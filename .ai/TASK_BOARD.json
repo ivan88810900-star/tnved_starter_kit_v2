@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 899,
+  "revision": 900,
   "runs": [
     {
       "head_sha": null,
@@ -4743,6 +4743,34 @@
       "a6": "UNCHANGED_NOT_SENT",
       "protected_actions_performed": false,
       "evidence": ".ai/orchestration/evidence/cycle370_pr255_economic_input_admission.json",
+      "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh state; keep full PR #245 acceptance blocked until a lawful populated synchronized NTM snapshot is available."
+    },
+    "cycle371_pr255_payment_api_boolean_admission": {
+      "task_id": "TARIFF-PR255-PAYMENT-API-BOOLEAN-ADMISSION-20261020",
+      "checked_at": "2026-10-20T02:10:18Z",
+      "executor": "/root/scheduled-cycle371-20261020T015513Z",
+      "lease_generation": 371,
+      "pr": 255,
+      "parent_sha": "3a499b41db42ce0cebd2452abcacd77aac6d14ee",
+      "head_sha": "71c1a2f76aaeb5c1bfe62a5a182d36a1f332217f",
+      "tree_sha": "daee98dfc9a0832749eb23ed539a85fdd44eef39",
+      "status": "IMPLEMENTED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+      "author_tests": "331 tests plus 140 subtests; focused 32 tests plus 81 subtests; compile and diff checks; all exit 0",
+      "independent_a5": "/root/a5_cycle371 PASS_NO_FINDINGS on exact tree after invoice JSON and CSV/XLSX coercion findings were repaired; 86 tests plus 78 subtests",
+      "ci_run_id": 39357272634,
+      "ci_jobs": {
+        "payment-regression": 118414844298,
+        "offline-safety": 118414844552
+      },
+      "receipts": {
+        "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6281692906",
+        "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6281694931"
+      },
+      "snapshot_status": "POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+      "full_pr244_acceptance": "NOT_PASS",
+      "a6": "UNCHANGED_NOT_SENT",
+      "protected_actions_performed": false,
+      "evidence": ".ai/orchestration/evidence/cycle371_pr255_payment_api_boolean_admission.json",
       "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh state; keep full PR #245 acceptance blocked until a lawful populated synchronized NTM snapshot is available."
     }
   },
@@ -8034,7 +8062,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-20T01:05:17Z",
+  "updated_at": "2026-10-20T02:10:18Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",

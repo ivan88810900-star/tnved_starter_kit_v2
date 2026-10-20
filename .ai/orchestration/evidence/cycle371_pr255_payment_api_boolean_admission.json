@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-PAYMENT-API-BOOLEAN-ADMISSION-20261020",
+  "executor": "/root/scheduled-cycle371-20261020T015513Z",
+  "started_at": "2026-10-20T01:55:13Z",
+  "completed_at": "2026-10-20T02:10:18Z",
+  "lease_generation": 371,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "parent_sha": "3a499b41db42ce0cebd2452abcacd77aac6d14ee",
+  "local_author_commits": [
+    "a6b51af6a213de17f86702b029d93ea9e2c7549d",
+    "1ce0da6ef3248a5ef79bc3960215008c2b8b5c8d",
+    "804cc5aaf651af60974aa0e049d9e6722ee63c3a"
+  ],
+  "published_head_sha": "71c1a2f76aaeb5c1bfe62a5a182d36a1f332217f",
+  "tree_sha": "daee98dfc9a0832749eb23ed539a85fdd44eef39",
+  "publication": {
+    "method": "Git data blobs/tree/commit followed by non-force fast-forward CAS",
+    "expected_parent_sha": "3a499b41db42ce0cebd2452abcacd77aac6d14ee",
+    "verified_remote_head_sha": "71c1a2f76aaeb5c1bfe62a5a182d36a1f332217f",
+    "verified_remote_tree_sha": "daee98dfc9a0832749eb23ed539a85fdd44eef39",
+    "local_and_remote_tree_identical": true
+  },
+  "defect": "Public payment-facing Pydantic models converted JSON booleans to numeric values before payment validation. The invoice JSON and CSV/XLSX paths also converted Python or pandas/numpy booleans before arithmetic.",
+  "repair": "Calculator, comparison, compliance, Copilot and invoice numeric request fields reject booleans in mode=before validators. The invoice parser rejects Python and pandas/numpy boolean cells before float conversion, and the invoice service independently rejects boolean-like values before arithmetic. Intended boolean flags remain valid.",
+  "changed_files": [
+    "customs-clear/backend/app/api/assistant.py",
+    "customs-clear/backend/app/api/calculator.py",
+    "customs-clear/backend/app/api/compliance.py",
+    "customs-clear/backend/app/api/invoice.py",
+    "customs-clear/backend/app/services/invoice_batch_service.py",
+    "customs-clear/backend/tests/test_payment_api_boolean_inputs.py"
+  ],
+  "author_validation": [
+    {
+      "command": "DATABASE_URL=sqlite:////tmp/tariff-cycle371-publish-ci-20261020.db SCHEDULER_ENABLED=0 PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_pp908_vat_coverage.py tests/test_import_duty_ingestion.py tests/test_official_bundle_builder_safety.py tests/test_payment_engine.py tests/test_rate_display.py tests/test_special_duties.py tests/test_api_integration.py tests/test_hs_leaf_clarification.py tests/test_recycling_fees.py tests/test_tariff_preferences.py tests/test_duty_rules_backfill.py tests/test_normative_bundle.py tests/test_rop_calculator.py tests/test_vat_preferences_audit161.py tests/test_payment_api_boolean_inputs.py tests/test_invoice_and_compare.py tests/test_payment_fx_provenance_fail_closed.py tests/test_payment_quote.py tests/test_assistant_request_models_security.py",
+      "exit_code": 0,
+      "result": "331 passed, 140 subtests passed on a freshly migrated disposable SQLite database"
+    },
+    {
+      "command": "DATABASE_URL=sqlite:////tmp/tariff-cycle371-invoice-20261020.db SCHEDULER_ENABLED=0 PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_payment_api_boolean_inputs.py tests/test_invoice_and_compare.py tests/test_payment_fx_provenance_fail_closed.py",
+      "exit_code": 0,
+      "result": "32 passed, 81 subtests passed"
+    },
+    {
+      "command": "git diff --check && python -m compileall -q changed_paths",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "independent_a5": {
+    "reviewer": "/root/a5_cycle371",
+    "status": "PASS_NO_FINDINGS",
+    "reviewed_commit": "804cc5aaf651af60974aa0e049d9e6722ee63c3a",
+    "reviewed_tree": "daee98dfc9a0832749eb23ed539a85fdd44eef39",
+    "findings_repaired_before_pass": [
+      "The public invoice calculate-batch schema still coerced booleans in quantity, unit price, weights and calendar year.",
+      "The CSV/XLSX parser converted boolean quantity and unit price cells before the service-level guard could inspect their type."
+    ],
+    "verification": "86 passed plus 78 subtests, exit 0; independent CSV/XLSX boolean matrix, service numpy.bool_ matrix including engine_volume, JSON/query API checks, valid numeric controls, intended boolean flags, diff-check, compileall and direct public payment-entry search all passed."
+  },
+  "exact_head_ci": {
+    "run_id": 39357272634,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39357272634",
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "71c1a2f76aaeb5c1bfe62a5a182d36a1f332217f",
+    "jobs": [
+      {
+        "name": "payment-regression",
+        "job_id": 118414844298,
+        "conclusion": "success"
+      },
+      {
+        "name": "offline-safety",
+        "job_id": 118414844552,
+        "conclusion": "success"
+      }
+    ]
+  },
+  "receipts": {
+    "pr255_comment_id": 6281692906,
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6281692906",
+    "issue257_comment_id": 6281694931,
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6281694931"
+  },
+  "scope_limits": {
+    "full_pr244_acceptance": "NOT_PASS",
+    "official_source_or_legal_completeness": "NOT_PASS",
+    "populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "full_pr245_acceptance": "BLOCKED_BY_SNAPSHOT",
+    "broad_backend_suite": "NOT_RERUN_AFTER_PRIOR_UNRELATED_PLATFORM_SECURITY_STOP",
+    "rate_or_legal_semantics_changed": false,
+    "normative_or_fixture_data_changed": false,
+    "merge_or_deploy_performed": false,
+    "staging_or_production_write_performed": false,
+    "protected_action_performed": false,
+    "a6": "UNCHANGED_NOT_SENT"
+  },
+  "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh state; keep full PR #245 acceptance blocked until a lawful populated synchronized NTM snapshot is available."
+}
