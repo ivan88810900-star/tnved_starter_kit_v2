@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-TNVED-RECOVERY-PRODUCT-CI-20261020",
+  "started_at": "2026-10-20T10:53:06Z",
+  "completed_at": "2026-10-20T11:00:47Z",
+  "executor": "/root/scheduled-cycle376-20261020T105000Z",
+  "lease_generation": 376,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pull_request": 260,
+  "branch": "agent/tnved-structure-recovery-v1",
+  "previous_head_sha": "bc8a24542549725aa7c73ad7160ba41c7a76cc4f",
+  "head_sha": "3e92624a3bcf0b7499badc23cba0aa6a12934ad2",
+  "tree_sha": "1fa2ebaa908f08c09e8205b124438ac3535574b3",
+  "local_author_commit": "0bd5c9db3bf2c6bb8adcee97e8b8e8d1ea246a00",
+  "status": "DRAFT_PUBLISHED_A5_PASS_PRODUCT_CI_SUCCESS_OWNER_COPY_VERIFIED",
+  "change": "Added a mandatory stdlib CI test that executes the real recovery validation/schema/SQLite/adapter path on a generated synthetic 96-chapter fixture. Operational build() and CLI remain bound to the immutable approved catalog/index hashes and production counts. No private source bytes are committed.",
+  "local_validation": {
+    "mandatory_offline_unittest": "2 tests passed, exit 0",
+    "source_backed_plus_offline_pytest": "4 passed, exit 0",
+    "py_compile": "exit 0",
+    "git_diff_check": "exit 0",
+    "coverage": "two deterministic builds, byte/logical hash equality, manifest, no sidecars, immutable read-only reopen, integrity_check, foreign_key_check, adapter status/lookup/breadcrumb/search, operational-pin and changed-byte rejection"
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle376",
+    "result": "PASS_NO_FINDINGS",
+    "tests": "offline unittest 2 passed; exact-source combined pytest 4 passed; orchestration verifier 225 passed; py_compile and diff-check exit 0",
+    "boundary": "No full source or legal acceptance claim; legal_status remains unverified and rates remain absent."
+  },
+  "exact_head_ci": [
+    {
+      "event": "pull_request",
+      "run_id": 39411673990,
+      "job_id": 118590693968,
+      "name": "offline-safety",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39411673990",
+      "recovery_step": "completed/success"
+    },
+    {
+      "event": "push",
+      "run_id": 39411669292,
+      "job_id": 118590679305,
+      "name": "offline-safety",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39411669292",
+      "recovery_step": "completed/success"
+    }
+  ],
+  "owner_copy_verification": {
+    "status": "OWNER_CONFIRMED_MATCH_ON_NEW_MAC",
+    "bundle_bytes": 3638945,
+    "bundle_sha256": "a30004de21e6c6fd9bb1585a10542076d61b3c577f5d61dc1752827b23b69727",
+    "sqlite_bytes": 73908224,
+    "sqlite_sha256": "c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4",
+    "local_path_recorded": false
+  },
+  "recovery_artifact": {
+    "logical_sha256": "be57fc61571bee51817e5a0915918d7f3baa86873c644ce148c613b1b20589e6",
+    "nodes": 18014,
+    "ten_digit_codes": 13294,
+    "leading_zero_codes": 2234,
+    "rates_present": false,
+    "legal_status": "unverified"
+  },
+  "safety_boundaries": {
+    "project_object_upload_retried": false,
+    "normative_admission_performed": false,
+    "database_write_performed": false,
+    "merge_or_deploy_performed": false,
+    "a6": "UNCHANGED_NOT_SENT"
+  },
+  "next_step": "Return to coherent PR #244 payment/source acceptance and fixture cleanup. Keep rates, NTM and legal admission separate from the structurally recovered reference."
+}
