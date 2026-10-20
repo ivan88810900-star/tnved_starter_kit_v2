@@ -1,3 +1,13 @@
+## 2026-10-20 — Trade-remedies audit owns its Alembic boundary
+
+- Draft [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255) now publishes exact head `82318dd750d01acb314715ab49a0fbb597f96a05`, tree `9b50208ed62a3f496f7a503483c65659b555d46a`.
+- On exact parent `e28983e95ebe3520928e94f29af49a7c868cef68`, the focused audit module failed all five cases because `special_duties` did not exist; a clean 31-module payment/source run then reproduced an order-dependent **1 failed / 606 passed** result.
+- The one-file test-only repair gives the audit module a disposable SQLite migration boundary: it upgrades to the explicit pre-audit revision, seeds synthetic non-normative rows, and runs the real Alembic audit migration. Product code, migrations, tracked normative fixtures, rates, source facts and legal applicability are unchanged.
+- Author verification: focused **5 passed**; expanded forward **652 passed**; expanded reverse **652 passed**; compile and diff checks exit 0. Independent A5 `/root/a5_cycle387`: **PASS_NO_FINDINGS**, with parent/candidate reproduction, AST/assertion preservation and no ambient database artifact.
+- Exact-head CI [run 39488615101](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39488615101) is `success`; offline-safety job `118855467375` and payment-regression job `118855467631` succeeded.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6300334123), [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6300334520). Durable evidence: `.ai/orchestration/evidence/cycle387_pr255_trade_remedies_audit_isolation.json`.
+- No Neon, merge/deploy, staging/production write or A6 call occurred. Full #244 acceptance remains NOT PASS. Next: continue coherent payment/source acceptance and fixture cleanup, then #245.
+
 ## 2026-10-20 — Customs-procedure tests use their own canonical fixture
 
 - Draft [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255) now publishes exact head `e28983e95ebe3520928e94f29af49a7c868cef68`, tree `9852153602b8cfed851e262c2328b6a629e6654e`.

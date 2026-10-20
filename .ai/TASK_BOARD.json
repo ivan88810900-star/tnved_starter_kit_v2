@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 913,
+  "revision": 914,
   "runs": [
     {
       "head_sha": null,
@@ -8118,7 +8118,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-20T19:02:32Z",
+  "updated_at": "2026-10-20T20:05:39Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -18957,32 +18957,32 @@
   },
   "latest_scheduled_product_checkpoint": {
     "schema_version": 1,
-    "task_id": "TARIFF-PR255-CUSTOMS-PROCEDURE-ISOLATION-20261020",
-    "started_at": "2026-10-20T18:54:03Z",
-    "completed_at": "2026-10-20T19:02:32Z",
-    "executor": "/root/scheduled-cycle386-20261020T185403Z",
-    "lease_generation": 386,
+    "task_id": "TARIFF-PR255-TRADE-REMEDIES-AUDIT-ISOLATION-20261020",
+    "started_at": "2026-10-20T19:47:10Z",
+    "completed_at": "2026-10-20T20:05:39Z",
+    "executor": "/root/scheduled-cycle387-20261020T194710Z",
+    "lease_generation": 387,
     "pr": 255,
     "branch": "agent/core-payment-regressions-v1",
-    "previous_head_sha": "22190f2d4002ea8dad06927affd5ecd8309a34ea",
-    "head_sha": "e28983e95ebe3520928e94f29af49a7c868cef68",
-    "tree_sha": "9852153602b8cfed851e262c2328b6a629e6654e",
-    "local_author_commit": "a252a22009552798d919a72086599de4a6a0b3dd",
+    "previous_head_sha": "e28983e95ebe3520928e94f29af49a7c868cef68",
+    "head_sha": "82318dd750d01acb314715ab49a0fbb597f96a05",
+    "tree_sha": "9b50208ed62a3f496f7a503483c65659b555d46a",
+    "local_author_commit": "50231d4e61c336781fcd402de156b125e3b10904",
     "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
-    "implementation": "A class-scoped fixture creates an in-memory SQLite schema, patches only the canonical seeder's engine and session factory, calls the unchanged seed_customs_procedures.seed function, and disposes the database after the tests. Product code and fixture data are unchanged.",
-    "reproduction": "12 failed, 140 passed; All customs-procedure tests depended on an ambient preloaded customs_procedures table; a clean disposable database reported no such table.",
-    "tests": "Focused 12 passed; adjacent forward/reverse 152 passed each; expanded payment/source forward/reverse 491 passed each; static checks exit 0.",
-    "a5": "/root/a5_cycle386 PASS_NO_FINDINGS; parent focused 12 failed, candidate focused 12 passed, adjacent forward/reverse 152 passed each, canonical seed and AST integrity verified.",
-    "exact_head_ci": "Run 39479668131 attempt 2 success; offline-safety job 118825301714 and payment-regression job 118825304029 success.",
+    "implementation": "A class-scoped disposable SQLite fixture upgrades to the explicit pre-audit revision, seeds synthetic non-normative rows, executes the real Alembic audit migration, binds the test session, and disposes the database. Product code, migrations, tracked normative fixtures, rates and legal applicability are unchanged.",
+    "reproduction": "Focused parent 5 failed because special_duties did not exist; expanded clean 31-module parent order 1 failed / 606 passed because the audit depended on ambient database state.",
+    "tests": "Focused 5 passed; expanded forward 652 passed; expanded reverse 652 passed; py_compile and diff checks exit 0.",
+    "a5": "/root/a5_cycle387 PASS_NO_FINDINGS; parent focused 5 failed, parent forward 1 failed / 606 passed, candidate focused 5 passed, candidate forward/reverse 652 passed each; AST/assertion and isolation checks passed.",
+    "exact_head_ci": "Run 39488615101 success; offline-safety job 118855467375 and payment-regression job 118855467631 success.",
     "receipts": {
-      "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6298864953",
-      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6298865302"
+      "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6300334123",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6300334520"
     },
-    "legal_boundary": "No product logic, fixture data, payment arithmetic, rate, source fact, normative data or legal applicability changed. Full #244 acceptance remains NOT PASS.",
+    "legal_boundary": "Test-only isolation. No product logic, migration, tracked normative data, rate, source fact or legal applicability changed. Full #244 acceptance remains NOT PASS.",
     "protected_actions_performed": false,
     "a6": "UNCHANGED_NOT_SENT",
-    "evidence": ".ai/orchestration/evidence/cycle386_pr255_customs_procedure_isolation.json",
-    "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from the fresh live head, then #245."
+    "evidence": ".ai/orchestration/evidence/cycle387_pr255_trade_remedies_audit_isolation.json",
+    "next_step": "Continue coherent PR #244 payment/source acceptance and remaining fixture isolation from the fresh live head, then #245."
   },
   "previous_scheduled_product_checkpoint_382": {
     "schema_version": 1,
@@ -19073,5 +19073,34 @@
     "a6": "UNCHANGED_NOT_SENT",
     "evidence": ".ai/orchestration/evidence/cycle381_pr255_quote_special_duty_scope.json",
     "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh live state."
+  },
+  "previous_scheduled_product_checkpoint_386": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR255-CUSTOMS-PROCEDURE-ISOLATION-20261020",
+    "started_at": "2026-10-20T18:54:03Z",
+    "completed_at": "2026-10-20T19:02:32Z",
+    "executor": "/root/scheduled-cycle386-20261020T185403Z",
+    "lease_generation": 386,
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "previous_head_sha": "22190f2d4002ea8dad06927affd5ecd8309a34ea",
+    "head_sha": "e28983e95ebe3520928e94f29af49a7c868cef68",
+    "tree_sha": "9852153602b8cfed851e262c2328b6a629e6654e",
+    "local_author_commit": "a252a22009552798d919a72086599de4a6a0b3dd",
+    "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+    "implementation": "A class-scoped fixture creates an in-memory SQLite schema, patches only the canonical seeder's engine and session factory, calls the unchanged seed_customs_procedures.seed function, and disposes the database after the tests. Product code and fixture data are unchanged.",
+    "reproduction": "12 failed, 140 passed; All customs-procedure tests depended on an ambient preloaded customs_procedures table; a clean disposable database reported no such table.",
+    "tests": "Focused 12 passed; adjacent forward/reverse 152 passed each; expanded payment/source forward/reverse 491 passed each; static checks exit 0.",
+    "a5": "/root/a5_cycle386 PASS_NO_FINDINGS; parent focused 12 failed, candidate focused 12 passed, adjacent forward/reverse 152 passed each, canonical seed and AST integrity verified.",
+    "exact_head_ci": "Run 39479668131 attempt 2 success; offline-safety job 118825301714 and payment-regression job 118825304029 success.",
+    "receipts": {
+      "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6298864953",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6298865302"
+    },
+    "legal_boundary": "No product logic, fixture data, payment arithmetic, rate, source fact, normative data or legal applicability changed. Full #244 acceptance remains NOT PASS.",
+    "protected_actions_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "evidence": ".ai/orchestration/evidence/cycle386_pr255_customs_procedure_isolation.json",
+    "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from the fresh live head, then #245."
   }
 }

@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-TRADE-REMEDIES-AUDIT-ISOLATION-20261020",
+  "executor": "/root/scheduled-cycle387-20261020T194710Z",
+  "started_at": "2026-10-20T19:47:10Z",
+  "completed_at": "2026-10-20T20:05:39Z",
+  "lease_generation": 387,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "parent_sha": "e28983e95ebe3520928e94f29af49a7c868cef68",
+  "head_sha": "82318dd750d01acb314715ab49a0fbb597f96a05",
+  "tree_sha": "9b50208ed62a3f496f7a503483c65659b555d46a",
+  "local_author_commit": "50231d4e61c336781fcd402de156b125e3b10904",
+  "changed_files": [
+    "customs-clear/backend/tests/test_trade_remedies_audit.py"
+  ],
+  "reproduction": {
+    "focused": "exit 1; 5 failed; sqlite3.OperationalError: no such table: special_duties",
+    "expanded_forward": "exit 1; 1 failed, 606 passed; test_legacy_junk_rows_removed observed three undeleted ambient rows"
+  },
+  "implementation": "Class-scoped disposable SQLite fixture upgrades through Alembic to d3e4f5b0a1b2, seeds an explicit synthetic pre-audit boundary, upgrades through e4f5b0a1b2c3, binds the test session, and disposes the database after the class.",
+  "boundaries": [
+    "Product code and migration code unchanged",
+    "Tracked normative and legal fixtures unchanged",
+    "Synthetic seed rows are test-only and use example.invalid provenance",
+    "All five original test methods are AST-identical",
+    "All 17 original assertions are preserved; one fixture guard assertion added",
+    "No ambient database artifact remained"
+  ],
+  "author_verification": [
+    {"result": "5 passed", "exit_code": 0, "scope": "focused trade-remedies audit"},
+    {"result": "652 passed", "exit_code": 0, "scope": "31-module payment/source forward order"},
+    {"result": "652 passed", "exit_code": 0, "scope": "31-module payment/source reverse order"},
+    {"result": "PASS", "exit_code": 0, "scope": "py_compile and git diff --check"}
+  ],
+  "independent_a5": {
+    "session": "/root/a5_cycle387",
+    "status": "PASS_NO_FINDINGS",
+    "focused_parent": "5 failed, exit 1",
+    "parent_forward": "1 failed, 606 passed, exit 1",
+    "candidate_focused": "5 passed, exit 0",
+    "candidate_forward": "652 passed, exit 0",
+    "candidate_reverse": "652 passed, exit 0"
+  },
+  "exact_head_ci": {
+    "run_id": 39488615101,
+    "head_sha": "82318dd750d01acb314715ab49a0fbb597f96a05",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39488615101",
+    "jobs": [
+      {"id": 118855467375, "name": "offline-safety", "conclusion": "success"},
+      {"id": 118855467631, "name": "payment-regression", "conclusion": "success"}
+    ]
+  },
+  "receipts": {
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6300334123",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6300334520"
+  },
+  "protected_actions_performed": false,
+  "a6": "UNCHANGED_NOT_SENT",
+  "full_pr244_acceptance": "NOT_PASS",
+  "next_step": "Continue coherent PR #244 payment/source acceptance and remaining fixture isolation from the fresh live head, then #245."
+}
