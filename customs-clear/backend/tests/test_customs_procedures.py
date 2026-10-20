@@ -1,19 +1,37 @@
 """Tests for customs procedures database."""
 from __future__ import annotations
 
-import pytest
-from sqlalchemy import text
+from unittest.mock import patch
 
-from app.db import SessionLocal
+import pytest
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from scripts import seed_customs_procedures
+
+
+@pytest.fixture(scope="class", autouse=True)
+def _customs_procedure_db(request):
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    session_factory = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    with (
+        patch.object(seed_customs_procedures, "engine", engine),
+        patch.object(seed_customs_procedures, "SessionLocal", session_factory),
+    ):
+        result = seed_customs_procedures.seed()
+    assert result["total"] == len(seed_customs_procedures.PROCEDURES)
+    request.cls.db = session_factory()
+    yield
+    request.cls.db.close()
+    engine.dispose()
 
 
 class TestCustomsProcedures:
-    @pytest.fixture(autouse=True)
-    def _db(self):
-        self.db = SessionLocal()
-        yield
-        self.db.close()
-
     def test_total_procedures_above_20(self) -> None:
         count = self.db.execute(
             text("SELECT COUNT(*) FROM customs_procedures")
