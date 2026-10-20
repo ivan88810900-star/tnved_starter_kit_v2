@@ -1,5 +1,5 @@
 name: Tariff trusted A6 live audit
-run-name: Tariff A6 command ${{ github.event.comment.body }}
+run-name: Tariff A6 owner command gate
 
 on:
   issue_comment:
@@ -15,6 +15,19 @@ concurrency:
 
 jobs:
   context-gate:
+    # issue_comment cannot filter by body at trigger time. Skip unrelated
+    # comments before checkout, state reads, dedupe, or provider credentials.
+    if: >-
+      ${{
+        github.event.action == 'created' &&
+        github.event.issue.number == 214 &&
+        github.event.issue.pull_request == null &&
+        github.event.comment.body == '/tariff-a6-live run-pending' &&
+        github.event.comment.user.login == github.repository_owner &&
+        github.event.comment.author_association == 'OWNER' &&
+        github.actor == github.repository_owner &&
+        github.run_attempt == 1
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     outputs:
