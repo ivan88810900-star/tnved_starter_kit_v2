@@ -30,6 +30,6 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         working-directory: customs-clear/backend
-        run: python3 -m unittest -v tests.test_tnved_recovery_ci
+        run: python3 scripts/run_tnved_recovery_ci.py
       - name: Committed persistent state schema
         run: python3 -m tools.tariff_agents validate-snapshot

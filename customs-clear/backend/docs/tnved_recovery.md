@@ -25,6 +25,25 @@ deterministic build, immutable reopen, integrity/FK checks and read-only adapter
 against a generated synthetic 96-chapter fixture.  The operational `build()` and
 CLI remain bound to the approved source hashes; the synthetic fixture contains no
 private snapshot bytes and cannot establish source completeness for the real data.
+The mandatory runner fails if it discovers no recovery subject tests, does not
+execute every discovered test, or skips every subject test; its final summary
+records discovered, executed and skipped counts.
+
+## 2026-10-20 builder compatibility assessment
+
+The accepted bundle remains attributed to PR head
+`bc8a24542549725aa7c73ad7160ba41c7a76cc4f` and reviewed tree
+`4caf1d03f0d718cac7b8d462e66090c423ecb9ee`; later CI refactoring does not
+relabel that historical artifact.  The refactored operational `build()` still
+supplies the same immutable catalog/index hashes, counts, chapters and section
+count to the shared implementation.  Running that operational entry point on
+the pinned accepted inputs produced a byte-identical SQLite with SHA-256
+`c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4` and
+logical SHA-256
+`be57fc61571bee51817e5a0915918d7f3baa86873c644ce148c613b1b20589e6`.
+This establishes output equivalence for those exact accepted inputs; it is not
+a new legal/source acceptance and does not replace the private dated Mac
+verification receipt.
 
 All 18,014 catalog nodes remain strings, including leading zeroes. Their full
 `path_json` retains 3,172 uncoded intermediate labels. Source/page references,

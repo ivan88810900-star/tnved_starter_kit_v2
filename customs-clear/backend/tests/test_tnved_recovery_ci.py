@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import closing
 import hashlib
 import importlib.util
+import io
 import json
 from pathlib import Path
 import sqlite3
@@ -20,6 +21,15 @@ COUNTS = {"sources": 99, "editions": 96, "nodes": 192, "notes": 107, "ten_digit"
 def _builder():
     path = ROOT / "scripts/build_tnved_recovery.py"
     spec = importlib.util.spec_from_file_location("build_tnved_recovery_ci", path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def _gate_runner():
+    path = ROOT / "scripts/run_tnved_recovery_ci.py"
+    spec = importlib.util.spec_from_file_location("run_tnved_recovery_ci", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
@@ -153,6 +163,26 @@ def _fixture(directory: Path) -> tuple[Path, Path, str, str]:
 
 
 class TnvedRecoveryOfflineCiTest(unittest.TestCase):
+    def test_gate_rejects_zero_subject_tests(self) -> None:
+        output = io.StringIO()
+        exit_code = _gate_runner().run_suite(unittest.TestSuite(), stream=output)
+        self.assertEqual(exit_code, 2)
+        self.assertIn("no subject tests discovered", output.getvalue())
+
+    def test_gate_rejects_all_subject_tests_skipped(self) -> None:
+        class SkippedSubject(unittest.TestCase):
+            @unittest.skip("synthetic missing fixture")
+            def runTest(self) -> None:
+                raise AssertionError("skip did not apply")
+
+        output = io.StringIO()
+        exit_code = _gate_runner().run_suite(
+            unittest.TestSuite([SkippedSubject()]),
+            stream=output,
+        )
+        self.assertEqual(exit_code, 4)
+        self.assertIn("all subject tests skipped", output.getvalue())
+
     def test_builder_is_deterministic_integral_and_readable(self) -> None:
         builder = _builder()
         with tempfile.TemporaryDirectory() as raw:
