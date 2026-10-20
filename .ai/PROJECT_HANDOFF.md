@@ -1,3 +1,12 @@
+## 2026-10-20 — Source-currentness tests execute without undeclared asyncio plugin
+
+- Draft [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255) now publishes exact head `675eb20f5b06f2d05257365d754a3536568a96c3`, tree `6b228e1cb61c36033b74c18f6b5a9f4ebfcd87bf`.
+- A clean runner reproduced three collected-but-unexecuted source-currentness cases because `pytest-asyncio` is not declared: the bounded tranche exited 1 with **3 failed / 113 passed**. The two test functions now use stdlib `asyncio.run`; their names, parameterization, mocks and all 12 assertions are unchanged.
+- Author verification: focused **3 passed**; adjacent source/payment tranche **116 passed** in forward and reverse order; compile, AST parity and diff checks exit 0. Independent A5 `/root/a5_cycle384`: **PASS_NO_FINDINGS**, with the same 3/116/116 results in an outbound-denied disposable environment.
+- Exact-head CI [run 39462671757](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39462671757) is `success`; offline-safety job `118765879781` and payment-regression job `118765880259` both succeeded.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6296573918), [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6296574224). Durable evidence: `.ai/orchestration/evidence/cycle384_pr255_source_sync_stdlib_runner.json`.
+- No payment arithmetic, rate, source fact or legal applicability changed. No Neon, merge/deploy, staging/production write or A6 call occurred. Full #244 acceptance remains NOT PASS. Next: continue source-by-source acceptance and fixture cleanup.
+
 ## 2026-10-20 — Structural TN VED staging adapter verified; external load partial at 7,500/18,014
 
 - Draft [PR #260](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/260) now publishes exact head `f50f8cbe10daef44a4f42c516aaf19a5f5b156f4`, tree `5327650562c1d276695bf45846cc79cd1f91d931`. The public staging boundary rereads the exact accepted SQLite and derives metadata/rows internally; caller-built provenance and rows cannot enter.

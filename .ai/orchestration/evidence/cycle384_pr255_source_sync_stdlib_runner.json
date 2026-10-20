@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-SOURCE-SYNC-STDLIB-RUNNER-20261020",
+  "started_at": "2026-10-20T16:58:47Z",
+  "completed_at": "2026-10-20T17:06:42Z",
+  "executor": "/root/scheduled-cycle384-20261020T165847Z",
+  "lease_generation": 384,
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "previous_head_sha": "5ff8f780a14a3d3690ac8a0d9e10adc753e12fcc",
+  "head_sha": "675eb20f5b06f2d05257365d754a3536568a96c3",
+  "tree_sha": "6b228e1cb61c36033b74c18f6b5a9f4ebfcd87bf",
+  "local_author_commit": "3324cd60f551da348dbfdca1c1ddef909b259e30",
+  "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+  "reproduction": "A clean environment without the undeclared pytest-asyncio plugin collected but did not execute the three source-currentness cases: 3 failed and 113 passed, exit 1.",
+  "implementation": "The two source-currentness test functions now execute their existing async calls through stdlib asyncio.run. Test names, parameterization, mocks, all 12 assertions and product code are unchanged.",
+  "author_tests": {
+    "focused": "3 passed, exit 0",
+    "adjacent_forward": "116 passed, exit 0",
+    "adjacent_reverse": "116 passed, exit 0",
+    "static": "py_compile, AST name/assertion parity and git diff --check exit 0"
+  },
+  "a5": {
+    "reviewer": "/root/a5_cycle384",
+    "result": "PASS_NO_FINDINGS",
+    "focused": "3 passed, exit 0",
+    "adjacent_forward": "116 passed, exit 0",
+    "adjacent_reverse": "116 passed, exit 0",
+    "boundary": "Outbound proxies denied; disposable SQLite outside worktree; no ambient DB or sidecars."
+  },
+  "exact_head_ci": {
+    "run_id": 39462671757,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39462671757",
+    "status": "completed",
+    "conclusion": "success",
+    "offline_safety_job": 118765879781,
+    "payment_regression_job": 118765880259
+  },
+  "receipts": {
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6296573918",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6296574224"
+  },
+  "legal_boundary": "No payment arithmetic, rate, source fact, normative fixture or legal applicability changed. Full PR #244 acceptance remains NOT PASS.",
+  "external_write_boundary": "No owner approval for the remaining 10514 structural rows; Neon was not contacted.",
+  "protected_actions_performed": false,
+  "a6": "UNCHANGED_NOT_SENT",
+  "next_step": "Continue coherent PR #244 source-by-source acceptance and fixture cleanup from fresh live state."
+}

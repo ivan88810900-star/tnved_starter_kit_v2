@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 910,
+  "revision": 911,
   "runs": [
     {
       "head_sha": null,
@@ -8118,7 +8118,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-20T13:28:40Z",
+  "updated_at": "2026-10-20T17:07:21Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -18956,6 +18956,36 @@
     "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh live state; do not resume the external structural import without explicit owner approval."
   },
   "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR255-SOURCE-SYNC-STDLIB-RUNNER-20261020",
+    "started_at": "2026-10-20T16:58:47Z",
+    "completed_at": "2026-10-20T17:06:42Z",
+    "executor": "/root/scheduled-cycle384-20261020T165847Z",
+    "lease_generation": 384,
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "previous_head_sha": "5ff8f780a14a3d3690ac8a0d9e10adc753e12fcc",
+    "head_sha": "675eb20f5b06f2d05257365d754a3536568a96c3",
+    "tree_sha": "6b228e1cb61c36033b74c18f6b5a9f4ebfcd87bf",
+    "local_author_commit": "3324cd60f551da348dbfdca1c1ddef909b259e30",
+    "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+    "implementation": "Source-currentness tests now execute existing async calls via stdlib asyncio.run instead of an undeclared pytest-asyncio dependency; product code and assertions are unchanged.",
+    "reproduction": "Clean bounded run exited 1 with 3 failed and 113 passed because async tests were collected but not executed without pytest-asyncio.",
+    "tests": "Focused 3 passed; adjacent source/payment tranche 116 passed in forward and reverse order; py_compile, AST name/assertion parity and git diff --check exit 0.",
+    "a5": "/root/a5_cycle384 PASS_NO_FINDINGS; focused 3 passed and both 116-test orders passed with outbound proxies denied and disposable SQLite.",
+    "exact_head_ci": "Run 39462671757 success; offline-safety job 118765879781 and payment-regression job 118765880259 success.",
+    "receipts": {
+      "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6296573918",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6296574224"
+    },
+    "external_write_boundary": "No owner approval for remaining 10514 structural rows; Neon not contacted.",
+    "legal_boundary": "No payment arithmetic, rate, source fact, normative fixture or legal applicability changed. Full #244 acceptance remains NOT PASS.",
+    "protected_actions_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "evidence": ".ai/orchestration/evidence/cycle384_pr255_source_sync_stdlib_runner.json",
+    "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh live state."
+  },
+  "previous_scheduled_product_checkpoint_382": {
     "schema_version": 1,
     "task_id": "TARIFF-PR255-COMPLIANCE-SCOPE-AUDIT-20261020",
     "started_at": "2026-10-20T15:51:08Z",
