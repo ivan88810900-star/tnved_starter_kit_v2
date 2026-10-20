@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-TNVED-STRUCTURAL-RECOVERY-CI-CLOSURE-20261020",
+  "checked_at": "2026-10-20T10:19:24.096Z",
+  "executor": "/root/scheduled-cycle375-20261020T101418Z",
+  "lease_generation": 375,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pull_request": 260,
+  "branch": "agent/tnved-structure-recovery-v1",
+  "exact_head_sha": "bc8a24542549725aa7c73ad7160ba41c7a76cc4f",
+  "reviewed_tree_sha": "4caf1d03f0d718cac7b8d462e66090c423ecb9ee",
+  "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_PASS",
+  "independent_a5": {
+    "session": "/root/a5_cycle374",
+    "reviewed_tree_sha": "4caf1d03f0d718cac7b8d462e66090c423ecb9ee",
+    "result": "PASS_NO_FINDINGS",
+    "source_evidence": ".ai/orchestration/evidence/cycle374_tnved_structural_recovery.json"
+  },
+  "exact_head_ci": {
+    "workflow_run_id": 39400461650,
+    "workflow_name": "Tariff agent safety",
+    "workflow_status": "completed",
+    "workflow_conclusion": "success",
+    "job_id": 118553586284,
+    "job_name": "offline-safety",
+    "job_status": "completed",
+    "job_conclusion": "success",
+    "started_at": "2026-10-20T09:24:42Z",
+    "completed_at": "2026-10-20T09:25:42Z",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39400461650",
+    "all_steps_passed": true
+  },
+  "artifact_receipt": {
+    "sqlite_sha256": "c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4",
+    "logical_sha256": "be57fc61571bee51817e5a0915918d7f3baa86873c644ce148c613b1b20589e6",
+    "bundle_sha256": "a30004de21e6c6fd9bb1585a10542076d61b3c577f5d61dc1752827b23b69727",
+    "persistent_user_copy": "SAVED_AND_AVAILABLE",
+    "mac_byte_verification": "PENDING"
+  },
+  "safety_boundaries": {
+    "legal_status": "unverified",
+    "validity_dates": "unknown",
+    "rates_present": false,
+    "normative_admission_performed": false,
+    "database_write_performed": false,
+    "merge_or_deploy_performed": false,
+    "a6": "UNCHANGED_NOT_SENT"
+  },
+  "next_step": "Verify the saved bundle bytes on the new Mac against the recorded SHA-256 values; do not admit legal dates, rates, or NTM completeness from this structure-only snapshot."
+}
