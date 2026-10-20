@@ -359,7 +359,9 @@ def _build_assumptions(payload: dict[str, Any], raw: dict[str, Any]) -> list[Pay
 def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     """Собирает product-facing quote поверх compute_payments без изменения расчётной семантики."""
     hs_code = str(payload.get("hs_code") or "").strip()
-    description = (payload.get("description") or "").strip() or None
+    description = (
+        payload.get("product_description") or payload.get("description") or ""
+    ).strip() or None
     invoice_currency = str(payload.get("invoice_currency") or "RUB").upper().strip()
     user_excise = float(payload["excise"]) if payload.get("excise") is not None else None
 
@@ -368,6 +370,8 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         raise ValueError(f"Неизвестная валюта инвойса: {invoice_currency}")
 
     calc_payload = dict(payload)
+    if description is not None:
+        calc_payload["product_description"] = description
     invoice_fx = float(rates.get(invoice_currency) or 1.0)
     calc_payload["customs_value"] = float(payload.get("customs_value") or 0.0) * invoice_fx
     calc_payload["_fx_rates"] = rates

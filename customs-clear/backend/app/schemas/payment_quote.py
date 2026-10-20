@@ -63,8 +63,9 @@ class PaymentQuoteRequest(BaseModel):
             "Подтверждённый по товарным документам племенной статус для кодов 0102–0105."
         ),
     )
-    description: str | None = Field(
+    product_description: str | None = Field(
         default=None,
+        validation_alias=AliasChoices("product_description", "description"),
         description="Описание товара; используется только для точного scope-match специальных пошлин.",
     )
 

@@ -386,6 +386,52 @@ class SpecialDutiesTests(unittest.TestCase):
                 db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
                 db.commit()
 
+    def test_payment_quote_accepts_canonical_and_legacy_product_description(self) -> None:
+        marker = "TEST-QUOTE-SCOPED-SPECIAL-DUTY"
+        row = self._official_anti_dumping_row(act=marker)
+        row.manufacturer_exporter = "Alpha Steel Co"
+        row.product_description = "Прокат горячекатаный"
+        with SessionLocal() as db:
+            db.add(row)
+            db.commit()
+        try:
+            client = TestClient(app)
+            for description_key in ("product_description", "description"):
+                with self.subTest(description_key=description_key):
+                    response = client.post(
+                        "/api/payments/quote",
+                        json={
+                            "hs_code": "9996999999",
+                            "customs_value": 100_000.0,
+                            "invoice_currency": "RUB",
+                            "country": "ZZ",
+                            "manufacturer": "  alpha   STEEL co  ",
+                            description_key: "ПРОКАТ   ГОРЯЧЕКАТАНЫЙ",
+                        },
+                    )
+                    self.assertEqual(response.status_code, 200, response.text)
+                    quote = response.json()
+                    special = next(
+                        line for line in quote["line_items"]
+                        if line["code"] == "special_duty"
+                    )
+                    self.assertEqual(special["status"], "applied")
+                    self.assertEqual(special["amount_rub"], 7_000.0)
+                    self.assertNotIn(
+                        "special_duty_scope_unresolved",
+                        [warning["code"] for warning in quote["warnings"]],
+                    )
+                    self.assertEqual(
+                        quote["description"],
+                        "ПРОКАТ   ГОРЯЧЕКАТАНЫЙ",
+                    )
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(
+                    SpecialDuty.regulatory_act == marker
+                ).delete()
+                db.commit()
+
     def test_compliance_surfaces_special_duty_scope_manual_review(self) -> None:
         marker = "TEST-COMPLIANCE-SCOPED-SPECIAL-DUTY"
         row = self._official_anti_dumping_row(act=marker)
