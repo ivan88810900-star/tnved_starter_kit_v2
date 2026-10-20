@@ -1,14 +1,14 @@
 {
-  "acquisition_note": "cycle361 CI closure and next bounded product cycle",
-  "expires_at": null,
-  "generation": 382,
-  "holder": null,
+  "acquisition_note": "cycle383 bounded PR255 payment defect review",
+  "expires_at": "2026-10-20T16:48:34.721Z",
+  "generation": 383,
+  "holder": "/root/scheduled-cycle383-20261020T161418Z",
   "lease_repair": {},
   "release_reason": "cycle360 read-only state refresh completed",
   "released_by": "/root/scheduled-cycle333-20261018T125155Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-20T16:07:06.486162Z"
+  "state": "active",
+  "token": "3a209f44909fba0fbc70d9babf364f23",
+  "updated_at": "2026-10-20T16:18:34.721Z"
 }
