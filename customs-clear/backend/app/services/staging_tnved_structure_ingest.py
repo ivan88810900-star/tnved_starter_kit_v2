@@ -269,7 +269,39 @@ def read_accepted_sqlite(path: Path, *, expected_sha256: str, expected_logical_s
     return artifact, rows
 
 
-def ingest_structure(session: Session, *, artifact: StructureArtifact, rows: Sequence[StructureRow], schema: str | None = DEFAULT_SCHEMA, initialize_schema: bool = False, now: datetime) -> StructureIngestResult:
+def ingest_structure(
+    session: Session,
+    *,
+    artifact_path: Path,
+    expected_sha256: str,
+    expected_logical_sha256: str,
+    schema: str | None = DEFAULT_SCHEMA,
+    initialize_schema: bool = False,
+    now: datetime,
+) -> StructureIngestResult:
+    """Validate the immutable accepted SQLite and ingest its exact projection.
+
+    The public write boundary intentionally accepts neither caller-built
+    artifact metadata nor caller-built rows.  Both are derived again from the
+    exact SQLite bytes whose file and logical digests are supplied by the
+    accepted recovery receipt.
+    """
+    artifact, rows = read_accepted_sqlite(
+        artifact_path,
+        expected_sha256=expected_sha256,
+        expected_logical_sha256=expected_logical_sha256,
+    )
+    return _ingest_validated_structure(
+        session,
+        artifact=artifact,
+        rows=rows,
+        schema=schema,
+        initialize_schema=initialize_schema,
+        now=now,
+    )
+
+
+def _ingest_validated_structure(session: Session, *, artifact: StructureArtifact, rows: Sequence[StructureRow], schema: str | None = DEFAULT_SCHEMA, initialize_schema: bool = False, now: datetime) -> StructureIngestResult:
     _validate_artifact(artifact)
     if not isinstance(now, datetime) or now.utcoffset() is None:
         raise StructureIngestError("ingest time must be timezone-aware")

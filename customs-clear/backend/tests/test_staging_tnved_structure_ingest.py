@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.services.staging_tnved_structure_ingest import (
     STATUS,
     StructureIngestError,
+    _ingest_validated_structure,
     ingest_structure,
     read_accepted_sqlite,
     staging_tables,
@@ -48,12 +49,11 @@ def _fixture(path: Path) -> tuple[str, str]:
 def test_exact_ingest_and_replay_are_idempotent(tmp_path: Path) -> None:
     path = tmp_path / "accepted.sqlite"
     sha, logical = _fixture(path)
-    artifact, rows = read_accepted_sqlite(path, expected_sha256=sha, expected_logical_sha256=logical)
     engine = create_engine(f"sqlite:///{tmp_path / 'staging.sqlite'}")
     with Session(engine) as session, session.begin():
-        first = ingest_structure(session, artifact=artifact, rows=rows, schema=None, initialize_schema=True, now=datetime(2026, 10, 20, tzinfo=timezone.utc))
+        first = ingest_structure(session, artifact_path=path, expected_sha256=sha, expected_logical_sha256=logical, schema=None, initialize_schema=True, now=datetime(2026, 10, 20, tzinfo=timezone.utc))
     with Session(engine) as session, session.begin():
-        second = ingest_structure(session, artifact=artifact, rows=rows, schema=None, now=datetime(2026, 10, 21, tzinfo=timezone.utc))
+        second = ingest_structure(session, artifact_path=path, expected_sha256=sha, expected_logical_sha256=logical, schema=None, now=datetime(2026, 10, 21, tzinfo=timezone.utc))
         tables = staging_tables(MetaData(), schema=None)
         assert session.scalar(select(func.count()).select_from(tables["rows"])) == 2
         assert session.scalar(select(func.count()).select_from(tables["rows"]).where(tables["rows"].c.status == STATUS)) == 2
@@ -73,7 +73,21 @@ def test_hash_and_incomplete_state_fail_closed(tmp_path: Path) -> None:
     with Session(engine) as session, session.begin():
         session.execute(tables["artifacts"].insert().values(artifact_sha256=artifact.sha256, logical_sha256=artifact.logical_sha256, size_bytes=artifact.size_bytes, catalog_id=artifact.catalog_id, generated_at_source=artifact.generated_at_source, source_count=artifact.source_count, edition_count=artifact.edition_count, entry_count=artifact.entry_count, status=STATUS))
     with Session(engine) as session, session.begin(), pytest.raises(StructureIngestError, match="incomplete"):
-        ingest_structure(session, artifact=artifact, rows=rows, schema=None, now=datetime.now(timezone.utc))
+        ingest_structure(session, artifact_path=path, expected_sha256=sha, expected_logical_sha256=logical, schema=None, now=datetime.now(timezone.utc))
+
+
+def test_public_ingest_boundary_binds_rows_to_exact_sqlite(tmp_path: Path) -> None:
+    accepted = tmp_path / "accepted.sqlite"
+    sha, logical = _fixture(accepted)
+    altered = tmp_path / "altered.sqlite"
+    altered.write_bytes(accepted.read_bytes())
+    connection = sqlite3.connect(altered)
+    connection.execute("UPDATE tnved_entries SET title = ?, description = ? WHERE id = 2", ("forged", '["chapter","forged"]'))
+    connection.commit()
+    connection.close()
+    engine = create_engine(f"sqlite:///{tmp_path / 'staging.sqlite'}")
+    with Session(engine) as session, session.begin(), pytest.raises(StructureIngestError, match="artifact SHA"):
+        ingest_structure(session, artifact_path=altered, expected_sha256=sha, expected_logical_sha256=logical, schema=None, initialize_schema=True, now=datetime.now(timezone.utc))
 
 
 @pytest.mark.parametrize(
@@ -97,7 +111,7 @@ def test_public_ingest_boundary_rejects_forged_rows(tmp_path: Path, change: dict
     tables = staging_tables(MetaData(), schema=None)
     tables["artifacts"].metadata.create_all(engine)
     with Session(engine) as session, session.begin(), pytest.raises(StructureIngestError):
-        ingest_structure(session, artifact=artifact, rows=forged, schema=None, now=datetime.now(timezone.utc))
+        _ingest_validated_structure(session, artifact=artifact, rows=forged, schema=None, now=datetime.now(timezone.utc))
     with Session(engine) as session:
         assert session.scalar(select(func.count()).select_from(tables["artifacts"])) == 0
         assert session.scalar(select(func.count()).select_from(tables["rows"])) == 0
@@ -117,4 +131,4 @@ def test_public_ingest_boundary_rejects_existing_wrong_branch_parent(tmp_path: P
     forged_artifact = replace(artifact, entry_count=3)
     engine = create_engine(f"sqlite:///{tmp_path / 'staging.sqlite'}")
     with Session(engine) as session, session.begin(), pytest.raises(StructureIngestError, match="parent"):
-        ingest_structure(session, artifact=forged_artifact, rows=forged, schema=None, now=datetime.now(timezone.utc))
+        _ingest_validated_structure(session, artifact=forged_artifact, rows=forged, schema=None, now=datetime.now(timezone.utc))
