@@ -1,15 +1,117 @@
 """Trade remedies audit — migration e4f5b0a1b2c3 (Issue #170)."""
 from __future__ import annotations
 
-import pytest
-from sqlalchemy import text
+import os
+import sqlite3
+import subprocess
+import sys
+from pathlib import Path
 
-from app.db import SessionLocal
+import pytest
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
+
+
+SessionLocal: sessionmaker | None = None
+
+
+def _run_upgrade(backend: Path, env: dict[str, str], revision: str) -> None:
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "-c", str(backend / "alembic.ini"), "upgrade", revision],
+        cwd=backend,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+
+def _seed_pre_audit_rows(database: Path) -> None:
+    """Recreate the row-count/type boundary that migration e4f5 audits."""
+    junk_ids = (1, 2, 4, 5, 6)
+    retained_types = ("anti_dumping",) * 24 + ("special_safeguard",) * 3 + ("countervailing",) * 2
+    rows = [
+        (
+            row_id,
+            f"99{row_id:08d}"[-10:],
+            "ZZ",
+            1.0,
+            0.0,
+            "USD",
+            f"TEST-LEGACY-{row_id}",
+            "anti_dumping",
+            "",
+            "synthetic migration-boundary junk row",
+            "2020-01-01",
+            "2030-01-01",
+            "LEGACY_TEST",
+            "legacy-test",
+            "https://example.invalid/legacy-test",
+        )
+        for row_id in junk_ids
+    ]
+    rows.extend(
+        (
+            100 + index,
+            f"98{index:08d}"[-10:],
+            "ZZ",
+            1.0,
+            0.0,
+            "USD",
+            f"TEST-RETAINED-{index}",
+            measure_type,
+            "",
+            "synthetic migration-boundary retained row",
+            "2020-01-01",
+            "2030-01-01",
+            "EEC_TEST" if measure_type == "anti_dumping" else "TEST",
+            "retained-test",
+            "https://example.invalid/retained-test",
+        )
+        for index, measure_type in enumerate(retained_types)
+    )
+    with sqlite3.connect(database) as connection:
+        connection.executemany(
+            """
+            INSERT INTO special_duties (
+                id, hs_code_prefix, origin_country, rate_percent, rate_specific,
+                currency_code, regulatory_act, measure_type,
+                manufacturer_exporter, product_description,
+                effective_from, effective_to,
+                source_code, source_revision, source_url
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            rows,
+        )
+
+
+@pytest.fixture(scope="class", autouse=True)
+def _trade_remedies_migration_fixture(tmp_path_factory: pytest.TempPathFactory):
+    global SessionLocal
+
+    backend = Path(__file__).resolve().parents[1]
+    database = tmp_path_factory.mktemp("trade-remedies-audit") / "migration.sqlite"
+    url = f"sqlite:///{database}"
+    env = os.environ.copy()
+    env["DATABASE_URL"] = url
+
+    _run_upgrade(backend, env, "d3e4f5b0a1b2")
+    _seed_pre_audit_rows(database)
+    _run_upgrade(backend, env, "e4f5b0a1b2c3")
+
+    engine = create_engine(url)
+    SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    try:
+        yield
+    finally:
+        SessionLocal = None
+        engine.dispose()
 
 
 class TestTradeRemediesAudit:
     @pytest.fixture(autouse=True)
     def _db(self):
+        assert SessionLocal is not None
         self.db = SessionLocal()
         yield
         self.db.close()
