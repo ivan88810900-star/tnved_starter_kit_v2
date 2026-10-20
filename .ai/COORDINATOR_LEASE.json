@@ -2,7 +2,7 @@
   "acquisition_note": "cycle361 CI closure and next bounded product cycle",
   "expires_at": null,
   "generation": 378,
-  "holder": null,
+  "holder": "/root/scheduled-cycle378-20261020T124734Z",
   "lease_repair": {},
   "release_reason": "cycle360 read-only state refresh completed",
   "released_by": "/root/scheduled-cycle333-20261018T125155Z",
