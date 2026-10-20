@@ -39,6 +39,11 @@ class CompareSharedEconomics(BaseModel):
     freight: float = 0.0
     insurance: float | None = None
     country: str | None = None
+    manufacturer: str | None = None
+    product_description: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("product_description", "description"),
+    )
     quantity: float | None = None
     net_weight_kg: float | None = Field(default=None, validation_alias=AliasChoices("net_weight_kg", "weight_kg"))
     extra_quantity: float | None = None

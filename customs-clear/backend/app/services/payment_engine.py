@@ -1798,6 +1798,12 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
         )
     if (shared.get("country") or "").strip():
         econ["country"] = str(shared["country"]).strip().upper()
+    if (shared.get("manufacturer") or "").strip():
+        econ["manufacturer"] = str(shared["manufacturer"]).strip()
+    if (shared.get("product_description") or shared.get("description") or "").strip():
+        econ["product_description"] = str(
+            shared.get("product_description") or shared.get("description")
+        ).strip()
     if shared.get("quantity") is not None:
         econ["quantity"] = _payment_input_number(
             shared,

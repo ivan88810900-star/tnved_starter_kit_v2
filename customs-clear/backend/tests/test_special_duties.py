@@ -316,6 +316,74 @@ class SpecialDutiesTests(unittest.TestCase):
                 db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
                 db.commit()
 
+    def test_compare_api_preserves_shared_special_duty_scope_facts(self) -> None:
+        marker = "TEST-COMPARE-SCOPED-SPECIAL-DUTY"
+        row = self._official_anti_dumping_row(act=marker)
+        row.manufacturer_exporter = "Alpha Steel Co"
+        row.product_description = "Прокат горячекатаный"
+        with SessionLocal() as db:
+            db.add(row)
+            db.commit()
+        try:
+            response = TestClient(app).post(
+                "/api/calculator/compare",
+                json={
+                    "shared": {
+                        "customs_value": 100_000.0,
+                        "invoice_currency": "RUB",
+                        "country": "ZZ",
+                        "manufacturer": "  alpha   STEEL co  ",
+                        "product_description": "ПРОКАТ   ГОРЯЧЕКАТАНЫЙ",
+                    },
+                    "scenarios": [
+                        {"label": "A", "hs_code": "9996999999"},
+                        {"label": "B", "hs_code": "9996999999"},
+                    ],
+                    "save_history": False,
+                },
+            )
+            self.assertEqual(response.status_code, 200, response.text)
+            result = response.json()
+            self.assertEqual(
+                result["shared_economic"]["manufacturer"],
+                "alpha   STEEL co",
+            )
+            self.assertEqual(
+                result["shared_economic"]["product_description"],
+                "ПРОКАТ   ГОРЯЧЕКАТАНЫЙ",
+            )
+            for scenario in result["scenarios"]:
+                self.assertNotIn(
+                    "special_duty_scope_unresolved",
+                    scenario["profile"]["payment_review_reasons"],
+                )
+
+            unresolved = TestClient(app).post(
+                "/api/calculator/compare",
+                json={
+                    "shared": {
+                        "customs_value": 100_000.0,
+                        "invoice_currency": "RUB",
+                        "country": "ZZ",
+                    },
+                    "scenarios": [
+                        {"label": "A", "hs_code": "9996999999"},
+                        {"label": "B", "hs_code": "9996999999"},
+                    ],
+                    "save_history": False,
+                },
+            )
+            self.assertEqual(unresolved.status_code, 200, unresolved.text)
+            for scenario in unresolved.json()["scenarios"]:
+                self.assertIn(
+                    "special_duty_scope_unresolved",
+                    scenario["profile"]["payment_review_reasons"],
+                )
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                db.commit()
+
     def test_overlapping_distinct_official_measures_fail_closed(self) -> None:
         markers = ["TEST-OFFICIAL-OVERLAP-A", "TEST-OFFICIAL-OVERLAP-B"]
         with SessionLocal() as db:

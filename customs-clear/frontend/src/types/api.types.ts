@@ -488,6 +488,8 @@ export interface CalculatorCompareSharedInput {
   freight?: number;
   insurance?: number | null;
   country?: string | null;
+  manufacturer?: string | null;
+  product_description?: string | null;
   quantity?: number | null;
   net_weight_kg?: number | null;
   extra_quantity?: number | null;
@@ -516,6 +518,8 @@ export interface CalculatorCompareSharedEconomic {
   freight: number;
   insurance?: number;
   country?: string;
+  manufacturer?: string;
+  product_description?: string;
   quantity?: number;
   _fx_rates?: Record<string, number>;
 }
