@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
 PaymentLineStatus = Literal[
     "applied",
@@ -67,6 +67,25 @@ class PaymentQuoteRequest(BaseModel):
         default=None,
         description="Описание товара; используется только для точного scope-match специальных пошлин.",
     )
+
+    @field_validator(
+        "customs_value",
+        "freight",
+        "insurance",
+        "duty_rate",
+        "vat_rate",
+        "excise",
+        "quantity",
+        "net_weight_kg",
+        "extra_quantity",
+        mode="before",
+    )
+    @classmethod
+    def reject_boolean_economic_inputs(cls, value):
+        """JSON booleans are not monetary or physical quantities."""
+        if isinstance(value, bool):
+            raise ValueError("значение должно быть числом, а не boolean")
+        return value
 
 
 class PaymentQuoteResponse(BaseModel):

@@ -613,6 +613,46 @@ class PaymentEngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compute_payments({"hs_code": "8509400000", "customs_value": 0})
 
+    def test_invalid_economic_inputs_are_rejected_before_calculation(self):
+        """Невалидные стоимость/расходы/количества не попадают в арифметику."""
+        cases = (
+            ("customs_value", float("nan")),
+            ("customs_value", float("inf")),
+            ("customs_value", True),
+            ("freight", -0.01),
+            ("freight", float("nan")),
+            ("freight", True),
+            ("insurance", -0.01),
+            ("insurance", float("inf")),
+            ("insurance", False),
+            ("quantity", 0),
+            ("quantity", -1),
+            ("quantity", float("nan")),
+            ("quantity", True),
+            ("net_weight_kg", 0),
+            ("net_weight_kg", -1),
+            ("extra_quantity", 0),
+            ("extra_quantity", float("inf")),
+        )
+        for field, value in cases:
+            payload = {"hs_code": "8509400000", "customs_value": 100_000, field: value}
+            with self.subTest(field=field, value=value):
+                with self.assertRaisesRegex(ValueError, "конечным (?:неотрицательным|положительным) числом"):
+                    compute_payments(payload)
+
+    def test_zero_freight_and_insurance_remain_valid(self):
+        """Нулевые расходы валидны и не подменяются отсутствующим вводом."""
+        result = compute_payments(
+            {
+                "hs_code": "8509400000",
+                "customs_value": 100_000,
+                "freight": 0,
+                "insurance": 0,
+            }
+        )
+        self.assertEqual(result["freight"], 0)
+        self.assertEqual(result["insurance"], 0)
+
     def test_insurance_auto_calculated(self):
         """Страховка рассчитывается автоматически как 0.15% от (стоимость + фрахт)."""
         res = compute_payments({
@@ -660,6 +700,51 @@ class PaymentEngineTests(unittest.TestCase):
                     "scenarios": [{"hs_code": "8509400000"}],
                 }
             )
+
+    def test_compare_rejects_invalid_shared_economic_inputs(self):
+        """Compare-path не должен преобразовывать bool/NaN/отрицательные значения до admission."""
+        invalid_cases = (
+            ("customs_value", True),
+            ("customs_value", float("nan")),
+            ("freight", True),
+            ("freight", -1),
+            ("insurance", False),
+            ("insurance", float("inf")),
+            ("quantity", True),
+            ("quantity", 0),
+            ("net_weight_kg", -1),
+            ("extra_quantity", 0),
+        )
+        for key, value in invalid_cases:
+            with self.subTest(key=key, value=value):
+                shared = {"customs_value": 100_000, key: value}
+                with self.assertRaisesRegex(ValueError, "конечным (?:неотрицательным|положительным) числом"):
+                    compare_payment_scenarios(
+                        {
+                            "shared": shared,
+                            "scenarios": [
+                                {"hs_code": "8509400000"},
+                                {"hs_code": "8516108008"},
+                            ],
+                        }
+                    )
+
+    def test_compare_preserves_zero_freight_and_insurance(self):
+        out = compare_payment_scenarios(
+            {
+                "shared": {
+                    "customs_value": 100_000,
+                    "freight": 0,
+                    "insurance": 0,
+                },
+                "scenarios": [
+                    {"hs_code": "8509400000"},
+                    {"hs_code": "8516108008"},
+                ],
+            }
+        )
+        self.assertEqual(out["shared_economic"]["freight"], 0)
+        self.assertEqual(out["shared_economic"]["insurance"], 0)
 
     def test_compare_propagates_live_animal_characteristic(self):
         """Общий типизированный факт доходит до каждого animal-сценария."""

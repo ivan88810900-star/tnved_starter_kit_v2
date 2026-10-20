@@ -95,6 +95,39 @@ def _manual_nonnegative_number(payload: dict[str, Any], key: str, label: str) ->
     return value
 
 
+def _payment_input_number(
+    payload: dict[str, Any],
+    key: str,
+    label: str,
+    *,
+    default: float | None = None,
+    strictly_positive: bool = False,
+) -> float | None:
+    """Admit a finite non-negative economic input without truthy defaults.
+
+    Explicit zero must not silently become the historical quantity default of
+    one.  Required positive operands and optional quantities therefore use an
+    explicit lower bound, while freight and insurance may be zero.
+    """
+    raw = payload.get(key)
+    if raw is None:
+        return default
+    try:
+        value = None if isinstance(raw, bool) else float(raw)
+    except (TypeError, ValueError, OverflowError):
+        value = None
+    invalid = (
+        value is None
+        or not isfinite(value)
+        or value < 0
+        or (strictly_positive and value <= 0)
+    )
+    if invalid:
+        requirement = "конечным положительным числом" if strictly_positive else "конечным неотрицательным числом"
+        raise ValueError(f"{label} должна быть {requirement}")
+    return value
+
+
 def _validated_payment_result(value: Any, *, label: str) -> float:
     """Fail closed when otherwise valid operands overflow dependent arithmetic."""
     try:
@@ -1130,13 +1163,23 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     )
     hs_code = str(payload.get("hs_code") or "").strip()
     hs_digits = _digits_hs(hs_code)
-    customs_value = float(payload.get("customs_value") or 0.0)
-    freight = float(payload.get("freight") or 0.0)
+    customs_value = _payment_input_number(
+        payload,
+        "customs_value",
+        "Таможенная стоимость",
+        default=0.0,
+        strictly_positive=True,
+    )
+    assert customs_value is not None
+    freight = _payment_input_number(
+        payload,
+        "freight",
+        "Стоимость фрахта",
+        default=0.0,
+    )
+    assert freight is not None
     country = str(payload.get("country") or "").upper().strip() or None
     manual_duty_rate_supplied = manual_duty_rate is not None
-
-    if customs_value <= 0:
-        raise ValueError("Таможенная стоимость должна быть > 0")
 
     # Геополитика: эмбарго и подмена ставки (geo_special_duties)
     geo_meta: dict[str, Any] = {
@@ -1192,8 +1235,17 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
 
     insurance = payload.get("insurance")
     if insurance is None:
-        insurance = 0.0015 * (customs_value + freight)
-    insurance = float(insurance)
+        insurance = _validated_payment_result(
+            0.0015 * (customs_value + freight),
+            label="страховки",
+        )
+    else:
+        insurance = _payment_input_number(
+            payload,
+            "insurance",
+            "Стоимость страховки",
+        )
+        assert insurance is not None
 
     rate, match_len = find_rate_for_hs(hs_code)
     matched = rate is not None
@@ -1223,9 +1275,26 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     matched_prefix = hs_code[:match_len] if match_len else ""
     apply_reduced_vat = bool(payload.get("apply_reduced_vat") or False)
 
-    qty = float(payload.get("quantity") or 1.0)
-    net_weight_kg = float(payload.get("net_weight_kg") or 0.0) if payload.get("net_weight_kg") is not None else None
-    extra_quantity = float(payload.get("extra_quantity") or 0.0) if payload.get("extra_quantity") is not None else None
+    qty = _payment_input_number(
+        payload,
+        "quantity",
+        "Количество товара",
+        default=1.0,
+        strictly_positive=True,
+    )
+    assert qty is not None
+    net_weight_kg = _payment_input_number(
+        payload,
+        "net_weight_kg",
+        "Вес нетто",
+        strictly_positive=True,
+    )
+    extra_quantity = _payment_input_number(
+        payload,
+        "extra_quantity",
+        "Дополнительное количество",
+        strictly_positive=True,
+    )
 
     # Duty (структурированные правила hs_duty_rules + fallback на историческую ставку)
     if manual_duty_rate is not None:
@@ -1627,26 +1696,54 @@ def compare_payment_scenarios(payload: dict[str, Any]) -> dict[str, Any]:
     if len(scenarios) > 8:
         raise ValueError("Не более 8 сценариев за один запрос")
 
-    customs_value = float(shared.get("customs_value") or 0)
-    if customs_value <= 0:
-        raise ValueError("Общая таможенная стоимость (shared.customs_value) должна быть > 0")
+    customs_value = _payment_input_number(
+        shared,
+        "customs_value",
+        "Общая таможенная стоимость (shared.customs_value)",
+        default=0.0,
+        strictly_positive=True,
+    )
 
     econ: dict[str, Any] = {
         "customs_value": customs_value,
-        "freight": float(shared.get("freight") or 0.0),
+        "freight": _payment_input_number(
+            shared,
+            "freight",
+            "Общий фрахт (shared.freight)",
+            default=0.0,
+        ),
     }
     if isinstance(shared.get("_fx_rates"), dict):
         econ["_fx_rates"] = shared.get("_fx_rates")
     if shared.get("insurance") is not None:
-        econ["insurance"] = float(shared["insurance"])
+        econ["insurance"] = _payment_input_number(
+            shared,
+            "insurance",
+            "Общая страховка (shared.insurance)",
+        )
     if (shared.get("country") or "").strip():
         econ["country"] = str(shared["country"]).strip().upper()
     if shared.get("quantity") is not None:
-        econ["quantity"] = float(shared["quantity"])
+        econ["quantity"] = _payment_input_number(
+            shared,
+            "quantity",
+            "Общее количество товара (shared.quantity)",
+            strictly_positive=True,
+        )
     if shared.get("net_weight_kg") is not None:
-        econ["net_weight_kg"] = float(shared["net_weight_kg"])
+        econ["net_weight_kg"] = _payment_input_number(
+            shared,
+            "net_weight_kg",
+            "Общий вес нетто (shared.net_weight_kg)",
+            strictly_positive=True,
+        )
     if shared.get("extra_quantity") is not None:
-        econ["extra_quantity"] = float(shared["extra_quantity"])
+        econ["extra_quantity"] = _payment_input_number(
+            shared,
+            "extra_quantity",
+            "Общее дополнительное количество (shared.extra_quantity)",
+            strictly_positive=True,
+        )
     if shared.get("apply_reduced_vat") is not None:
         econ["apply_reduced_vat"] = bool(shared["apply_reduced_vat"])
     if shared.get("live_animal_breeding_status") is not None:

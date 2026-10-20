@@ -109,6 +109,51 @@ class PaymentQuoteStatusConsistencyTests(unittest.TestCase):
         self.assertEqual(body["status"], "REVIEW_REQUIRED")
         self.assertIsNone(body["total_payable_rub"])
 
+    @unittest.skipUnless(_API_OK, "payment quote API tests need FastAPI app")
+    def test_api_rejects_negative_economic_input(self):
+        """API не возвращает quote для отрицательного фрахта."""
+        with patch(
+            "app.services.payment_quote_service.get_rates_map",
+            return_value={"RUB": 1.0},
+        ):
+            response = TestClient(app).post(
+                "/api/payments/quote",
+                json={
+                    "hs_code": "8509400000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "freight": -1,
+                },
+            )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Стоимость фрахта", response.json()["detail"])
+
+    @unittest.skipUnless(_API_OK, "payment quote API tests need FastAPI app")
+    def test_api_rejects_boolean_economic_inputs_before_float_coercion(self):
+        """Pydantic не должен превращать JSON boolean в 0.0/1.0."""
+        for key, value in (
+            ("customs_value", True),
+            ("freight", True),
+            ("insurance", False),
+            ("duty_rate", True),
+            ("vat_rate", False),
+            ("excise", True),
+            ("quantity", True),
+            ("net_weight_kg", False),
+            ("extra_quantity", True),
+        ):
+            with self.subTest(key=key):
+                payload = {
+                    "hs_code": "8509400000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    key: value,
+                }
+                response = TestClient(app).post("/api/payments/quote", json=payload)
+                self.assertEqual(response.status_code, 422)
+                self.assertIn("boolean", response.text)
+
 
 class PaymentQuoteServiceTests(unittest.TestCase):
     @classmethod
