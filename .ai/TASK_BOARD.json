@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 912,
+  "revision": 913,
   "runs": [
     {
       "head_sha": null,
@@ -8118,7 +8118,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-20T18:02:47Z",
+  "updated_at": "2026-10-20T19:02:32Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -18957,32 +18957,32 @@
   },
   "latest_scheduled_product_checkpoint": {
     "schema_version": 1,
-    "task_id": "TARIFF-PR255-ROP-COVERAGE-ISOLATION-20261020",
-    "started_at": "2026-10-20T17:55:13Z",
-    "completed_at": "2026-10-20T18:02:47Z",
-    "executor": "/root/scheduled-cycle385-20261020T175513Z",
-    "lease_generation": 385,
+    "task_id": "TARIFF-PR255-CUSTOMS-PROCEDURE-ISOLATION-20261020",
+    "started_at": "2026-10-20T18:54:03Z",
+    "completed_at": "2026-10-20T19:02:32Z",
+    "executor": "/root/scheduled-cycle386-20261020T185403Z",
+    "lease_generation": 386,
     "pr": 255,
     "branch": "agent/core-payment-regressions-v1",
-    "previous_head_sha": "675eb20f5b06f2d05257365d754a3536568a96c3",
-    "head_sha": "22190f2d4002ea8dad06927affd5ecd8309a34ea",
-    "tree_sha": "2f264659882380c88d52646eef1d2565f13d36de",
-    "local_author_commit": "713faf66722a73899f829dacdc6cad4a6f20a990",
+    "previous_head_sha": "22190f2d4002ea8dad06927affd5ecd8309a34ea",
+    "head_sha": "e28983e95ebe3520928e94f29af49a7c868cef68",
+    "tree_sha": "9852153602b8cfed851e262c2328b6a629e6654e",
+    "local_author_commit": "a252a22009552798d919a72086599de4a6a0b3dd",
     "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
-    "implementation": "ROP coverage audit tests now create an in-memory SQLite schema and load the tracked canonical ROP fixture through the real importer; product code and assertions are unchanged.",
-    "reproduction": "Clean disposable-DB tranche exited 1 with 1 failed and 118 passed because the ROP audit assumed ambient preloaded tables; independent parent-focused run failed all four cases with rop_goods_rates absent.",
-    "tests": "Focused 4 passed; expanded payment/source tranche 339 passed in forward and reverse order; py_compile and git diff --check exit 0.",
-    "a5": "/root/a5_cycle385 PASS_NO_FINDINGS; parent reproduced, focused 4, adjacent 89 both orders, expanded 339, AST assertion parity and no ambient DB artifacts.",
-    "exact_head_ci": "Run 39471099229 success; offline-safety job 118795045538 and payment-regression job 118795045605 success.",
+    "implementation": "A class-scoped fixture creates an in-memory SQLite schema, patches only the canonical seeder's engine and session factory, calls the unchanged seed_customs_procedures.seed function, and disposes the database after the tests. Product code and fixture data are unchanged.",
+    "reproduction": "12 failed, 140 passed; All customs-procedure tests depended on an ambient preloaded customs_procedures table; a clean disposable database reported no such table.",
+    "tests": "Focused 12 passed; adjacent forward/reverse 152 passed each; expanded payment/source forward/reverse 491 passed each; static checks exit 0.",
+    "a5": "/root/a5_cycle386 PASS_NO_FINDINGS; parent focused 12 failed, candidate focused 12 passed, adjacent forward/reverse 152 passed each, canonical seed and AST integrity verified.",
+    "exact_head_ci": "Run 39479668131 attempt 2 success; offline-safety job 118825301714 and payment-regression job 118825304029 success.",
     "receipts": {
-      "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6297663666",
-      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6297664046"
+      "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6298864953",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6298865302"
     },
-    "legal_boundary": "No product logic, payment arithmetic, rate, source fact, normative data or legal applicability changed. Full #244 acceptance remains NOT PASS.",
+    "legal_boundary": "No product logic, fixture data, payment arithmetic, rate, source fact, normative data or legal applicability changed. Full #244 acceptance remains NOT PASS.",
     "protected_actions_performed": false,
     "a6": "UNCHANGED_NOT_SENT",
-    "evidence": ".ai/orchestration/evidence/cycle385_pr255_rop_coverage_isolation.json",
-    "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh live state."
+    "evidence": ".ai/orchestration/evidence/cycle386_pr255_customs_procedure_isolation.json",
+    "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from the fresh live head, then #245."
   },
   "previous_scheduled_product_checkpoint_382": {
     "schema_version": 1,

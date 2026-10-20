@@ -1,3 +1,12 @@
+## 2026-10-20 — Customs-procedure tests use their own canonical fixture
+
+- Draft [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255) now publishes exact head `e28983e95ebe3520928e94f29af49a7c868cef68`, tree `9852153602b8cfed851e262c2328b6a629e6654e`.
+- A clean disposable-DB payment tranche reproduced **12 failed / 140 passed**: every customs-procedure case depended on an ambient preloaded `customs_procedures` table. The one-file test fixture now creates an in-memory SQLite schema and loads the unchanged canonical seeder; all 12 original test methods and 24 assertions are AST-identical.
+- Author verification: focused **12 passed**; adjacent eight-module tranche **152 passed** forward and reverse; expanded payment/source tranche **491 passed** forward and reverse. Independent A5 `/root/a5_cycle386`: **PASS_NO_FINDINGS**, including parent reproduction, canonical-seed binding, order checks and ambient-artifact checks.
+- Exact-head CI [run 39479668131](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39479668131), attempt 2 is `success`; offline-safety job `118825301714` and payment-regression job `118825304029` succeeded. Attempt 1 payment-regression succeeded; offline-safety alone hit a transient TemporaryDirectory `.git` cleanup race and passed on the same-SHA retry.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6298864953), [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6298865302). Durable evidence: `.ai/orchestration/evidence/cycle386_pr255_customs_procedure_isolation.json`.
+- No product logic, fixture data, rates, source facts or legal applicability changed. No Neon, merge/deploy, staging/production write or A6 call occurred. Full #244 acceptance remains NOT PASS. Next: continue coherent source-by-source payment acceptance and fixture cleanup, then #245.
+
 ## 2026-10-20 — ROP coverage audit uses a hermetic canonical fixture
 
 - Draft [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255) now publishes exact head `22190f2d4002ea8dad06927affd5ecd8309a34ea`, tree `2f264659882380c88d52646eef1d2565f13d36de`.

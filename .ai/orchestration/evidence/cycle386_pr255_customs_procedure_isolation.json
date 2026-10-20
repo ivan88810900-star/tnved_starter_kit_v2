@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-CUSTOMS-PROCEDURE-ISOLATION-20261020",
+  "executor": "/root/scheduled-cycle386-20261020T185403Z",
+  "lease_generation": 386,
+  "started_at": "2026-10-20T18:54:03Z",
+  "completed_at": "2026-10-20T19:02:32Z",
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "previous_head_sha": "22190f2d4002ea8dad06927affd5ecd8309a34ea",
+  "head_sha": "e28983e95ebe3520928e94f29af49a7c868cef68",
+  "tree_sha": "9852153602b8cfed851e262c2328b6a629e6654e",
+  "local_author_commit": "a252a22009552798d919a72086599de4a6a0b3dd",
+  "changed_files": [
+    "customs-clear/backend/tests/test_customs_procedures.py"
+  ],
+  "reproduction": {
+    "command": "PYTHONPATH=. python3 -m pytest -q tests/test_customs_procedures.py tests/test_payment_api_boolean_inputs.py tests/test_payment_engine.py tests/test_payment_quote.py tests/test_rate_display.py tests/test_recycling_fees.py tests/test_rop_calculator.py tests/test_tariff_preferences.py",
+    "exit_code": 1,
+    "result": "12 failed, 140 passed",
+    "cause": "All customs-procedure tests depended on an ambient preloaded customs_procedures table; a clean disposable database reported no such table."
+  },
+  "implementation": "A class-scoped fixture creates an in-memory SQLite schema, patches only the canonical seeder's engine and session factory, calls the unchanged seed_customs_procedures.seed function, and disposes the database after the tests. Product code and fixture data are unchanged.",
+  "author_tests": {
+    "focused": "12 passed, exit 0",
+    "adjacent_forward": "152 passed, exit 0",
+    "adjacent_reverse": "152 passed, exit 0",
+    "expanded_forward": "491 passed, exit 0",
+    "expanded_reverse": "491 passed, exit 0",
+    "static": "py_compile, git diff --check, AST parity and ambient DB/WAL/SHM checks exit 0"
+  },
+  "a5": {
+    "session": "/root/a5_cycle386",
+    "status": "PASS_NO_FINDINGS",
+    "parent_focused": "12 failed, exit 1",
+    "candidate_focused": "12 passed, exit 0",
+    "adjacent_forward": "152 passed, exit 0",
+    "adjacent_reverse": "152 passed, exit 0",
+    "integrity": "Twelve test methods and 24 assertions AST-identical; canonical seed blob a975b5568e46c08bd1e9d0313e07eadb6967cfdc invoked once; one-file diff; outbound AF_INET/AF_INET6 denied; no ambient DB artifacts."
+  },
+  "exact_head_ci": {
+    "run_id": 39479668131,
+    "attempt": 2,
+    "status": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39479668131",
+    "jobs": {
+      "offline-safety": 118825301714,
+      "payment-regression": 118825304029
+    },
+    "attempt_1_note": "payment-regression succeeded; offline-safety alone hit a transient TemporaryDirectory .git cleanup race and passed on the same-SHA rerun"
+  },
+  "receipts": {
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6298864953",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6298865302"
+  },
+  "boundaries": {
+    "product_logic_changed": false,
+    "fixture_data_changed": false,
+    "normative_data_changed": false,
+    "neon_contacted": false,
+    "protected_actions_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "full_pr244_acceptance": "NOT_PASS"
+  },
+  "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from the fresh live head, then #245."
+}
