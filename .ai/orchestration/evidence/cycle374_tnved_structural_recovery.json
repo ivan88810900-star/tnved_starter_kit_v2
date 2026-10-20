@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-TNVED-STRUCTURAL-RECOVERY-20261020",
+  "started_at": "2026-10-20T08:57:01Z",
+  "checked_at": "2026-10-20T09:29:00Z",
+  "executor": "/root/scheduled-cycle374-20261020T085701Z",
+  "lease_generation": 374,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pull_request": 260,
+  "branch": "agent/tnved-structure-recovery-v1",
+  "published_head_sha": "bc8a24542549725aa7c73ad7160ba41c7a76cc4f",
+  "reviewed_tree_sha": "4caf1d03f0d718cac7b8d462e66090c423ecb9ee",
+  "local_author_commit": "6cf56bed655b7d2604f609048f22694cd1445979",
+  "status": "DRAFT_PUBLISHED_A5_PASS_CI_RECEIPT_PENDING",
+  "source": {
+    "archive_bytes": 35421031,
+    "archive_sha256": "2396b48ae5ab0cc3fa6a1b1238ab6c0400783b8361760925d83175ec7000aa9b",
+    "catalog_bytes": 23151703,
+    "catalog_sha256": "c7e4e5bb52b103d8b13554b4e25bf12ea0d09b4d67494e236a55cc276a173d41",
+    "ett_index_bytes": 132825,
+    "ett_index_sha256": "2465cd548ccc4b9b9f9cfb05e504cf79774ab49a513ae63fda203f1b7bfc0bdc",
+    "package_verify": "PASS; exit 0"
+  },
+  "artifact": {
+    "sqlite_bytes": 73908224,
+    "sqlite_sha256": "c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4",
+    "logical_sha256": "be57fc61571bee51817e5a0915918d7f3baa86873c644ce148c613b1b20589e6",
+    "bundle_bytes": 3638945,
+    "bundle_sha256": "a30004de21e6c6fd9bb1585a10542076d61b3c577f5d61dc1752827b23b69727",
+    "persistent_user_copy": "SAVED_AND_AVAILABLE",
+    "project_object_copy": "CAPABILITY_BLOCKED_BY_PLATFORM_SECURITY_NO_UPLOAD",
+    "mac_byte_verification": "NOT_PERFORMED"
+  },
+  "inventory": {
+    "sources": 99,
+    "editions": 96,
+    "nodes": 18014,
+    "notes": 107,
+    "sections": 21,
+    "chapters": 96,
+    "ten_digit_codes": 13294,
+    "leading_zero_codes": 2234
+  },
+  "author_validation": {
+    "source_backed_tests": "2 passed; exit 0",
+    "five_repeated_builds": "byte-identical",
+    "fresh_immutable_reopen": "PASS",
+    "integrity_check": "ok",
+    "foreign_key_check": "empty",
+    "exhaustive_source_equality": "18014/18014",
+    "sqlite_sidecars": "none for published artifacts"
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle374",
+    "reviewed_commit": "6cf56bed655b7d2604f609048f22694cd1445979",
+    "reviewed_tree": "4caf1d03f0d718cac7b8d462e66090c423ecb9ee",
+    "result": "PASS_NO_FINDINGS",
+    "tests": "2 passed; five independent builds; all exit 0",
+    "negative_checks": "tampered catalog/index and overwrite rejected"
+  },
+  "exact_head_ci": {
+    "head_sha": "bc8a24542549725aa7c73ad7160ba41c7a76cc4f",
+    "status": "NO_ASSOCIATED_RUN_VISIBLE_YET",
+    "claim": "NOT_PASS"
+  },
+  "safety_boundaries": {
+    "legal_status": "unverified",
+    "validity_dates": "unknown",
+    "rates_present": false,
+    "normative_admission_performed": false,
+    "database_write_performed": false,
+    "merge_or_deploy_performed": false,
+    "a6": "UNCHANGED_NOT_SENT"
+  },
+  "next_step": "Obtain an exact-head CI receipt for PR #260, then verify the saved bundle bytes on the new Mac; do not admit legal dates, rates or NTM completeness from this structure-only snapshot."
+}

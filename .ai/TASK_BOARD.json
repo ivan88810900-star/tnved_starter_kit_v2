@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 902,
+  "revision": 903,
   "runs": [
     {
       "head_sha": null,
@@ -8118,7 +8118,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-20T07:57:53Z",
+  "updated_at": "2026-10-20T09:31:00Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -18810,7 +18810,7 @@
     "evidence": ".ai/orchestration/evidence/cycle362_pr258_ett_atomic_adapter.json",
     "next_step": "Prepare and read back the exact public group01 original/extraction/manifest, then execute the single bounded 86-row pilot through this adapter in one caller-owned staging transaction and verify exact replay without duplicates."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_363": {
     "schema_version": 1,
     "task_id": "TARIFF-ETT-GROUP01-PILOT-20261019",
     "started_at": "2026-10-19T18:50:48Z",
@@ -18841,5 +18841,31 @@
     "protected_actions_performed": false,
     "evidence": ".ai/orchestration/evidence/cycle363_ett_group01_staging_pilot.json",
     "next_step": "Return to the next unfinished live-board product block, with PR #244 quote/backend/DB/API acceptance ahead of #245; keep group01 raw staging separate from legal admission."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-TNVED-STRUCTURAL-RECOVERY-20261020",
+    "started_at": "2026-10-20T08:57:01Z",
+    "checked_at": "2026-10-20T09:31:00Z",
+    "executor": "/root/scheduled-cycle374-20261020T085701Z",
+    "lease_generation": 374,
+    "pr": 260,
+    "branch": "agent/tnved-structure-recovery-v1",
+    "head_sha": "bc8a24542549725aa7c73ad7160ba41c7a76cc4f",
+    "tree_sha": "4caf1d03f0d718cac7b8d462e66090c423ecb9ee",
+    "local_author_commit": "6cf56bed655b7d2604f609048f22694cd1445979",
+    "status": "DRAFT_PUBLISHED_A5_PASS_CI_RECEIPT_PENDING",
+    "source": "Exact authorized read: archive 35421031 bytes / 2396b48a..., catalog 23151703 bytes / c7e4e5bb..., ETT index 132825 bytes / 2465cd54...; package verify exit 0.",
+    "artifact": "SQLite 73908224 bytes / c5959912...; logical be57fc61...; 18014 nodes, 13294 ten-digit, 2234 leading-zero, integrity ok, no rates.",
+    "tests": "Source-backed 2 passed; five byte-identical builds; fresh immutable reopen, FK/integrity and exhaustive 18014/18014 equality; all exit 0.",
+    "a5": "/root/a5_cycle374 PASS_NO_FINDINGS; remote exact HEAD is a no-op commit over the reviewed tree and all four blobs are byte-identical.",
+    "exact_head_ci": "No associated run visible yet for bc8a245; PASS is not claimed.",
+    "portable_copy": "Persistent user bundle saved, 3638945 bytes / a30004de...; new-Mac byte verification not yet performed.",
+    "capability_blocker": "Project-object upload rejected by platform security as unauthorized private-derived disclosure; no retry or bypass.",
+    "legal_boundary": "All 96 editions remain unverified/incomplete with NULL dates; no rates, NTM completeness or normative admission.",
+    "protected_actions_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "evidence": ".ai/orchestration/evidence/cycle374_tnved_structural_recovery.json",
+    "next_step": "Obtain exact-head CI for PR #260, then verify the saved bundle bytes in a new dated Mac folder; do not overwrite old copies."
   }
 }
