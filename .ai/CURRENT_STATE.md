@@ -570,3 +570,17 @@ legacy (сверх structural). Контур по-прежнему **не под
 - A6 request `core-s1-6415f443120f-r9-g106` is unchanged and was not sent.
 - Evidence: `.ai/orchestration/evidence/cycle375_tnved_exact_head_ci_closure.json`.
 - Next safe step: verify the saved bundle bytes on the new Mac against the recorded SHA-256 values; do not infer legal dates, rates or NTM completeness from this structure-only snapshot.
+
+
+## Cycle 383 checkpoint — A6 issue-comment trigger filter (2026-10-20)
+
+- Main remains `e526dfbdb5a31b01bf6f743da0288b88f916de0c`; no protected action was performed.
+- Confirmed defect: every ordinary `issue_comment` entered the trusted A6 workflow and failed the exact-command shell gate, producing false red Actions runs (including `39439874237` and `39439845369`) and placing arbitrary comment bodies in run names.
+- Draft PR #261 is published at exact head `981ba68d666e42d441e2065f27e6df15083c75c3`, tree `1e131182883ad0146141ecf0926e21f44208617d`.
+- The workflow now skips unrelated comments at the job boundary before checkout, authoritative-state reads, dedupe or provider credentials. The original shell context checks remain as defense in depth; the run name is fixed.
+- Exact-head `Tariff agent safety` run `39457979308` / `offline-safety` job `118749901026` completed successfully.
+- All 44 open PRs were checked for exact-head checks and review threads. The only unresolved thread is an outdated PR #222 finding; its malformed-date defect is already fixed in the current payment stack.
+- Independent A5 is pending; this block is **DRAFT PUBLISHED / EXACT-HEAD CI PASS / A5 PENDING**, not merge-ready.
+- A6 request/provider was not invoked. No merge, deploy, production/staging write, permission/secret change, or enforcement flag change occurred.
+- Evidence: `.ai/orchestration/evidence/cycle383_a6_command_trigger_filter.json`.
+- Next safe step: fresh independent A5 review of exact PR #261 head, followed by exact-head CI recheck; do not merge.
