@@ -3,10 +3,18 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 try:
-    from app.db import SessionLocal
+    from app.db import Base
+    from app.models.rop import RopGoodsRate, RopPackagingDefault, RopPackagingRate
+    from app.models.tnved import Chapter, Section
     from app.services.rop_coverage_audit import build_rop_chapter_coverage, coverage_summary
+    from scripts.import_rop_rates import main as import_rop_rates
 
     _OK = True
 except ImportError:
@@ -17,11 +25,31 @@ except ImportError:
 class RopCoverageAuditTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.db = SessionLocal()
+        cls.engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        Base.metadata.create_all(
+            bind=cls.engine,
+            tables=[
+                Section.__table__,
+                Chapter.__table__,
+                RopGoodsRate.__table__,
+                RopPackagingRate.__table__,
+                RopPackagingDefault.__table__,
+            ],
+        )
+        cls.SessionLocal = sessionmaker(bind=cls.engine, autocommit=False, autoflush=False)
+        with patch("scripts.import_rop_rates.SessionLocal", cls.SessionLocal):
+            if import_rop_rates([]) != 0:
+                raise AssertionError("ROP fixture import failed")
+        cls.db = cls.SessionLocal()
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.db.close()
+        cls.engine.dispose()
 
     def test_matrix_has_97_chapters(self) -> None:
         matrix = build_rop_chapter_coverage(self.db, calendar_year=2026)
