@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-INVOICE-ECONOMIC-ADMISSION-20261020",
+  "executor": "/root/scheduled-cycle372-20261020T025751Z",
+  "started_at": "2026-10-20T02:57:51Z",
+  "completed_at": "2026-10-20T03:07:55Z",
+  "lease_generation": 372,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "parent_sha": "71c1a2f76aaeb5c1bfe62a5a182d36a1f332217f",
+  "local_author_commit": "c83893c7d469bbbeaadc12d416b95f8fc708d952",
+  "published_head_sha": "aeef3dd1b96d31399f5dc46bdafc983ad3fe1078",
+  "tree_sha": "eac9b48c27c712d7801907e3089cdc866efa98a8",
+  "publication": {
+    "method": "Git data blobs/tree/commit followed by non-force fast-forward CAS",
+    "expected_parent_sha": "71c1a2f76aaeb5c1bfe62a5a182d36a1f332217f",
+    "verified_remote_head_sha": "aeef3dd1b96d31399f5dc46bdafc983ad3fe1078",
+    "verified_remote_tree_sha": "eac9b48c27c712d7801907e3089cdc866efa98a8",
+    "local_and_remote_tree_identical": true
+  },
+  "defect": "Invoice JSON and CSV/XLSX admitted missing, non-positive, non-finite or mutually cancelling negative quantity and unit-price operands. Overflow could escape as HTTP 500, numpy booleans could be coerced, and gross weight below net weight silently undercounted ROP packaging weight.",
+  "repair": "Require finite positive invoice price, quantity and provided weights; reject Python/pandas/numpy booleans; reject multiplication and post-FX overflow; require gross weight not below net weight in schema, parser and service; translate invoice calculation ValueError to HTTP 422.",
+  "changed_files": [
+    "customs-clear/backend/app/api/invoice.py",
+    "customs-clear/backend/app/services/invoice_batch_service.py",
+    "customs-clear/backend/tests/test_invoice_economic_input_admission.py"
+  ],
+  "author_validation": [
+    {
+      "command": "fresh migrated disposable SQLite + pytest payment/source/API/invoice slice including test_invoice_economic_input_admission.py",
+      "exit_code": 0,
+      "result": "344 passed, 171 subtests passed"
+    },
+    {
+      "command": "pytest -q tests/test_invoice_economic_input_admission.py tests/test_payment_api_boolean_inputs.py tests/test_payment_fx_provenance_fail_closed.py",
+      "exit_code": 0,
+      "result": "41 passed, 112 subtests passed"
+    },
+    {
+      "command": "git diff --check and compileall changed paths",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "independent_a5": {
+    "reviewer": "/root/a5_cycle372",
+    "status": "PASS_NO_FINDINGS",
+    "reviewed_commit": "c83893c7d469bbbeaadc12d416b95f8fc708d952",
+    "reviewed_tree": "eac9b48c27c712d7801907e3089cdc866efa98a8",
+    "findings_repaired_before_pass": [
+      "Calculation and upload overflow escaped as HTTP 500 instead of 422.",
+      "numpy.bool_ bypassed the request-schema boolean guard.",
+      "Gross weight below net weight reached ROP and silently clamped packaging weight."
+    ],
+    "verification": "160 passed plus 162 subtests and focused 57 passed plus 112 subtests, all exit 0; adversarial JSON, CSV/XLSX, numpy/pandas, Decimal, overflow, weight-relation and valid-control matrices passed."
+  },
+  "exact_head_ci": {
+    "run_id": 39362537607,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39362537607",
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "aeef3dd1b96d31399f5dc46bdafc983ad3fe1078",
+    "jobs": [
+      {
+        "name": "payment-regression",
+        "job_id": 118431763982,
+        "conclusion": "success"
+      },
+      {
+        "name": "offline-safety",
+        "job_id": 118431763819,
+        "conclusion": "success"
+      }
+    ]
+  },
+  "receipts": {
+    "pr255_comment_id": 6282408948,
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6282408948",
+    "issue257_comment_id": 6282409135,
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6282409135"
+  },
+  "scope_limits": {
+    "full_pr244_acceptance": "NOT_PASS",
+    "official_source_or_legal_completeness": "NOT_PASS",
+    "populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "full_pr245_acceptance": "BLOCKED_BY_SNAPSHOT",
+    "rate_or_legal_semantics_changed": false,
+    "normative_or_fixture_data_changed": false,
+    "merge_or_deploy_performed": false,
+    "staging_or_production_write_performed": false,
+    "protected_action_performed": false,
+    "a6": "UNCHANGED_NOT_SENT"
+  },
+  "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh state; keep full PR #245 acceptance blocked until a lawful populated synchronized NTM snapshot is available."
+}

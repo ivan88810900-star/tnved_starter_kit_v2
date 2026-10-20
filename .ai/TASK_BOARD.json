@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 900,
+  "revision": 901,
   "runs": [
     {
       "head_sha": null,
@@ -4771,6 +4771,34 @@
       "a6": "UNCHANGED_NOT_SENT",
       "protected_actions_performed": false,
       "evidence": ".ai/orchestration/evidence/cycle371_pr255_payment_api_boolean_admission.json",
+      "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh state; keep full PR #245 acceptance blocked until a lawful populated synchronized NTM snapshot is available."
+    },
+    "cycle372_pr255_invoice_economic_admission": {
+      "task_id": "TARIFF-PR255-INVOICE-ECONOMIC-ADMISSION-20261020",
+      "checked_at": "2026-10-20T03:07:55Z",
+      "executor": "/root/scheduled-cycle372-20261020T025751Z",
+      "lease_generation": 372,
+      "pr": 255,
+      "parent_sha": "71c1a2f76aaeb5c1bfe62a5a182d36a1f332217f",
+      "head_sha": "aeef3dd1b96d31399f5dc46bdafc983ad3fe1078",
+      "tree_sha": "eac9b48c27c712d7801907e3089cdc866efa98a8",
+      "status": "IMPLEMENTED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+      "author_tests": "344 tests plus 171 subtests; focused 41 tests plus 112 subtests; compile and diff checks; all exit 0",
+      "independent_a5": "/root/a5_cycle372 PASS_NO_FINDINGS after HTTP 500 overflow, numpy boolean and gross/net findings were repaired; 160 tests plus 162 subtests and focused 57 plus 112",
+      "ci_run_id": 39362537607,
+      "ci_jobs": {
+        "payment-regression": 118431763982,
+        "offline-safety": 118431763819
+      },
+      "receipts": {
+        "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6282408948",
+        "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6282409135"
+      },
+      "snapshot_status": "POPULATED_SYNCHRONIZED_NTM_NOT_AVAILABLE",
+      "full_pr244_acceptance": "NOT_PASS",
+      "a6": "UNCHANGED_NOT_SENT",
+      "protected_actions_performed": false,
+      "evidence": ".ai/orchestration/evidence/cycle372_pr255_invoice_economic_admission.json",
       "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh state; keep full PR #245 acceptance blocked until a lawful populated synchronized NTM snapshot is available."
     }
   },
@@ -8062,7 +8090,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-20T02:10:18Z",
+  "updated_at": "2026-10-20T03:07:55Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
