@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-TNVED-RECOVERY-GATE-AND-EQUIVALENCE-20261020",
+  "executor": "/root/scheduled-cycle377-20261020T115000Z",
+  "lease_generation": 377,
+  "started_at": "2026-10-20T11:50:44Z",
+  "checked_at": "2026-10-20T12:00:23Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 260,
+  "branch": "agent/tnved-structure-recovery-v1",
+  "previous_head_sha": "3e92624a3bcf0b7499badc23cba0aa6a12934ad2",
+  "head_sha": "2f26a3ba4a6b19c79db037f342fce3325061b8d2",
+  "tree_sha": "9eaf826606612e285e6d2bd506eec20d1b2cca97",
+  "local_author_commit": "76319c5952f10264c49457a070606690bc29ba9f",
+  "changes": [
+    "mandatory recovery runner with explicit nonempty, complete-execution and not-all-skipped guards",
+    "negative unit coverage for zero discovered and all-skipped subject suites",
+    "workflow invokes the guarded runner",
+    "dated builder compatibility assessment preserves historical artifact attribution"
+  ],
+  "author_validation": [
+    {
+      "command": "python3 scripts/run_tnved_recovery_ci.py",
+      "result": "4 discovered, 4 executed, 0 skipped",
+      "exit_code": 0
+    },
+    {
+      "command": "TNVED_RECOVERY_SOURCE_DIR=<approved extracted source> <isolated python> -m pytest -q customs-clear/backend/tests/test_tnved_recovery.py customs-clear/backend/tests/test_tnved_recovery_ci.py",
+      "result": "6 passed",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -m unittest discover -s tests/agent_orchestration -v",
+      "result": "225 tests OK",
+      "exit_code": 0
+    },
+    {
+      "command": "operational build() on exact pinned inputs; sha256sum and cmp against accepted SQLite",
+      "result": "73908224 bytes; SHA-256 c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4; logical SHA-256 be57fc61571bee51817e5a0915918d7f3baa86873c644ce148c613b1b20589e6; cmp exit 0",
+      "exit_code": 0
+    }
+  ],
+  "a5": {
+    "session_id": "/root/a5_cycle377",
+    "status": "PASS_NO_FINDINGS",
+    "head_sha": "76319c5952f10264c49457a070606690bc29ba9f",
+    "tree_sha": "9eaf826606612e285e6d2bd506eec20d1b2cca97",
+    "result": "zero/all-skip/assertion/runtime-error/pass/mixed matrices correct; pinned-source 6 passed; fresh output byte-identical; diff scope clean"
+  },
+  "exact_head_ci": [
+    {
+      "event": "push",
+      "run_id": 39418813809,
+      "job_id": 118614358704,
+      "conclusion": "success",
+      "subject_summary": "discovered=4 executed=4 skipped=0"
+    },
+    {
+      "event": "pull_request",
+      "run_id": 39418818983,
+      "job_id": 118614375126,
+      "conclusion": "success",
+      "subject_summary": "discovered=4 executed=4 skipped=0"
+    }
+  ],
+  "accepted_artifact": {
+    "historical_head_sha": "bc8a24542549725aa7c73ad7160ba41c7a76cc4f",
+    "historical_tree_sha": "4caf1d03f0d718cac7b8d462e66090c423ecb9ee",
+    "sqlite_bytes": 73908224,
+    "sqlite_sha256": "c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4",
+    "logical_sha256": "be57fc61571bee51817e5a0915918d7f3baa86873c644ce148c613b1b20589e6",
+    "mac_verified_at": "2026-10-20T10:38:00Z",
+    "private_receipt_association_preserved": true,
+    "private_path_or_locator_published": false
+  },
+  "legal_or_rate_admission": false,
+  "staging_or_production_write": false,
+  "merge_or_deploy": false,
+  "a6_dispatched": false,
+  "protected_actions_performed": false,
+  "next_step": "Owner-directed non-production staging ingestion with before/after unique counts, provenance/hashes and rerun idempotence."
+}
