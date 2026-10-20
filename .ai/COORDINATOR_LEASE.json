@@ -1,6 +1,6 @@
 {
   "acquisition_note": "cycle383 bounded PR255 payment defect review",
-  "expires_at": "2026-10-20T20:20:24.459392Z",
+  "expires_at": "2026-10-20T20:34:04.002922+00:00",
   "generation": 387,
   "holder": "/root/scheduled-cycle387-20261020T194710Z",
   "lease_repair": {},
@@ -10,5 +10,5 @@
   "serialization_repair": {},
   "state": "active",
   "token": "32cfa1d99ccc4bb388807d2485bcc214",
-  "updated_at": "2026-10-20T19:50:24.459392Z"
+  "updated_at": "2026-10-20T20:04:04.002922+00:00"
 }
