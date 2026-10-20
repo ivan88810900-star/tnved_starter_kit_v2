@@ -592,6 +592,24 @@ class AuditBridgeTests(unittest.TestCase):
         self.assertIn("permissions:\n  actions: read\n  contents: read", workflow)
         self.assertIn("github.event.repository.default_branch", workflow)
         self.assertIn("  context-gate:\n", workflow)
+        self.assertIn("run-name: Tariff A6 owner command gate", workflow)
+        self.assertIn("github.event.action == 'created'", workflow)
+        self.assertIn("github.event.issue.number == 214", workflow)
+        self.assertIn("github.event.issue.pull_request == null", workflow)
+        self.assertIn(
+            "github.event.comment.body == '/tariff-a6-live run-pending'",
+            workflow,
+        )
+        self.assertIn(
+            "github.event.comment.user.login == github.repository_owner",
+            workflow,
+        )
+        self.assertIn(
+            "github.event.comment.author_association == 'OWNER'",
+            workflow,
+        )
+        self.assertIn("github.actor == github.repository_owner", workflow)
+        self.assertIn("github.run_attempt == 1", workflow)
         self.assertIn("    needs: context-gate\n", workflow)
         self.assertIn("    environment: tariff-a6-trusted\n", workflow)
         self.assertIn("group: tariff-a6-live-pending-request", workflow)
