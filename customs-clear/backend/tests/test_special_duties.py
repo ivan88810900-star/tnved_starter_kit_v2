@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import unittest
 from datetime import date, datetime, timedelta, timezone
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
@@ -13,6 +14,7 @@ from app.models.tnved import SpecialDuty
 from app.services.normative_store import init_db
 from app.services.payment_engine import compute_payments
 from app.services.payment_quote_service import build_payment_quote
+from tests.support_auth import login_declarant
 
 
 class SpecialDutiesTests(unittest.TestCase):
@@ -379,6 +381,61 @@ class SpecialDutiesTests(unittest.TestCase):
                     "special_duty_scope_unresolved",
                     scenario["profile"]["payment_review_reasons"],
                 )
+        finally:
+            with SessionLocal() as db:
+                db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
+                db.commit()
+
+    def test_compliance_surfaces_special_duty_scope_manual_review(self) -> None:
+        marker = "TEST-COMPLIANCE-SCOPED-SPECIAL-DUTY"
+        row = self._official_anti_dumping_row(act=marker)
+        row.manufacturer_exporter = "Alpha Steel Co"
+        row.product_description = "Прокат горячекатаный"
+        with SessionLocal() as db:
+            db.add(row)
+            db.commit()
+        non_tariff_ok = {
+            "status": "OK",
+            "required_permit_types": [],
+            "missing_permit_types": [],
+            "permits": [],
+            "data_freshness": {"is_stale": False},
+        }
+        try:
+            client = TestClient(app)
+            login_declarant(client)
+            with patch(
+                "app.api.compliance.check_position_non_tariff",
+                new=AsyncMock(return_value=non_tariff_ok),
+            ):
+                response = client.post(
+                    "/api/compliance/check",
+                    json={
+                        "items": [{
+                            "hs_code": "9996999999",
+                            "description": "Прокат горячекатаный",
+                            "country": "ZZ",
+                            "customs_value": 100_000.0,
+                            "quantity": 1.0,
+                            "permits": [],
+                        }],
+                    },
+                )
+            self.assertEqual(response.status_code, 200, response.text)
+            result = response.json()
+            self.assertEqual(result["items"][0]["payment"]["status"], "REVIEW_REQUIRED")
+            self.assertIn(
+                "special_duty_scope_unresolved",
+                result["items"][0]["payment"]["payment_review_reasons"],
+            )
+            self.assertEqual(result["status"], "WARNING")
+            self.assertTrue(result["meta"]["any_manual_review"])
+            self.assertTrue(
+                any(
+                    "special_duty_scope_unresolved" in risk
+                    for risk in result["items"][0]["risks"]
+                )
+            )
         finally:
             with SessionLocal() as db:
                 db.query(SpecialDuty).filter(SpecialDuty.regulatory_act == marker).delete()
