@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+from math import isfinite
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse, Response
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ..security import require_authenticated_user
 from ..services.invoice_batch_service import (
+    _is_boolean_number,
     build_invoice_template_xlsx,
     calculate_batch_lines,
     parse_invoice_file,
@@ -30,7 +32,7 @@ class InvoiceLineIn(BaseModel):
     hs_code: str = ""
     quantity: float = 1.0
     unit: str = ""
-    unit_price: float = 0.0
+    unit_price: float
     currency: str = "USD"
     weight_gross_kg: float | None = None
     weight_net_kg: float | None = None
@@ -45,9 +47,33 @@ class InvoiceLineIn(BaseModel):
     )
     @classmethod
     def reject_boolean_economic_inputs(cls, value):
-        if isinstance(value, bool):
+        if _is_boolean_number(value):
             raise ValueError("значение должно быть числом, а не boolean")
         return value
+
+    @field_validator("quantity", "unit_price")
+    @classmethod
+    def require_positive_invoice_inputs(cls, value):
+        if not isfinite(value) or value <= 0:
+            raise ValueError("значение должно быть конечным положительным числом")
+        return value
+
+    @field_validator("weight_gross_kg", "weight_net_kg")
+    @classmethod
+    def require_positive_invoice_weights(cls, value):
+        if value is not None and (not isfinite(value) or value <= 0):
+            raise ValueError("значение должно быть конечным положительным числом")
+        return value
+
+    @model_validator(mode="after")
+    def require_gross_not_below_net(self):
+        if (
+            self.weight_gross_kg is not None
+            and self.weight_net_kg is not None
+            and self.weight_gross_kg < self.weight_net_kg
+        ):
+            raise ValueError("weight_gross_kg должен быть не меньше weight_net_kg")
+        return self
 
 
 class InvoiceBatchRequest(BaseModel):
@@ -89,17 +115,27 @@ async def invoice_upload(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     if not lines:
         raise HTTPException(status_code=422, detail="Файл не содержит позиций")
-    return await calculate_batch_lines(lines, auto_classify=auto_classify, calendar_year=calendar_year)
+    try:
+        return await calculate_batch_lines(
+            lines,
+            auto_classify=auto_classify,
+            calendar_year=calendar_year,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.post("/calculate-batch")
 async def invoice_calculate_batch(body: InvoiceBatchRequest) -> dict:
     lines = [ln.model_dump() for ln in body.lines]
-    return await calculate_batch_lines(
-        lines,
-        auto_classify=body.auto_classify,
-        calendar_year=body.calendar_year,
-    )
+    try:
+        return await calculate_batch_lines(
+            lines,
+            auto_classify=body.auto_classify,
+            calendar_year=body.calendar_year,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.post("/upload-packing-list")
