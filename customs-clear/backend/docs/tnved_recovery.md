@@ -20,6 +20,12 @@ parent cycles, builds with foreign keys enabled, and runs `integrity_check` and
 and logical-content hashes. It refuses to overwrite an existing output path, so
 each recovery is placed in a new dated directory.
 
+The GitHub offline-safety workflow also exercises the same validation, schema,
+deterministic build, immutable reopen, integrity/FK checks and read-only adapter
+against a generated synthetic 96-chapter fixture.  The operational `build()` and
+CLI remain bound to the approved source hashes; the synthetic fixture contains no
+private snapshot bytes and cannot establish source completeness for the real data.
+
 All 18,014 catalog nodes remain strings, including leading zeroes. Their full
 `path_json` retains 3,172 uncoded intermediate labels. Source/page references,
 note links, change symbols, source hashes and the 96 unverified editions are

@@ -76,7 +76,12 @@ class _TableRows(HTMLParser):
             self.parts.append(data)
 
 
-def parse_sections(index_raw: bytes) -> list[dict[str, Any]]:
+def parse_sections(
+    index_raw: bytes,
+    *,
+    expected_chapters: tuple[str, ...] = EXPECTED_CHAPTERS,
+    expected_section_count: int = 21,
+) -> list[dict[str, Any]]:
     parser = _TableRows()
     parser.feed(index_raw.decode("utf-8"))
     sections: list[dict[str, Any]] = []
@@ -101,9 +106,12 @@ def parse_sections(index_raw: bytes) -> list[dict[str, Any]]:
             _require(chapter not in seen_chapters, f"duplicate chapter in index: {chapter}")
             current["chapters"].append(chapter)
             seen_chapters.add(chapter)
-    _require(len(sections) == 21, f"expected 21 sections, found {len(sections)}")
-    _require(tuple(sorted(seen_chapters)) == EXPECTED_CHAPTERS, "section/chapter coverage differs from 96-chapter inventory")
-    _require(tuple(s["roman"] for s in sections) == tuple(_to_roman(i) for i in range(1, 22)), "section order/numerals invalid")
+    _require(len(sections) == expected_section_count, f"expected {expected_section_count} sections, found {len(sections)}")
+    _require(tuple(sorted(seen_chapters)) == expected_chapters, "section/chapter coverage differs from expected inventory")
+    _require(
+        tuple(s["roman"] for s in sections) == tuple(_to_roman(i) for i in range(1, expected_section_count + 1)),
+        "section order/numerals invalid",
+    )
     return sections
 
 
@@ -173,21 +181,26 @@ CREATE INDEX ix_tnved_entries_chapter ON tnved_entries(chapter);
 """
 
 
-def validate_catalog(catalog: dict[str, Any]) -> None:
+def validate_catalog(
+    catalog: dict[str, Any],
+    *,
+    expected_counts: dict[str, int] = EXPECTED_COUNTS,
+    expected_chapters: tuple[str, ...] = EXPECTED_CHAPTERS,
+) -> None:
     _require(catalog.get("schemaVersion") == 1, "unsupported catalog schemaVersion")
-    for key, expected in EXPECTED_COUNTS.items():
+    for key, expected in expected_counts.items():
         if key == "ten_digit":
             actual = sum(len(str(n.get("code", ""))) == 10 for n in catalog.get("nodes", []))
         else:
             actual = len(catalog.get(key, []))
         _require(actual == expected, f"{key}: expected {expected}, got {actual}")
     coverage = catalog.get("importCoverage", {})
-    _require(tuple(coverage.get("acceptedChapters", [])) == EXPECTED_CHAPTERS, "accepted chapter order/coverage invalid")
+    _require(tuple(coverage.get("acceptedChapters", [])) == expected_chapters, "accepted chapter order/coverage invalid")
     _require(not coverage.get("failedChapters"), "catalog contains failed chapters")
     source_ids = {s["id"] for s in catalog["sources"]}
     note_ids = {n["id"] for n in catalog["notes"]}
-    _require(len(source_ids) == EXPECTED_COUNTS["sources"], "duplicate source ids")
-    _require(len(note_ids) == EXPECTED_COUNTS["notes"], "duplicate note ids")
+    _require(len(source_ids) == expected_counts["sources"], "duplicate source ids")
+    _require(len(note_ids) == expected_counts["notes"], "duplicate note ids")
     editions = {e["id"]: e for e in catalog["editions"]}
     for edition in editions.values():
         _require(edition.get("validFrom") is None and edition.get("validTo") is None, "edition validity must stay unknown")
@@ -231,15 +244,37 @@ def _logical_digest(conn: sqlite3.Connection) -> str:
     return digest.hexdigest()
 
 
-def build(catalog_path: Path, index_path: Path, output_path: Path, manifest_path: Path | None = None) -> dict[str, Any]:
+def _build_with_pins(
+    catalog_path: Path,
+    index_path: Path,
+    output_path: Path,
+    manifest_path: Path | None,
+    *,
+    catalog_sha256: str,
+    index_sha256: str,
+    expected_counts: dict[str, int],
+    expected_chapters: tuple[str, ...],
+    expected_section_count: int,
+) -> dict[str, Any]:
+    """Shared builder used by the pinned CLI and a synthetic offline CI fixture.
+
+    The public ``build`` function below is the only operational entry point and
+    always supplies the immutable production pins.  Keeping alternate pins in
+    this private function lets CI execute the real schema/validation/SQLite
+    path without publishing the private recovery source snapshot.
+    """
     catalog_raw, index_raw = catalog_path.read_bytes(), index_path.read_bytes()
-    _require(_sha(catalog_raw) == CATALOG_SHA256, "catalog bytes do not match approved input")
-    _require(_sha(index_raw) == INDEX_SHA256, "EEC index bytes do not match approved input")
+    _require(_sha(catalog_raw) == catalog_sha256, "catalog bytes do not match approved input")
+    _require(_sha(index_raw) == index_sha256, "EEC index bytes do not match approved input")
     catalog = json.loads(catalog_raw)
-    validate_catalog(catalog)
-    sections = parse_sections(index_raw)
+    validate_catalog(catalog, expected_counts=expected_counts, expected_chapters=expected_chapters)
+    sections = parse_sections(
+        index_raw,
+        expected_chapters=expected_chapters,
+        expected_section_count=expected_section_count,
+    )
     source_by_id = {s["id"]: s for s in catalog["sources"]}
-    _require(source_by_id["eec-ett-index"]["sha256"] == INDEX_SHA256, "catalog/index provenance mismatch")
+    _require(source_by_id["eec-ett-index"]["sha256"] == index_sha256, "catalog/index provenance mismatch")
     _require(not output_path.exists(), f"refusing to overwrite existing recovery output: {output_path}")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     building_path = output_path.with_name(f".{output_path.name}.building")
@@ -255,8 +290,8 @@ def build(catalog_path: Path, index_path: Path, output_path: Path, manifest_path
         with conn:
             metadata = {
                 "schema_version": "1",
-                "catalog_sha256": CATALOG_SHA256,
-                "index_sha256": INDEX_SHA256,
+                "catalog_sha256": catalog_sha256,
+                "index_sha256": index_sha256,
                 "catalog_id": str(catalog["id"]),
                 "legal_status": "unverified",
                 "rates_present": "false",
@@ -311,13 +346,17 @@ def build(catalog_path: Path, index_path: Path, output_path: Path, manifest_path
         _require(published.execute("PRAGMA integrity_check").fetchone()[0] == "ok", "published SQLite integrity check failed")
     result = {
         "schemaVersion": 1,
-        "catalogSha256": CATALOG_SHA256,
-        "indexSha256": INDEX_SHA256,
+        "catalogSha256": catalog_sha256,
+        "indexSha256": index_sha256,
         "sqlitePath": str(output_path),
         "sqliteBytes": output_path.stat().st_size,
         "sqliteSha256": _sha(output_path.read_bytes()),
         "logicalSha256": logical_sha,
-        "counts": {**EXPECTED_COUNTS, "sections": 21, "chapters": 96},
+        "counts": {
+            **expected_counts,
+            "sections": expected_section_count,
+            "chapters": len(expected_chapters),
+        },
         "integrityCheck": "ok",
         "legalStatus": "unverified",
         "ratesPresent": False,
@@ -326,6 +365,20 @@ def build(catalog_path: Path, index_path: Path, output_path: Path, manifest_path
         manifest_path.parent.mkdir(parents=True, exist_ok=True)
         manifest_path.write_text(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2) + "\n")
     return result
+
+
+def build(catalog_path: Path, index_path: Path, output_path: Path, manifest_path: Path | None = None) -> dict[str, Any]:
+    return _build_with_pins(
+        catalog_path,
+        index_path,
+        output_path,
+        manifest_path,
+        catalog_sha256=CATALOG_SHA256,
+        index_sha256=INDEX_SHA256,
+        expected_counts=EXPECTED_COUNTS,
+        expected_chapters=EXPECTED_CHAPTERS,
+        expected_section_count=21,
+    )
 
 
 def main(argv: Iterable[str] | None = None) -> int:
