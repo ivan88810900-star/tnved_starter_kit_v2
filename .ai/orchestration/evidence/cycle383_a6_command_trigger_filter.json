@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-A6-COMMAND-TRIGGER-FILTER-20261020",
+  "started_at": "2026-10-20T16:14:18Z",
+  "completed_at": "2026-10-20T16:32:35.850Z",
+  "executor": "/root/scheduled-cycle383-20261020T161418Z",
+  "lease_generation": 383,
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "pr": 261,
+  "branch": "agent/a6-command-trigger-filter-20261020",
+  "head_sha": "981ba68d666e42d441e2065f27e6df15083c75c3",
+  "tree_sha": "1e131182883ad0146141ecf0926e21f44208617d",
+  "status": "DRAFT_PUBLISHED_EXACT_HEAD_CI_SUCCESS_A5_PENDING",
+  "defect": "Every issue_comment ran the A6 shell gate; unrelated completion receipts therefore produced false failed workflow runs and comment-controlled run names.",
+  "implementation": "Added an exact owner-command job-level filter before checkout/state/dedupe/credentials, retained the shell gate as defense in depth, and replaced the run name with a fixed label.",
+  "changed_files": [
+    ".github/workflows/tariff-a6-live.yml",
+    "tests/agent_orchestration/test_audit_bridge.py"
+  ],
+  "ci": {
+    "run_id": 39457979308,
+    "job_id": 118749901026,
+    "workflow": "Tariff agent safety",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39457979308"
+  },
+  "review_threads": {
+    "open_pr_count_checked": 44,
+    "only_unresolved_thread_pr": 222,
+    "note": "The lone thread is outdated and its date-validation finding is already fixed in the current payment stack."
+  },
+  "a5": "PENDING; no independent A5 review was run in this session.",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "boundaries": [
+    "No provider call",
+    "No merge",
+    "No deploy",
+    "No production or staging write",
+    "No permission or secret change"
+  ],
+  "next_step": "Run fresh independent A5 review of exact PR #261 head; if clean, recheck exact-head CI and then leave the draft for owner review without merging."
+}
