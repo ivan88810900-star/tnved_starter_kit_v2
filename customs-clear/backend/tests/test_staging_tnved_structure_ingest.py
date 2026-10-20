@@ -101,3 +101,20 @@ def test_public_ingest_boundary_rejects_forged_rows(tmp_path: Path, change: dict
     with Session(engine) as session:
         assert session.scalar(select(func.count()).select_from(tables["artifacts"])) == 0
         assert session.scalar(select(func.count()).select_from(tables["rows"])) == 0
+
+
+def test_public_ingest_boundary_rejects_existing_wrong_branch_parent(tmp_path: Path) -> None:
+    path = tmp_path / "accepted.sqlite"
+    sha, logical = _fixture(path)
+    artifact, rows = read_accepted_sqlite(path, expected_sha256=sha, expected_logical_sha256=logical)
+    sibling = replace(rows[0], hs_code="02", chapter="02")
+    sibling_payload = {"hs_code": sibling.hs_code, "parent_hs": sibling.parent_hs, "level": sibling.level, "title": sibling.title, "description": sibling.path_json, "chapter": sibling.chapter, "source_url": sibling.source_url, "source_revision": sibling.source_revision}
+    sibling = replace(sibling, row_sha256=hashlib.sha256(json.dumps(sibling_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest())
+    wrong = replace(rows[1], parent_hs="02")
+    wrong_payload = {"hs_code": wrong.hs_code, "parent_hs": wrong.parent_hs, "level": wrong.level, "title": wrong.title, "description": wrong.path_json, "chapter": wrong.chapter, "source_url": wrong.source_url, "source_revision": wrong.source_revision}
+    wrong = replace(wrong, row_sha256=hashlib.sha256(json.dumps(wrong_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest())
+    forged = [rows[0], sibling, wrong]
+    forged_artifact = replace(artifact, entry_count=3)
+    engine = create_engine(f"sqlite:///{tmp_path / 'staging.sqlite'}")
+    with Session(engine) as session, session.begin(), pytest.raises(StructureIngestError, match="parent"):
+        ingest_structure(session, artifact=forged_artifact, rows=forged, schema=None, now=datetime.now(timezone.utc))

@@ -133,7 +133,11 @@ def _validate_row(row: StructureRow) -> None:
         raise StructureIngestError("row must use the validated structure contract")
     if isinstance(row.ordinal, bool) or not isinstance(row.ordinal, int) or row.ordinal < 1 or not isinstance(row.hs_code, str) or not _HS_RE.fullmatch(row.hs_code):
         raise StructureIngestError("structure row ordinal and HS code must be canonical")
-    if row.parent_hs and (not _HS_RE.fullmatch(row.parent_hs) or len(row.parent_hs) >= len(row.hs_code)):
+    if row.parent_hs and (
+        not _HS_RE.fullmatch(row.parent_hs)
+        or len(row.parent_hs) >= len(row.hs_code)
+        or not row.hs_code.startswith(row.parent_hs)
+    ):
         raise StructureIngestError("structure row parent is invalid")
     if isinstance(row.level, bool) or not isinstance(row.level, int) or row.level != len(row.hs_code):
         raise StructureIngestError("structure row level does not match HS length")
