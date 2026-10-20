@@ -2119,3 +2119,17 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - PR #260 body now records the current evidence, dated Mac acceptance at 2026-10-20 10:38 UTC and association with the existing private verification receipt without exposing any private path or locator.
 - No merge, deploy, staging/production DB write, legal/rate/NTM admission, protected action or A6 dispatch occurred. Evidence: `.ai/orchestration/evidence/cycle377_tnved_recovery_gate_equivalence.json`; TASK_BOARD revision 905.
 - Next owner-directed block: non-production staging ingestion of the accepted structural SQLite with actual before/after unique counts, source/hash provenance and identical-rerun idempotence. Do not substitute unrelated #244 work; no production write or legal admission.
+
+## Cycle 379 — PR #255 comparison special-duty scope (2026-10-20 UTC)
+
+- Task `TARIFF-PR255-COMPARE-SPECIAL-DUTY-SCOPE-20261020`; executor `/root/scheduled-cycle379-20261020T135242Z`; lease generation 379.
+- On parent `4f56ce456fe512b6098549c0811b213cd4cc62cf`, `/api/calculator/compare` discarded shared manufacturer and product-description facts. Exact manufacturer/product restrictions therefore could not be resolved per scenario and payments remained withheld even when the caller supplied the facts.
+- Draft PR #255 advanced by non-force CAS to exact head `d0ad8ec40df2c09ab51d30bc0653ece325b34ea4`, tree `784ee9f52929bf6070af70835dc66660fa47adb7`; local author commit `fd74aa69f854ddfa76d2ecbf11f0d57970a0e42b` has the identical tree.
+- The comparison schema now accepts optional `manufacturer` and canonical `product_description` with `description` as validation alias; the service propagates normalized facts into every scenario. Exact facts resolve the scoped measure, while missing or mismatched facts retain `special_duty_scope_unresolved` and withheld totals. No fuzzy matching, rate value or legal applicability rule changed.
+- Author validation on disposable SQLite passed **130 tests plus 59 subtests**; the workflow-equivalent 14-module payment slice passed **289 tests plus 50 subtests**. `py_compile` and `git diff --check` exited 0.
+- Independent A5 `/root/a5_cycle378` returned `PASS`: **19 tests plus 9 subtests**, adjacent compare **6 tests plus 10 subtests**, and an independent canonical/alias/missing/mismatch API matrix; compile and diff checks exited 0.
+- Exact-head CI succeeded: [run 39436245608](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39436245608), offline-safety job `118673901885` and payment-regression job `118673902426`, both success on the exact published SHA.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6292950081) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6292953642).
+- `npm ci --offline --ignore-scripts` could not run because `zwitch` was absent from the isolated cache (`ENOTCACHED`); no frontend typecheck claim is made. The only frontend edit is the compare request/response type mirror.
+- No new owner approval appeared for the remaining 10,514 external structural rows, so Neon was not contacted or retried. No merge, deploy, production/staging write, normative data change, protected action or A6 dispatch occurred; A6 remains unchanged/not sent.
+- Evidence: `.ai/orchestration/evidence/cycle379_pr255_compare_special_duty_scope.json`; TASK_BOARD revision 907. Next continue coherent #244 source-by-source payment acceptance and fixture cleanup from fresh state.

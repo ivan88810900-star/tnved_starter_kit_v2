@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 906,
+  "revision": 907,
   "runs": [
     {
       "head_sha": null,
@@ -18894,7 +18894,7 @@
     "evidence": ".ai/orchestration/evidence/cycle377_tnved_recovery_gate_equivalence.json",
     "next_step": "Owner-directed non-production staging ingestion of the accepted structural SQLite, with before/after unique counts, source/hash provenance and an identical rerun proving idempotence; no production write, legal admission, merge, deploy or A6."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_378": {
     "schema_version": 1,
     "task_id": "TARIFF-TNVED-STAGING-PARTIAL-20261020",
     "started_at": "2026-10-20T12:47:34Z",
@@ -18924,5 +18924,35 @@
     "a6": "UNCHANGED_NOT_SENT",
     "evidence": ".ai/orchestration/evidence/cycle378_tnved_structure_staging_partial.json",
     "next_step": "Only after explicit owner approval for completing this exact derived private payload to the named external non-production Neon target, resume from ordinal7501 and finish a completed run receipt plus identical replay; otherwise use an owner-approved private import channel."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR255-COMPARE-SPECIAL-DUTY-SCOPE-20261020",
+    "started_at": "2026-10-20T13:52:42Z",
+    "completed_at": "2026-10-20T14:13:58Z",
+    "executor": "/root/scheduled-cycle379-20261020T135242Z",
+    "lease_generation": 379,
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "previous_head_sha": "4f56ce456fe512b6098549c0811b213cd4cc62cf",
+    "head_sha": "d0ad8ec40df2c09ab51d30bc0653ece325b34ea4",
+    "tree_sha": "784ee9f52929bf6070af70835dc66660fa47adb7",
+    "local_author_commit": "fd74aa69f854ddfa76d2ecbf11f0d57970a0e42b",
+    "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+    "implementation": "Calculator comparison now preserves optional manufacturer and canonical product_description (including description alias) into every scenario so exact special-duty manufacturer/product scope can be resolved. Missing or mismatched facts remain fail-closed with special_duty_scope_unresolved and withheld totals.",
+    "tests": "Focused disposable-DB suite 130 passed plus 59 subtests; workflow-equivalent 14-module payment slice 289 passed plus 50 subtests; py_compile and diff-check exit 0.",
+    "a5": "/root/a5_cycle378 PASS on exact tree: special-duty suite 19 passed plus 9 subtests, adjacent compare suite 6 passed plus 10 subtests, independent canonical/alias/missing/mismatch matrix, py_compile and diff-check all exit 0.",
+    "exact_head_ci": "Run 39436245608 completed success on d0ad8ec40df2c09ab51d30bc0653ece325b34ea4; offline-safety job 118673901885 and payment-regression job 118673902426 both success.",
+    "receipts": {
+      "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6292950081",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6292953642"
+    },
+    "frontend_check_boundary": "npm ci --offline --ignore-scripts could not run because zwitch was absent from the isolated cache (ENOTCACHED); no frontend typecheck claim. The only frontend change is the request/response type mirror and exact-head payment CI does not cover a frontend build.",
+    "external_write_boundary": "No owner approval appeared for the remaining 10514 structural rows; external Neon was not contacted or retried. Existing partial target remains 7500/18014 and incomplete.",
+    "legal_boundary": "No rate values, normative fixtures, fuzzy matching or legal applicability rules changed. Full #244 acceptance remains NOT PASS; synchronized populated NTM remains unavailable for full #245 acceptance.",
+    "protected_actions_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "evidence": ".ai/orchestration/evidence/cycle379_pr255_compare_special_duty_scope.json",
+    "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh live state; do not resume the external structural import without explicit owner approval."
   }
 }

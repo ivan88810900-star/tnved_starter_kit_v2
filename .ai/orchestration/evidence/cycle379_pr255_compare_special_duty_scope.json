@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-COMPARE-SPECIAL-DUTY-SCOPE-20261020",
+  "started_at": "2026-10-20T13:52:42Z",
+  "completed_at": "2026-10-20T14:13:58Z",
+  "executor": "/root/scheduled-cycle379-20261020T135242Z",
+  "lease_generation": 379,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pull_request": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "previous_head_sha": "4f56ce456fe512b6098549c0811b213cd4cc62cf",
+  "published_head_sha": "d0ad8ec40df2c09ab51d30bc0653ece325b34ea4",
+  "local_author_commit": "fd74aa69f854ddfa76d2ecbf11f0d57970a0e42b",
+  "tree_sha": "784ee9f52929bf6070af70835dc66660fa47adb7",
+  "changed_files": [
+    "customs-clear/backend/app/api/calculator.py",
+    "customs-clear/backend/app/services/payment_engine.py",
+    "customs-clear/backend/tests/test_special_duties.py",
+    "customs-clear/frontend/src/types/api.types.ts"
+  ],
+  "defect": "Comparison discarded caller-supplied manufacturer/product-description facts before scenario construction, preventing exact special-duty scope matching.",
+  "behavior": {
+    "canonical_and_alias_facts": "propagated to every scenario and resolve exact scope",
+    "missing_or_mismatched_facts": "retain special_duty_scope_unresolved and withheld totals",
+    "fuzzy_matching_added": false,
+    "rate_or_legal_semantics_changed": false
+  },
+  "author_validation": {
+    "focused": "130 passed, 59 subtests passed, exit 0",
+    "workflow_equivalent_payment_slice": "289 passed, 50 subtests passed, exit 0",
+    "py_compile": "exit 0",
+    "git_diff_check": "exit 0"
+  },
+  "independent_a5": {
+    "executor": "/root/a5_cycle378",
+    "conclusion": "PASS",
+    "special_duty_suite": "19 passed, 9 subtests passed, exit 0",
+    "adjacent_compare_suite": "6 passed, 10 subtests passed, exit 0",
+    "matrix": "canonical and description alias resolved; missing and mismatched facts remained unresolved"
+  },
+  "exact_head_ci": {
+    "run_id": 39436245608,
+    "run_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39436245608",
+    "conclusion": "success",
+    "offline_safety_job": {
+      "id": 118673901885,
+      "conclusion": "success"
+    },
+    "payment_regression_job": {
+      "id": 118673902426,
+      "conclusion": "success"
+    }
+  },
+  "receipts": {
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6292950081",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6292953642"
+  },
+  "frontend_check_boundary": "npm ci --offline --ignore-scripts failed ENOTCACHED because zwitch was absent; no frontend typecheck claim.",
+  "external_neon": {
+    "approval_present": false,
+    "contacted_or_retried": false,
+    "existing_rows": 7500,
+    "expected_rows": 18014,
+    "remaining_rows": 10514
+  },
+  "protected_actions_performed": false,
+  "a6_dispatched": false
+}
