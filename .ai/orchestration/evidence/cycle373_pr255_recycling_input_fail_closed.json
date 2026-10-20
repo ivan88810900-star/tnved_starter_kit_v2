@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-RECYCLING-INPUT-FAIL-CLOSED-20261020",
+  "executor": "/root/scheduled-cycle373-20261020T074704Z",
+  "started_at": "2026-10-20T07:47:04Z",
+  "completed_at": "2026-10-20T07:57:53Z",
+  "lease_generation": 373,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "parent_sha": "aeef3dd1b96d31399f5dc46bdafc983ad3fe1078",
+  "local_author_commit": "f4c34c10decb5ae2dd2fbc84c31f545b8e4f4e60",
+  "published_head_sha": "4f56ce456fe512b6098549c0811b213cd4cc62cf",
+  "tree_sha": "c31c8c88d23523a0439573ff0d850880cfd05c67",
+  "publication": {
+    "method": "Git data blobs/tree/commit followed by non-force fast-forward CAS",
+    "expected_parent_sha": "aeef3dd1b96d31399f5dc46bdafc983ad3fe1078",
+    "verified_remote_head_sha": "4f56ce456fe512b6098549c0811b213cd4cc62cf",
+    "verified_remote_tree_sha": "c31c8c88d23523a0439573ff0d850880cfd05c67",
+    "local_and_remote_tree_identical": true
+  },
+  "defect": "Vehicle payments could automatically select the first or cheapest recycling-fee row when vehicle age or required engine volume was absent. Negative volume could fall through to an unrelated generic/electric row, and fractional volume was silently truncated with int(...).",
+  "repair": "Require an explicit boolean vehicle-age fact before automatic selection, require finite strictly positive integral engine volume when supplied, withhold the fee and final total for ambiguous missing volume, and preserve unambiguous generic rows and valid exact-volume calculations.",
+  "changed_files": [
+    "customs-clear/backend/app/services/payment_engine.py",
+    "customs-clear/backend/tests/test_recycling_fees.py"
+  ],
+  "author_validation": [
+    {
+      "command": "pytest -q tests/test_recycling_fees.py tests/test_payment_engine.py tests/test_payment_quote.py tests/test_api_integration.py tests/test_invoice_and_compare.py",
+      "exit_code": 0,
+      "result": "128 passed, 50 subtests passed"
+    },
+    {
+      "command": "fresh migrated disposable SQLite + workflow-equivalent payment regression slice",
+      "exit_code": 0,
+      "result": "288 passed, 50 subtests passed"
+    },
+    {
+      "command": "git diff --check and compileall changed paths",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "independent_a5": {
+    "reviewer": "/root/a5_cycle373",
+    "status": "PASS_NO_FINDINGS",
+    "reviewed_commit": "f4c34c10decb5ae2dd2fbc84c31f545b8e4f4e60",
+    "reviewed_tree": "c31c8c88d23523a0439573ff0d850880cfd05c67",
+    "verification": "128 passed plus 50 subtests and workflow-equivalent 288 passed plus 50 subtests on fresh disposable SQLite; direct and HTTP adversarial matrices for missing facts, invalid operands, bracket boundaries, generic rows and non-vehicle behavior passed."
+  },
+  "exact_head_ci": {
+    "run_id": 39389915404,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39389915404",
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "4f56ce456fe512b6098549c0811b213cd4cc62cf",
+    "jobs": [
+      {
+        "name": "offline-safety",
+        "job_id": 118518659899,
+        "conclusion": "success"
+      },
+      {
+        "name": "payment-regression",
+        "job_id": 118518660076,
+        "conclusion": "success"
+      }
+    ]
+  },
+  "receipts": {
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6286263931",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6286263510"
+  },
+  "scope_limits": {
+    "rate_values_changed": false,
+    "legal_applicability_changed": false,
+    "normative_or_fixture_data_changed": false,
+    "schema_changed": false,
+    "merge_or_deploy": false,
+    "staging_or_production_write": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "full_pr244_acceptance": "NOT_PASS",
+    "populated_synchronized_ntm_snapshot": "NOT_AVAILABLE"
+  },
+  "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh state; keep full PR #245 acceptance blocked until a lawful populated synchronized NTM snapshot is available."
+}
