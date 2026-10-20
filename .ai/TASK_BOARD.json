@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 897,
+  "revision": 898,
   "runs": [
     {
       "head_sha": null,
@@ -6947,6 +6947,46 @@
         "protected_actions_performed": false,
         "evidence": ".ai/orchestration/evidence/cycle368_pr255_official_url_parser_boundary.json",
         "next_step": "Continue the next unfinished PR #244 payment/source acceptance block from fresh state; keep full #245 acceptance blocked until a lawful populated synchronized NTM snapshot exists."
+      },
+      "duty_display_consistency_checkpoint_20261020": {
+        "task_id": "TARIFF-PR255-DUTY-DISPLAY-CONSISTENCY-20261020",
+        "started_at": "2026-10-19T23:52:20Z",
+        "completed_at": "2026-10-20T00:01:23Z",
+        "executor": "/root/scheduled-cycle369-20261019T235220Z",
+        "lease_generation": 369,
+        "base_pr": 244,
+        "corrective_pr": 255,
+        "parent_sha": "bbeb1eeb97ebf7ee8bd48ca6db0ca65781964aab",
+        "published_head_sha": "48ad3efff287aa7cd3ceaeef7b744b2d9264d6c2",
+        "tree_sha": "ae98fb43f548f6bedfda6494e322cadb40d985bb",
+        "local_author_commit": "1e6c27a76b3ab3d6df34228ef7305c57cdacd52c",
+        "scope": "Keep persisted duty display consistent with the quote engine's fail-closed source-binding admission and distinguish ADD, MAX and MIN labels.",
+        "reproduction": "A persisted unbound HsDutyRule rendered a concrete 2 EUR/kg label while the quote engine withheld duty, VAT and total as duty_rule_source_binding_unverified.",
+        "result": "Persisted unbound duty rules now render Уточните ставку. ADD renders as a sum, MAX as not-less-than and MIN as not-more-than; fallback/non-persisted labels remain available.",
+        "author_tests": "Focused/adjacent 81 passed plus 14 subtests; py_compile and diff-check exit 0.",
+        "independent_a5": "/root/a5_cycle369 PASS_NO_FINDINGS on byte-identical tree; 81 passed plus 14 subtests, independent fail-closed reproducer and duty-label matrix; exit 0.",
+        "exact_head_ci": {
+          "status": "PASSED",
+          "run_id": 39344924403,
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39344924403",
+          "jobs": {
+            "offline_safety": 118375126903,
+            "payment_regression": 118375127040
+          }
+        },
+        "limitations": [
+          "An unrestricted broad backend run was stopped by platform security after an unrelated telemetry attempt to mobile.events.data.microsoft.com; it was not retried or bypassed and no full-suite PASS is claimed.",
+          "No full #244 legal/source acceptance is claimed.",
+          "The populated synchronized NTM snapshot remains unavailable; full #245 acceptance remains blocked."
+        ],
+        "receipts": {
+          "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6280049729",
+          "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6280051539"
+        },
+        "a6": "UNCHANGED_NOT_SENT",
+        "protected_actions_performed": false,
+        "evidence": ".ai/orchestration/evidence/cycle369_pr255_duty_display_consistency.json",
+        "next_step": "Continue the next unfinished PR #244 source-by-source payment acceptance and fixture cleanup from fresh state; keep full #245 acceptance blocked until a lawful populated synchronized NTM snapshot exists."
       }
     },
     {
@@ -7966,7 +8006,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-19T23:01:49Z",
+  "updated_at": "2026-10-20T00:01:23Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
