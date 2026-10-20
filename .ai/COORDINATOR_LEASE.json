@@ -1,14 +1,14 @@
 {
   "acquisition_note": "cycle361 CI closure and next bounded product cycle",
-  "expires_at": null,
-  "generation": 380,
-  "holder": null,
+  "expires_at": "2026-10-20T15:20:59.340828Z",
+  "generation": 381,
+  "holder": "/root/scheduled-cycle381-20261020T144900Z",
   "lease_repair": {},
   "release_reason": "cycle360 read-only state refresh completed",
   "released_by": "/root/scheduled-cycle333-20261018T125155Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-20T14:31:52.357965Z"
+  "state": "active",
+  "token": "4552baa8f61842de981d6631434e2c53",
+  "updated_at": "2026-10-20T14:50:59.340828Z"
 }
