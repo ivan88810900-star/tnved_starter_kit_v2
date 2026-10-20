@@ -2133,3 +2133,17 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - `npm ci --offline --ignore-scripts` could not run because `zwitch` was absent from the isolated cache (`ENOTCACHED`); no frontend typecheck claim is made. The only frontend edit is the compare request/response type mirror.
 - No new owner approval appeared for the remaining 10,514 external structural rows, so Neon was not contacted or retried. No merge, deploy, production/staging write, normative data change, protected action or A6 dispatch occurred; A6 remains unchanged/not sent.
 - Evidence: `.ai/orchestration/evidence/cycle379_pr255_compare_special_duty_scope.json`; TASK_BOARD revision 907. Next continue coherent #244 source-by-source payment acceptance and fixture cleanup from fresh state.
+
+## Cycle 380 — PR #255 compliance payment-review propagation (2026-10-20 UTC)
+
+- Task `TARIFF-PR255-COMPLIANCE-PAYMENT-REVIEW-20261020`; executor `/root/scheduled-cycle380-20261020T142129Z`; lease generation 380.
+- On parent `d0ad8ec40df2c09ab51d30bc0653ece325b34ea4`, the authenticated compliance API returned overall `OK` and `meta.any_manual_review=false` while its payment result was `REVIEW_REQUIRED` for `special_duty_scope_unresolved` and the final total was withheld.
+- Draft PR #255 advanced by non-force CAS to exact head `b9614bc1cbfca8a35b5d5bd275656d49f2c8478e`, tree `d2242803e147afa7258c7e8bac4990e74e460ea8`; local author commit `b2c37bd9b78bfe44bb26faf333bcf953b10207c2` has the identical tree.
+- Compliance now propagates any payment `REVIEW_REQUIRED` to overall `WARNING` and `any_manual_review=true`, preserves non-tariff `ERROR` precedence, and surfaces non-antidumping payment review reasons. An antidumping-only review keeps the existing specific warning without a duplicate generic risk. Payment arithmetic, rates and legal applicability are unchanged.
+- The new authenticated API/DB regression failed before the fix and passed after it: **1 passed**, exit 0. `py_compile` and `git diff --check` exited 0.
+- Independent A5 `/root/a5_cycle378` returned static `PASS` with no findings on the exact tree; AST, diff, scope and clean-worktree checks exited 0. Per the platform restriction, A5 did not invoke pytest or external execution.
+- Exact-head CI succeeded: [run 39439574816](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39439574816), offline-safety job `118685563005` and payment-regression job `118685563900`, both success.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6293272178) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6293276129).
+- A broader local pytest command was stopped by platform security after triggering unauthorized Microsoft telemetry egress. It was not retried or bypassed; exact-head GitHub payment CI supplied the required regression receipt.
+- No owner approval appeared for the remaining 10,514 external structural rows, so Neon was not contacted or retried. No merge, deploy, DB write, normative data change, protected action or A6 dispatch occurred.
+- Evidence: `.ai/orchestration/evidence/cycle380_pr255_compliance_payment_review.json`; TASK_BOARD revision 908. Next continue coherent #244 source-by-source payment acceptance and fixture cleanup from fresh state.

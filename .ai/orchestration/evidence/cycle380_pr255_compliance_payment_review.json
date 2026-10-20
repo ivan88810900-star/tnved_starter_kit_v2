@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-COMPLIANCE-PAYMENT-REVIEW-20261020",
+  "started_at": "2026-10-20T14:21:29Z",
+  "completed_at": "2026-10-20T14:30:14Z",
+  "executor": "/root/scheduled-cycle380-20261020T142129Z",
+  "lease_generation": 380,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pull_request": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "previous_head_sha": "d0ad8ec40df2c09ab51d30bc0653ece325b34ea4",
+  "published_head_sha": "b9614bc1cbfca8a35b5d5bd275656d49f2c8478e",
+  "local_author_commit": "b2c37bd9b78bfe44bb26faf333bcf953b10207c2",
+  "tree_sha": "d2242803e147afa7258c7e8bac4990e74e460ea8",
+  "changed_files": [
+    "customs-clear/backend/app/api/compliance.py",
+    "customs-clear/backend/tests/test_special_duties.py"
+  ],
+  "defect": "Compliance presented OK and any_manual_review=false while payment status was REVIEW_REQUIRED for unresolved special-duty scope.",
+  "behavior": {
+    "payment_review_to_warning": true,
+    "any_manual_review_true": true,
+    "non_tariff_error_precedence_preserved": true,
+    "duplicate_antidumping_generic_risk_avoided": true,
+    "payment_arithmetic_changed": false,
+    "legal_semantics_changed": false
+  },
+  "author_validation": {
+    "pre_fix_regression": "failed as expected: compliance OK instead of WARNING",
+    "post_fix_regression": "1 passed, exit 0",
+    "py_compile": "exit 0",
+    "git_diff_check": "exit 0"
+  },
+  "independent_a5": {
+    "executor": "/root/a5_cycle378",
+    "conclusion": "PASS",
+    "mode": "static only per platform restriction",
+    "checks": "AST, diff, scope, clean worktree; exit 0",
+    "findings": []
+  },
+  "exact_head_ci": {
+    "run_id": 39439574816,
+    "run_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39439574816",
+    "conclusion": "success",
+    "offline_safety_job": {
+      "id": 118685563005,
+      "conclusion": "success"
+    },
+    "payment_regression_job": {
+      "id": 118685563900,
+      "conclusion": "success"
+    }
+  },
+  "receipts": {
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6293272178",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6293276129"
+  },
+  "local_test_boundary": "Broader pytest blocked by platform security because of unauthorized Microsoft telemetry egress; no retry or bypass.",
+  "external_neon": {
+    "approval_present": false,
+    "contacted_or_retried": false,
+    "existing_rows": 7500,
+    "expected_rows": 18014,
+    "remaining_rows": 10514
+  },
+  "protected_actions_performed": false,
+  "a6_dispatched": false
+}

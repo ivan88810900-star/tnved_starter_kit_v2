@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 907,
+  "revision": 908,
   "runs": [
     {
       "head_sha": null,
@@ -18925,7 +18925,7 @@
     "evidence": ".ai/orchestration/evidence/cycle378_tnved_structure_staging_partial.json",
     "next_step": "Only after explicit owner approval for completing this exact derived private payload to the named external non-production Neon target, resume from ordinal7501 and finish a completed run receipt plus identical replay; otherwise use an owner-approved private import channel."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_379": {
     "schema_version": 1,
     "task_id": "TARIFF-PR255-COMPARE-SPECIAL-DUTY-SCOPE-20261020",
     "started_at": "2026-10-20T13:52:42Z",
@@ -18954,5 +18954,36 @@
     "a6": "UNCHANGED_NOT_SENT",
     "evidence": ".ai/orchestration/evidence/cycle379_pr255_compare_special_duty_scope.json",
     "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh live state; do not resume the external structural import without explicit owner approval."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR255-COMPLIANCE-PAYMENT-REVIEW-20261020",
+    "started_at": "2026-10-20T14:21:29Z",
+    "completed_at": "2026-10-20T14:30:14Z",
+    "executor": "/root/scheduled-cycle380-20261020T142129Z",
+    "lease_generation": 380,
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "previous_head_sha": "d0ad8ec40df2c09ab51d30bc0653ece325b34ea4",
+    "head_sha": "b9614bc1cbfca8a35b5d5bd275656d49f2c8478e",
+    "tree_sha": "d2242803e147afa7258c7e8bac4990e74e460ea8",
+    "local_author_commit": "b2c37bd9b78bfe44bb26faf333bcf953b10207c2",
+    "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+    "implementation": "Compliance now propagates any payment REVIEW_REQUIRED to overall WARNING and meta.any_manual_review=true, while preserving non-tariff ERROR precedence. Non-antidumping payment review reasons are surfaced as risks; an antidumping-only review keeps its specific risk without a duplicate generic warning.",
+    "reproduction": "Authenticated API/DB regression reproduced compliance OK plus any_manual_review=false while payment was REVIEW_REQUIRED for special_duty_scope_unresolved.",
+    "tests": "New regression failed before fix and passed after fix: 1 passed, exit 0. py_compile and git diff --check exit 0.",
+    "a5": "/root/a5_cycle378 static PASS on exact tree; no findings; AST, diff, scope and clean-worktree checks exit 0. Pytest not attempted due explicit platform restriction.",
+    "exact_head_ci": "Run 39439574816 completed success on b9614bc1cbfca8a35b5d5bd275656d49f2c8478e; offline-safety job 118685563005 and payment-regression job 118685563900 both success.",
+    "receipts": {
+      "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6293272178",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6293276129"
+    },
+    "local_test_boundary": "Broader local pytest was stopped by platform security because it triggered unauthorized Microsoft telemetry egress; it was not retried or bypassed. Exact-head GitHub payment-regression CI passed.",
+    "external_write_boundary": "No owner approval appeared for the remaining 10514 structural rows; external Neon was not contacted or retried. Existing partial target remains 7500/18014 and incomplete.",
+    "legal_boundary": "No payment arithmetic, rates, normative fixtures or legal applicability rules changed. Full #244 acceptance remains NOT PASS; synchronized populated NTM remains unavailable for full #245 acceptance.",
+    "protected_actions_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "evidence": ".ai/orchestration/evidence/cycle380_pr255_compliance_payment_review.json",
+    "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh live state; do not resume external structural import without explicit owner approval."
   }
 }
