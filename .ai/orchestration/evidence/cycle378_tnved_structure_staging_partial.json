@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-TNVED-STAGING-PARTIAL-20261020",
+  "executor": "/root/scheduled-cycle378-20261020T124734Z",
+  "lease_generation": 378,
+  "started_at": "2026-10-20T12:47:34Z",
+  "completed_at": "2026-10-20T13:28:40Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 260,
+  "branch": "agent/tnved-structure-recovery-v1",
+  "previous_head_sha": "2f26a3ba4a6b19c79db037f342fce3325061b8d2",
+  "head_sha": "f50f8cbe10daef44a4f42c516aaf19a5f5b156f4",
+  "tree_sha": "5327650562c1d276695bf45846cc79cd1f91d931",
+  "local_author_commit": "358f21d6daef6e8fc36c66677965944738819622",
+  "accepted_artifact": {
+    "size_bytes": 73908224,
+    "sha256": "c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4",
+    "logical_sha256": "be57fc61571bee51817e5a0915918d7f3baa86873c644ce148c613b1b20589e6",
+    "source_count": 99,
+    "edition_count": 96,
+    "entry_count": 18014
+  },
+  "implementation": [
+    "Additive staging artifact/run/row schema and deterministic idempotent ingest adapter.",
+    "Public write boundary rereads the exact SQLite and accepts only pinned file/logical hashes; caller-supplied provenance and rows cannot enter.",
+    "Recovery CI selects only two explicit mandatory builder/SQLite/read-adapter tests; passing guard self-tests cannot mask missing or skipped product tests."
+  ],
+  "author_validation": [
+    {
+      "command": "python customs-clear/backend/scripts/run_tnved_recovery_ci.py",
+      "result": "discovered=2 executed=2 skipped=0",
+      "exit_code": 0
+    },
+    {
+      "command": "pytest -q test_staging_tnved_structure_ingest.py test_tnved_recovery.py test_tnved_recovery_ci.py",
+      "result": "19 passed",
+      "exit_code": 0
+    },
+    {
+      "command": "public API exact accepted SQLite load followed by identical replay",
+      "result": "first 18014/18014 replayed=false; second 18014/18014 replayed=true",
+      "exit_code": 0
+    }
+  ],
+  "a5": {
+    "session_id": "/root/a5_cycle378",
+    "status": "FINAL_PASS_NO_FINDINGS",
+    "head_sha": "f50f8cbe10daef44a4f42c516aaf19a5f5b156f4",
+    "tree_sha": "5327650562c1d276695bf45846cc79cd1f91d931",
+    "result": "19 passed; mandatory missing/skipped matrix failed closed; exact 18014-row load/replay and forged-provenance rejection passed; PostgreSQL compile, py_compile and diff-check passed"
+  },
+  "exact_head_ci": {
+    "name": "offline-safety",
+    "status": "completed",
+    "conclusion": "success",
+    "run_id": 39430147563,
+    "job_id": 118652765585,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39430147563/job/118652765585"
+  },
+  "staging_target": {
+    "project_id": "red-meadow-53765518",
+    "branch_id": "br-weathered-frost-ba9jri3c",
+    "database": "tariff_staging",
+    "schema": "tariff_ingest"
+  },
+  "staging_before": {
+    "target_artifacts": 0,
+    "target_runs": 0,
+    "target_rows": 0,
+    "unrelated_source_objects": 69,
+    "unrelated_ingest_runs": 38,
+    "unrelated_ett_rows": 619
+  },
+  "staging_after": {
+    "target_artifacts": 1,
+    "target_artifact_status": "LOADING_UNVERIFIED",
+    "target_runs": 0,
+    "target_rows": 7500,
+    "target_unique_codes": 7500,
+    "ordinal_min": 1,
+    "ordinal_max": 7500,
+    "row_status": "LOADING_UNVERIFIED",
+    "ordered_row_hash_md5": "1da94c52cc1192e4dc1c8a909276e24e",
+    "unrelated_source_objects": 69,
+    "unrelated_ingest_runs": 38,
+    "unrelated_ett_rows": 619
+  },
+  "staging_status": "PARTIAL_INCOMPLETE_NOT_REPLAYABLE_AS_COMPLETE",
+  "capability_blocker": "Platform policy refused continuation of the mass transfer of the derived private structural artifact to external Neon without explicit owner approval for this exact full payload and destination. The remaining 10514 rows were not written; no retry, alternate executor, workaround, cleanup or completion claim was made.",
+  "receipts": {
+    "pr260_comment_id": 6291969585,
+    "issue257_comment_id": 6291972463
+  },
+  "normative_admission_performed": false,
+  "production_write_performed": false,
+  "merge_or_deploy_performed": false,
+  "a6_dispatched": false,
+  "protected_actions_performed": false,
+  "next_step": "Only after explicit owner approval for completing this exact derived private payload to the named external non-production Neon target, resume from ordinal 7501 using the same accepted artifact and finish with a completed run receipt plus identical replay; otherwise use an owner-approved private import channel."
+}

@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 905,
+  "revision": 906,
   "runs": [
     {
       "head_sha": null,
@@ -8118,7 +8118,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-20T12:00:23Z",
+  "updated_at": "2026-10-20T13:28:40Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -18868,7 +18868,7 @@
     "evidence": ".ai/orchestration/evidence/cycle376_tnved_recovery_product_ci.json",
     "next_step": "Return to coherent PR #244 payment/source acceptance and fixture cleanup; keep structural recovery separate from rates, NTM and legal admission."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_377": {
     "schema_version": 1,
     "task_id": "TARIFF-TNVED-RECOVERY-GATE-AND-EQUIVALENCE-20261020",
     "started_at": "2026-10-20T11:50:44Z",
@@ -18893,5 +18893,36 @@
     "a6": "UNCHANGED_NOT_SENT",
     "evidence": ".ai/orchestration/evidence/cycle377_tnved_recovery_gate_equivalence.json",
     "next_step": "Owner-directed non-production staging ingestion of the accepted structural SQLite, with before/after unique counts, source/hash provenance and an identical rerun proving idempotence; no production write, legal admission, merge, deploy or A6."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-TNVED-STAGING-PARTIAL-20261020",
+    "started_at": "2026-10-20T12:47:34Z",
+    "completed_at": "2026-10-20T13:28:40Z",
+    "executor": "/root/scheduled-cycle378-20261020T124734Z",
+    "lease_generation": 378,
+    "pr": 260,
+    "branch": "agent/tnved-structure-recovery-v1",
+    "previous_head_sha": "2f26a3ba4a6b19c79db037f342fce3325061b8d2",
+    "head_sha": "f50f8cbe10daef44a4f42c516aaf19a5f5b156f4",
+    "tree_sha": "5327650562c1d276695bf45846cc79cd1f91d931",
+    "local_author_commit": "358f21d6daef6e8fc36c66677965944738819622",
+    "status": "ADAPTER_A5_PASS_EXACT_HEAD_CI_PASS_STAGING_PARTIAL_CAPABILITY_BLOCKED",
+    "artifact": "73908224 bytes; SHA-256 c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4; logical SHA-256 be57fc61571bee51817e5a0915918d7f3baa86873c644ce148c613b1b20589e6; 99 sources / 96 editions / 18014 entries.",
+    "implementation": "Additive structural staging schema and idempotent adapter; public boundary rereads the exact SQLite using pinned file/logical hashes. Recovery CI selects only the two explicit mandatory product tests, excluding guard self-tests.",
+    "tests": "Mandatory runner discovered=2 executed=2 skipped=0; combined pinned-source pytest 19 passed; local exact artifact first load and identical replay 18014/18014; all exit 0.",
+    "a5": "/root/a5_cycle378 FINAL PASS on exact head/tree: 19 passed; missing/skipped mandatory-test matrix and forged provenance failed closed; PostgreSQL compile, py_compile and diff-check passed.",
+    "exact_head_ci": "Run 39430147563 / offline-safety job 118652765585 completed success.",
+    "staging_result": "Before target 0 artifacts/0 runs/0 rows. After: 1 LOADING_UNVERIFIED artifact, 0 completed run, 7500 rows/7500 unique, ordinals 1..7500, all LOADING_UNVERIFIED; unrelated 69 source objects/38 runs/619 ETT rows unchanged.",
+    "capability_blocker": "Platform policy refused continuation of the mass transfer of the derived private artifact to external Neon without explicit approval for this exact full payload/destination. Remaining 10514 rows were not written; no retry, alternate executor, workaround or cleanup.",
+    "receipts": {
+      "pr260": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/260#issuecomment-6291969585",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6291972463"
+    },
+    "legal_boundary": "Structure-only; no rates, NTM completeness, effective dates or legal admission.",
+    "protected_actions_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "evidence": ".ai/orchestration/evidence/cycle378_tnved_structure_staging_partial.json",
+    "next_step": "Only after explicit owner approval for completing this exact derived private payload to the named external non-production Neon target, resume from ordinal7501 and finish a completed run receipt plus identical replay; otherwise use an owner-approved private import channel."
   }
 }
