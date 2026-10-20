@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-ECONOMIC-INPUT-ADMISSION-20261020",
+  "executor": "/root/scheduled-cycle370-20261020T005044Z",
+  "started_at": "2026-10-20T00:50:44Z",
+  "completed_at": "2026-10-20T01:05:17Z",
+  "lease_generation": 370,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "parent_sha": "48ad3efff287aa7cd3ceaeef7b744b2d9264d6c2",
+  "local_author_commit": "d5ad196d1d5179b4ade33e1e8b9067424d257347",
+  "published_head_sha": "3a499b41db42ce0cebd2452abcacd77aac6d14ee",
+  "tree_sha": "d7a4e4d5843f24bca4009421cea17e4d37ba369b",
+  "publication": {
+    "method": "Git data blobs/tree/commit followed by non-force fast-forward CAS",
+    "expected_parent_sha": "48ad3efff287aa7cd3ceaeef7b744b2d9264d6c2",
+    "verified_remote_head_sha": "3a499b41db42ce0cebd2452abcacd77aac6d14ee",
+    "verified_remote_tree_sha": "d7a4e4d5843f24bca4009421cea17e4d37ba369b",
+    "local_and_remote_tree_identical": true
+  },
+  "defect": "Invalid economic values were admitted through direct calculation, scenario comparison, or HTTP schema coercion: negative and non-finite values, booleans converted to 0.0/1.0, and explicit zero quantities could reach payment arithmetic.",
+  "repair": "Finite non-negative admission is applied to costs, strictly-positive admission to required or explicitly supplied quantities, scenario shared inputs use the same boundary, and the quote schema rejects booleans for all nine numeric payment fields before Pydantic float coercion. Valid zero freight, insurance and manual amounts remain admitted.",
+  "changed_files": [
+    "customs-clear/backend/app/schemas/payment_quote.py",
+    "customs-clear/backend/app/services/payment_engine.py",
+    "customs-clear/backend/tests/test_payment_engine.py",
+    "customs-clear/backend/tests/test_payment_quote.py"
+  ],
+  "author_validation": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 DATABASE_URL=sqlite:////tmp/cycle370-author-v4.db SECRET_KEY=cycle370 SCHEDULER_ENABLED=0 .venv/bin/python -m pytest -p no:cacheprovider -q tests/test_payment_engine.py tests/test_payment_quote.py tests/test_payment_source_admission.py tests/test_rate_display.py",
+      "exit_code": 0,
+      "result": "87 passed, 50 subtests passed"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 DATABASE_URL=sqlite:////tmp/cycle370-adjacent-v4.db SECRET_KEY=cycle370 SCHEDULER_ENABLED=0 .venv/bin/python -m pytest -p no:cacheprovider -q tests/test_automatic_duty_operand_validation.py tests/test_api_integration.py tests/test_payment_data_normalization.py tests/test_payment_data_coverage.py",
+      "exit_code": 0,
+      "result": "96 passed, 325 subtests passed"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "result": "PASS"
+    }
+  ],
+  "independent_a5": {
+    "reviewer": "/root/a5_cycle370",
+    "status": "PASS_NO_FINDINGS",
+    "findings_repaired_before_pass": [
+      "compare_payment_scenarios boolean pre-coercion bypass",
+      "PaymentQuoteRequest boolean pre-coercion bypass for nine numeric payment fields"
+    ],
+    "verification": "Direct 12-case invalid matrix, compare 9-case invalid matrix, actual API HTTP 400/422 behavior, valid zero controls, focused 87 plus 50 subtests, adjacent 96 plus 325 subtests, and diff-check all exited 0."
+  },
+  "exact_head_ci": {
+    "run_id": 39351257622,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39351257622",
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "3a499b41db42ce0cebd2452abcacd77aac6d14ee",
+    "jobs": [
+      {
+        "name": "offline-safety",
+        "job_id": 118395705088,
+        "conclusion": "success"
+      },
+      {
+        "name": "payment-regression",
+        "job_id": 118395705202,
+        "conclusion": "success"
+      }
+    ]
+  },
+  "receipts": {
+    "pr255_comment_id": 6280892290,
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6280892290",
+    "issue257_comment_id": 6280893886,
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6280893886"
+  },
+  "scope_limits": {
+    "full_pr244_acceptance": "NOT_PASS",
+    "official_source_or_legal_completeness": "NOT_PASS",
+    "populated_synchronized_ntm_snapshot": "UNAVAILABLE",
+    "full_pr245_acceptance": "BLOCKED_BY_SNAPSHOT",
+    "broad_backend_suite": "NOT_RERUN_AFTER_PRIOR_UNRELATED_PLATFORM_SECURITY_STOP",
+    "rate_or_legal_semantics_changed": false,
+    "normative_or_test_data_changed": false,
+    "merge_or_deploy_performed": false,
+    "staging_or_production_write_performed": false,
+    "protected_action_performed": false,
+    "a6": "UNCHANGED_NOT_SENT"
+  },
+  "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from fresh state; keep full PR #245 acceptance blocked until a lawful populated synchronized NTM snapshot is available."
+}
