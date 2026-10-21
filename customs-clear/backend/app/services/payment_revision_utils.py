@@ -65,6 +65,18 @@ _UNSAFE_OFFICIAL_URL_SUBSTRINGS = (
 )
 
 
+def _matches_non_future_revision(pattern: re.Pattern[str], revision: str | None) -> bool:
+    """Accept a typed source revision only when its ISO date is not in the future."""
+    rev = (revision or "").strip().lower()
+    if not pattern.fullmatch(rev):
+        return False
+    try:
+        revision_date = date.fromisoformat(rev.rsplit(":", 1)[-1])
+    except ValueError:
+        return False
+    return revision_date <= date.today()
+
+
 def is_official_eec_ett_revision(revision: str | None) -> bool:
     """Строгая проверка: revision должна быть explicit versioned EEC/ETT, не произвольная строка.
 
@@ -72,18 +84,9 @@ def is_official_eec_ett_revision(revision: str | None) -> bool:
     arbitrary non-versioned (`local-copy`, `foo`, `manual`, `prod`, `official`).
     Единый источник истины и для ingestion (apply/dry-run), и для official-only coverage.
     """
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    if not _EEC_ETT_REVISION_RE.match(rev):
-        return False
-    try:
-        revision_date = date.fromisoformat(rev.rsplit(":", 1)[-1])
-    except ValueError:
-        return False
     # A future label cannot prove that retained bytes are the effective official
-    # tariff.  Future-dated sources remain manual review until that date.
-    return revision_date <= date.today()
+    # tariff. Future-dated sources remain manual review until that date.
+    return _matches_non_future_revision(_EEC_ETT_REVISION_RE, revision)
 
 
 def is_official_vat_ingestion_revision(revision: str | None) -> bool:
@@ -92,10 +95,7 @@ def is_official_vat_ingestion_revision(revision: str | None) -> bool:
     Принимает: vat:YYYY-MM-DD | eec-vat:YYYY-MM-DD | eec:vat:YYYY-MM-DD.
     Отклоняет ett:/eec-ett:/eec:ett: и произвольные non-versioned строки.
     """
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    return bool(_EEC_VAT_REVISION_RE.match(rev))
+    return _matches_non_future_revision(_EEC_VAT_REVISION_RE, revision)
 
 
 def is_official_vat_revision(revision: str | None) -> bool:
@@ -104,12 +104,7 @@ def is_official_vat_revision(revision: str | None) -> bool:
     Принимает VAT-specific формы и legacy shared ETT versioned revisions из старых
     VAT import runs (ett:/eec-ett:/eec:ett:) — но не duty-only arbitrary strings.
     """
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    if _EEC_VAT_REVISION_RE.match(rev):
-        return True
-    return bool(_EEC_ETT_REVISION_RE.match(rev))
+    return is_official_vat_ingestion_revision(revision) or is_official_eec_ett_revision(revision)
 
 
 def is_official_vat_row_marker(*, vat_source_code: str | None, vat_source_revision: str | None) -> bool:
@@ -122,10 +117,7 @@ def is_official_vat_row_marker(*, vat_source_code: str | None, vat_source_revisi
 
 def is_official_excise_ingestion_revision(revision: str | None) -> bool:
     """Строгая revision только для excise ingestion (не import-duty / VAT)."""
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    return bool(_EEC_EXCISE_REVISION_RE.match(rev))
+    return _matches_non_future_revision(_EEC_EXCISE_REVISION_RE, revision)
 
 
 def is_official_excise_revision(revision: str | None) -> bool:
@@ -350,10 +342,7 @@ def is_safe_official_anti_dumping_source_url(
 
 def is_official_anti_dumping_ingestion_revision(revision: str | None) -> bool:
     """Strict revision only for anti-dumping ingestion (not duty/VAT/excise)."""
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    return bool(_EEC_ANTI_DUMPING_REVISION_RE.match(rev))
+    return _matches_non_future_revision(_EEC_ANTI_DUMPING_REVISION_RE, revision)
 
 
 def is_official_anti_dumping_revision(revision: str | None) -> bool:
@@ -409,10 +398,7 @@ def is_safe_official_special_safeguard_source_url(
 
 def is_official_special_safeguard_ingestion_revision(revision: str | None) -> bool:
     """Strict revision only for special-safeguard ingestion (not duty/VAT/excise/anti-dumping)."""
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    return bool(_EEC_SPECIAL_SAFEGUARD_REVISION_RE.match(rev))
+    return _matches_non_future_revision(_EEC_SPECIAL_SAFEGUARD_REVISION_RE, revision)
 
 
 def is_official_special_safeguard_revision(revision: str | None) -> bool:
@@ -477,10 +463,7 @@ def is_safe_official_countervailing_source_url(
 
 def is_official_countervailing_ingestion_revision(revision: str | None) -> bool:
     """Strict revision only for countervailing ingestion (not duty/VAT/excise/AD/SS)."""
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    return bool(_EEC_COUNTERVAILING_REVISION_RE.match(rev))
+    return _matches_non_future_revision(_EEC_COUNTERVAILING_REVISION_RE, revision)
 
 
 def is_official_countervailing_revision(revision: str | None) -> bool:

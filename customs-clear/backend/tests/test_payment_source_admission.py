@@ -13,6 +13,13 @@ from app.models.tnved import HsDutyRule, SpecialDuty
 from app.services import normative_store
 from app.services import payment_engine
 from app.services import payment_quote_service
+from app.services.payment_revision_utils import (
+    is_official_anti_dumping_ingestion_revision,
+    is_official_countervailing_ingestion_revision,
+    is_official_excise_ingestion_revision,
+    is_official_special_safeguard_ingestion_revision,
+    is_official_vat_ingestion_revision,
+)
 
 
 CODE = "8501100000"
@@ -190,3 +197,17 @@ def test_manual_duty_remains_visible_when_other_row_fields_need_review(payments)
     assert lines["duty"].amount_rub == 70_000
     assert lines["vat"].amount_rub is None
     assert quote.total_payable_rub is None
+
+
+@pytest.mark.parametrize(
+    ("validator", "revision"),
+    [
+        (is_official_vat_ingestion_revision, "vat:2999-01-01"),
+        (is_official_excise_ingestion_revision, "excise:2999-01-01"),
+        (is_official_anti_dumping_ingestion_revision, "anti-dumping:2999-01-01"),
+        (is_official_special_safeguard_ingestion_revision, "special-safeguard:2999-01-01"),
+        (is_official_countervailing_ingestion_revision, "countervailing:2999-01-01"),
+    ],
+)
+def test_future_dated_payment_revision_is_not_official(validator, revision):
+    assert validator(revision) is False
