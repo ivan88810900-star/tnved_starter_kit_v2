@@ -1,23 +1,23 @@
 {
   "acquisition_note": "cycle383 bounded PR255 payment defect review",
-  "expires_at": "2026-10-21T00:20:40.865308Z",
-  "generation": 390,
-  "holder": "/root/scheduled-cycle390-20261020T234919Z",
+  "expires_at": "2026-10-21T01:20:19.213901Z",
+  "generation": 391,
+  "holder": "/root/scheduled-cycle391-20261021T004852Z",
   "lease_repair": {},
   "previous_holder_end": {
-    "evidence_ref": "codex-thread prior automation turn: final 2489-row batch returned 'aborted by user'; turn ended by Auto-review",
-    "generation": 389,
-    "holder": "/root/scheduled-cycle389-20261020T225550Z",
-    "observed_at": "2026-10-20T23:50:30Z",
+    "evidence_ref": "codex-thread prior automation turn: 15526-15825 bounded batch returned 'aborted by user'; turn ended by Auto-review",
+    "generation": 390,
+    "holder": "/root/scheduled-cycle390-20261020T234919Z",
+    "observed_at": "2026-10-21T00:50:00Z",
     "source": "native_work",
     "terminal_status": "terminated",
-    "token": "2eeab98f85cb48b2b42906e6b14a1bd4"
+    "token": "22fdead9b2eb4508bea00058fa6bfd2b"
   },
   "release_reason": "cycle383 draft PR261 and state checkpoint completed",
   "released_by": "/root/scheduled-cycle383-20261020T161418Z",
   "schema_version": 1,
   "serialization_repair": {},
   "state": "active",
-  "token": "22fdead9b2eb4508bea00058fa6bfd2b",
-  "updated_at": "2026-10-20T23:50:40.865308Z"
+  "token": "13f2aa568e3c4317a795b2c5d19ae0de",
+  "updated_at": "2026-10-21T00:50:19.213901Z"
 }
