@@ -2307,3 +2307,16 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6312170949), [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6312173491).
 - No rate/source facts, fixtures, payment arithmetic, legal applicability, merge, deploy, database write, protected action or A6 dispatch changed. Full #244/#245 acceptance remains NOT PASS; the populated synchronized NTM snapshot remains unavailable.
 - Evidence: `.ai/orchestration/evidence/cycle400_pr255_manual_vat_status.json`; TASK_BOARD revision 923. Next continue a distinct #244 payment/source defect from fresh state, then #245.
+
+## Cycle 401 — PR #255 manual source attribution (2026-10-21 UTC)
+
+- Task `TARIFF-PR255-MANUAL-SOURCE-ATTRIBUTION-20261021`; executor `/root/scheduled-cycle401-20261021T095654Z`; lease generation 401.
+- On parent `64be642394f700e637ca3bed985533cdd7331842`, completed manual duty, VAT and excise overrides still exposed automatic `hs_*` database labels in the user-visible Smart Payments source field.
+- Draft PR #255 advanced by non-force CAS to exact head `27080f214a1cdbc6bb89e837a602a5dbaff38e72`, tree `610dad32c092e11a0dbed28665596b3aa3afdaa8`; local author commit `43a8f27db694ea1a50e00315bdf73c91fc93b498` has the identical tree.
+- Manual values now identify the corresponding manual input. Automatic paths keep their existing database/legal-source labels. Payment arithmetic, rate selection and fail-closed review precedence are unchanged.
+- Safe author checks exited 0: `python3 -Werror -m py_compile ...` and `git diff --check`. Local pytest/application import was not retried after the recorded unexpected Microsoft telemetry security stop.
+- Independent A5 `/root/a5_cycle401` returned `PASS_NO_FINDINGS`; diff-check, py_compile and AST checks exited 0.
+- Exact-head CI [run 39581564923](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39581564923) succeeded: payment-regression job `119160157120` reported **612 passed plus 229 subtests**; offline-safety job `119160156646` reported **120 plus 4 tests**.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6313328808), [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6313328495).
+- No rate/source facts, fixtures, legal applicability, merge, deploy, database write, protected action or A6 dispatch changed. Full #244/#245 acceptance remains NOT PASS; the populated synchronized NTM snapshot remains unavailable.
+- Evidence: `.ai/orchestration/evidence/cycle401_pr255_manual_source_attribution.json`; TASK_BOARD revision 924. Next continue a distinct #244 payment/source defect from fresh state, then #245.

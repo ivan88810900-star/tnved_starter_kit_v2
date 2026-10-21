@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-MANUAL-SOURCE-ATTRIBUTION-20261021",
+  "started_at": "2026-10-21T09:56:54Z",
+  "completed_at": "2026-10-21T10:04:18Z",
+  "executor": "/root/scheduled-cycle401-20261021T095654Z",
+  "lease_generation": 401,
+  "base_pr": 244,
+  "corrective_pr": 255,
+  "parent_sha": "64be642394f700e637ca3bed985533cdd7331842",
+  "published_head_sha": "27080f214a1cdbc6bb89e837a602a5dbaff38e72",
+  "tree_sha": "610dad32c092e11a0dbed28665596b3aa3afdaa8",
+  "local_author_commit": "43a8f27db694ea1a50e00315bdf73c91fc93b498",
+  "scope": "Attribute user-visible Smart Payments sources to manual duty, VAT and excise inputs instead of automatic databases.",
+  "reproduction": "On the parent, completed manual duty, VAT and excise overrides kept automatic hs-rate source labels rendered by SmartPaymentsBlock.",
+  "result": "Manual values now identify the corresponding manual input; automatic paths preserve the existing database source labels. Arithmetic, rates and fail-closed review precedence are unchanged.",
+  "author_checks": {
+    "py_compile": "exit 0",
+    "diff_check": "exit 0",
+    "pytest": "not run locally because a prior application import triggered blocked unexpected Microsoft telemetry egress"
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle401",
+    "status": "PASS_NO_FINDINGS",
+    "checks": "git diff --check, py_compile and AST parse exit 0"
+  },
+  "exact_head_ci": {
+    "status": "PASSED",
+    "run_id": 39581564923,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39581564923",
+    "jobs": {
+      "offline_safety": {
+        "job_id": 119160156646,
+        "result": "120 tests plus 4 snapshot tests passed"
+      },
+      "payment_regression": {
+        "job_id": 119160157120,
+        "result": "612 passed plus 229 subtests"
+      }
+    }
+  },
+  "receipts": {
+    "pr255_comment_id": 6313328808,
+    "issue257_comment_id": 6313328495
+  },
+  "limitations": [
+    "Full #244 product, source and legal acceptance remains NOT PASS.",
+    "The populated synchronized NTM snapshot remains unavailable; full #245 acceptance remains blocked."
+  ],
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "next_step": "Continue the next distinct unfinished #244 source/payment defect from fresh live state, then #245."
+}

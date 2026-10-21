@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 923,
+  "revision": 924,
   "runs": [
     {
       "head_sha": null,
@@ -7099,6 +7099,45 @@
         "protected_actions_performed": false,
         "evidence": ".ai/orchestration/evidence/cycle369_pr255_duty_display_consistency.json",
         "next_step": "Continue the next unfinished PR #244 source-by-source payment acceptance and fixture cleanup from fresh state; keep full #245 acceptance blocked until a lawful populated synchronized NTM snapshot exists."
+      },
+      "manual_source_attribution_checkpoint_20261021": {
+        "task_id": "TARIFF-PR255-MANUAL-SOURCE-ATTRIBUTION-20261021",
+        "started_at": "2026-10-21T09:56:54Z",
+        "completed_at": "2026-10-21T10:04:18Z",
+        "executor": "/root/scheduled-cycle401-20261021T095654Z",
+        "lease_generation": 401,
+        "base_pr": 244,
+        "corrective_pr": 255,
+        "parent_sha": "64be642394f700e637ca3bed985533cdd7331842",
+        "published_head_sha": "27080f214a1cdbc6bb89e837a602a5dbaff38e72",
+        "tree_sha": "610dad32c092e11a0dbed28665596b3aa3afdaa8",
+        "local_author_commit": "43a8f27db694ea1a50e00315bdf73c91fc93b498",
+        "scope": "Correct user-visible source attribution for manual duty, VAT and excise overrides.",
+        "result": "Manual inputs identify their manual source; automatic source labels and all calculation/fail-closed behavior remain unchanged.",
+        "author_checks": "py_compile and diff-check exit 0; local pytest/app import intentionally not run after recorded unexpected telemetry security stop",
+        "independent_a5": "/root/a5_cycle401 PASS_NO_FINDINGS; diff-check, py_compile and AST checks exit 0",
+        "exact_head_ci": {
+          "status": "PASSED",
+          "run_id": 39581564923,
+          "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39581564923",
+          "jobs": {
+            "offline_safety": 119160156646,
+            "payment_regression": 119160157120
+          },
+          "tests": "payment 612 passed plus 229 subtests; offline-safety 120 plus 4"
+        },
+        "receipts": {
+          "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6313328808",
+          "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6313328495"
+        },
+        "evidence": ".ai/orchestration/evidence/cycle401_pr255_manual_source_attribution.json",
+        "a6": "UNCHANGED_NOT_SENT",
+        "protected_actions_performed": false,
+        "unresolved": [
+          "full #244 acceptance remains NOT PASS",
+          "populated synchronized NTM snapshot remains unavailable; full #245 acceptance remains blocked"
+        ],
+        "next_step": "Continue the next distinct unfinished #244 source/payment defect from fresh live state, then #245."
       }
     },
     {
@@ -8118,7 +8157,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-21T09:02:02Z",
+  "updated_at": "2026-10-21T10:04:18Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
