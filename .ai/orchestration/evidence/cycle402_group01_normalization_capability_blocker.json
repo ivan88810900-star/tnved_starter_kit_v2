@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-ETT-GROUP01-NORMALIZATION-20261021",
+  "executor": "/root/scheduled-cycle402-20261021T101418Z",
+  "started_at": "2026-10-21T10:14:18Z",
+  "completed_at": "2026-10-21T10:22:22Z",
+  "lease_generation": 402,
+  "owner_priority": {
+    "issue": 257,
+    "instruction_comment_id": 6313111815,
+    "baseline_comment_id": 6313152129,
+    "correction_comment_id": 6313379739
+  },
+  "selected_block": {
+    "source_url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.01_2022_25.04.2022.pdf",
+    "registered_revision": "2022-04-25-group01",
+    "registered_pdf_size_bytes": 168285,
+    "registered_pdf_sha256": "7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9",
+    "raw_rows": 86,
+    "unique_codes": 86,
+    "raw_total_before": 619,
+    "normalized_before": 0,
+    "cursor": {
+      "complete": true,
+      "next_ordinal": 87
+    },
+    "duty_text_distribution": {
+      "0": 30,
+      "5": 51,
+      "5 63С)": 5
+    }
+  },
+  "preflight": {
+    "repository_source_of_truth": "GitHub connector",
+    "available_external_connectors": [
+      "GitHub"
+    ],
+    "neon_connector_available": false,
+    "object_storage_connector_available": false,
+    "local_repository_checkout_available": false,
+    "retained_group01_bytes_verified_in_this_run": false,
+    "staging_readback_performed_in_this_run": false
+  },
+  "confirmed_dependency": {
+    "path": "customs-clear/backend/app/services/staging_raw_ingest.py",
+    "branch": "agent/product-ntm-regressions-v1",
+    "blob_sha": "3649333790832fc6ca8c4232ee18debd2cc247d3",
+    "behavior": "The existing loader explicitly stops before database ingestion, normalization, and legal admission.",
+    "interpretation": "GitHub-only access cannot verify retained bytes, read the 86 live raw rows, execute normalization, or prove an idempotent staging replay."
+  },
+  "blocked_operation": {
+    "operation": "Read the retained group01 original and live raw rows, then execute and reread one bounded normalization transaction.",
+    "source": "registered private official-originals group01 object and existing tariff_ingest raw rows",
+    "destination": {
+      "project_id": "red-meadow-53765518",
+      "branch_id": "br-weathered-frost-ba9jri3c",
+      "database": "tariff_staging",
+      "schema": "tariff_ingest",
+      "environment": "non-production"
+    },
+    "result": "NOT_ISSUED_CAPABILITY_BLOCKED",
+    "reason": "This execution exposes no scoped Neon/PostgreSQL or object-storage connector. Repository instructions forbid creating credentials or bypassing the connector through another route."
+  },
+  "result": {
+    "status": "CAPABILITY_BLOCKED",
+    "raw_rows_added": 0,
+    "normalized_rows_added": 0,
+    "rejected_rows_added": 0,
+    "ambiguous_rows_added": 0,
+    "database_write": false,
+    "artifact_created": false,
+    "idempotent_replay_performed": false,
+    "legal_or_rate_admission": false
+  },
+  "resolving_action": "Run the next cycle in the existing scoped Neon connector context that can read official-originals and execute transactions on the authorized non-production tariff_staging destination; do not create credentials or retry through another route.",
+  "boundaries": {
+    "raw_reimport": false,
+    "merge": false,
+    "deploy": false,
+    "production_write": false,
+    "enforcement_change": false,
+    "permission_or_secret_change": false,
+    "a6_dispatch": false
+  }
+}
