@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-REGRESSION-CI-COVERAGE-20261021",
+  "started_at": "2026-10-21T04:14:17Z",
+  "completed_at": "2026-10-21T04:27:31Z",
+  "executor": "/root/scheduled-cycle395-20261021T041417Z",
+  "lease_generation": 395,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "previous_head_sha": "7a293776621e5a846affc4bff6cb08246d96775e",
+  "head_sha": "e71f48f5314cb427c052219aabd0645932a77f7e",
+  "tree_sha": "d5f852a4fdc32c077e3387c9eaa0e388bf430d3f",
+  "change": {
+    "file": ".github/workflows/tariff-agent-safety.yml",
+    "summary": "Expanded the exact-head payment-regression job from 14 to 23 modules so repaired quote/input, FX provenance, source-import/currentness, customs-procedure, ROP-audit and trade-remedy-audit paths are executed on every agent/core-* push.",
+    "added_modules": [
+      "tests/test_payment_quote.py",
+      "tests/test_payment_api_boolean_inputs.py",
+      "tests/test_invoice_economic_input_admission.py",
+      "tests/test_payment_fx_provenance_fail_closed.py",
+      "tests/test_source_import.py",
+      "tests/test_source_sync_index_currentness.py",
+      "tests/test_customs_procedures.py",
+      "tests/test_rop_coverage_audit.py",
+      "tests/test_trade_remedies_audit.py"
+    ]
+  },
+  "validation": {
+    "workflow_run_id": 39544044409,
+    "workflow_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39544044409",
+    "conclusion": "success",
+    "offline_safety_job_id": 119038066245,
+    "offline_safety": "success",
+    "payment_regression_job_id": 119038066469,
+    "payment_regression": "375 passed, 173 subtests passed, 2 warnings, 13.73s",
+    "warnings": [
+      "PyMuPDF fitz deprecation",
+      "Starlette TestClient httpx deprecation"
+    ]
+  },
+  "a5": "NOT_RUN_CI_SCOPE_ONLY_NO_PRODUCT_BEHAVIOR_CHANGE",
+  "product_logic_changed": false,
+  "tests_weakened": false,
+  "protected_actions_performed": false,
+  "production_write_performed": false,
+  "merge_or_deploy_performed": false,
+  "a6": "UNCHANGED_NOT_SENT",
+  "next_step": "Reproduce the candidate client-side numeric-input fallback in Calculator/SmartPayments from the fresh PR255 head before any bounded fail-closed fix; do not repeat completed fixture-isolation work."
+}
