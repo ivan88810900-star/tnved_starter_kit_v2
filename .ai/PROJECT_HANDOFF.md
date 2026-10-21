@@ -2250,3 +2250,15 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - A broader cycle393 pytest tranche was stopped by platform security after attempted Microsoft telemetry egress; it was not retried or bypassed and no broad-suite PASS is claimed.
 - No product or test data changed in this closure. No merge, deploy, staging/production write, protected action or A6 dispatch occurred. The populated synchronized NTM snapshot remains unavailable; full #244/#245 acceptance remains **NOT PASS**.
 - Evidence: `.ai/orchestration/evidence/cycle394_pr255_source_import_ci_closure.json`; TASK_BOARD revision 918. Next continue the next distinct #244 payment/source defect from fresh state without repeating cycle352/cycle393 work.
+
+## Cycle 396 — PR #255 payment CI coverage recovery (2026-10-21 UTC)
+
+- Task `TARIFF-PR255-PAYMENT-CI-COVERAGE-RECOVERY-20261021`; executor `/root/scheduled-cycle396-20261021T045631Z`; lease generation 396.
+- The preceding cycle published a workflow-only PR #255 commit but its TASK_BOARD revision 919 write was denied at the connector approval boundary. The product result remained intact and is recovered here: exact HEAD `e71f48f5314cb427c052219aabd0645932a77f7e`, tree `d5f852a4fdc32c077e3387c9eaa0e388bf430d3f`.
+- The one-file `+9/-0` diff adds nine already repaired payment/source modules to the mandatory `payment-regression` job. Static validation found 23 unique existing paths, no duplicates, and unchanged existing workflow steps/gates; `git diff --check` plus path/structure assertions exited 0.
+- Independent read-only A5 `/root/a5_cycle396` returned `PASS_NO_FINDINGS` on exact diff/SHA/tree and the CI binding.
+- Exact-head push [run 39544044409](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39544044409) attempt 1 completed with success: offline-safety job `119038066245` success; payment-regression job `119038066469` success with **375 passed plus 173 subtests** and two warnings.
+- A local workflow-equivalent pytest attempt in cycle396 was stopped by platform security after unexpected Microsoft telemetry. It was not retried or bypassed; no local or full-suite PASS is claimed.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6308445972) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6308448061).
+- Product code, tests/data, rates and legal applicability were not changed. No merge, deploy, database write, protected action or A6 dispatch occurred. Full #244/#245 acceptance remains **NOT PASS** and the populated synchronized NTM snapshot remains unavailable.
+- Evidence: `.ai/orchestration/evidence/cycle396_pr255_payment_ci_coverage_recovery.json`; TASK_BOARD revision 919. Next continue the next distinct #244 payment/source defect from fresh state without repeating already repaired isolation modules.

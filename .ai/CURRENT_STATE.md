@@ -604,3 +604,12 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Cycle393 author tests and independent A5 remain bound to the unchanged tree. The bounded source-import isolation block is now **DRAFT PUBLISHED / A5 PASS / EXACT-HEAD CI PASS**.
 - This is a CI/state closure only. No product/test data, merge, deploy, database, protected action or A6 dispatch changed. Full #244 acceptance remains NOT PASS and the populated synchronized NTM snapshot remains unavailable.
 - Evidence: `.ai/orchestration/evidence/cycle394_pr255_source_import_ci_closure.json`; TASK_BOARD revision 918. Next continue the next distinct PR #244 payment/source defect from fresh live state.
+
+## Cycle 396 checkpoint — PR #255 payment CI coverage recovery (2026-10-21)
+
+- Draft PR #255 advanced by the preceding workflow-only cycle to exact HEAD/tree `e71f48f5314cb427c052219aabd0645932a77f7e` / `d5f852a4fdc32c077e3387c9eaa0e388bf430d3f`; its denied TASK_BOARD write is recovered here.
+- Nine already repaired payment/source modules are now mandatory in the payment-regression job. Static validation passed with one changed workflow file, 23 unique existing paths and no duplicates.
+- Independent A5 `/root/a5_cycle396` returned `PASS_NO_FINDINGS`. Exact-head [run 39544044409](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39544044409) succeeded: offline-safety passed and payment-regression passed **375 tests plus 173 subtests**.
+- Local pytest was platform-stopped after unexpected Microsoft telemetry and was not retried or bypassed. This is bounded CI coverage, not a full backend/product acceptance claim.
+- No product/test data, rate/legal semantics, database, merge, deploy, protected action or A6 dispatch changed. Full #244 remains NOT PASS; populated synchronized NTM remains unavailable.
+- Evidence: `.ai/orchestration/evidence/cycle396_pr255_payment_ci_coverage_recovery.json`; TASK_BOARD revision 919. Next continue the next distinct PR #244 payment/source defect from fresh state.
