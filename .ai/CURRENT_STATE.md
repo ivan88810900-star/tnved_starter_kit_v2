@@ -613,3 +613,14 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Local pytest was platform-stopped after unexpected Microsoft telemetry and was not retried or bypassed. This is bounded CI coverage, not a full backend/product acceptance claim.
 - No product/test data, rate/legal semantics, database, merge, deploy, protected action or A6 dispatch changed. Full #244 remains NOT PASS; populated synchronized NTM remains unavailable.
 - Evidence: `.ai/orchestration/evidence/cycle396_pr255_payment_ci_coverage_recovery.json`; TASK_BOARD revision 919. Next continue the next distinct PR #244 payment/source defect from fresh state.
+
+## Cycle 402 checkpoint — group01 normalization capability blocker (2026-10-21)
+
+- Owner priority is acknowledged: selected the existing EEC ETT group01 block, not another generic payment defect. Registered source is `ru.01_2022_25.04.2022.pdf`, revision `2022-04-25-group01`, 168,285 bytes, SHA-256 `7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9`.
+- Live owner baseline remains 86/86 raw rows, zero mismatches, total raw 619, normalized 0, complete cursor at next ordinal 87. No raw replay or fictitious growth was performed.
+- This execution exposes only the GitHub connector. The scoped Neon/PostgreSQL and object-storage connectors used by cycle363 are absent, and there is no local repository/artifact checkout. Therefore retained bytes cannot be independently reread and the authorized `tariff_staging.tariff_ingest` normalization transaction/idempotent replay cannot be issued or verified.
+- The current reusable loader at blob `3649333790832fc6ca8c4232ee18debd2cc247d3` explicitly stops before database ingestion, normalization and legal admission. GitHub-only execution is a concrete dependency blocker, not evidence of a data result.
+- Result: **CAPABILITY_BLOCKED**; raw +0, normalized +0, rejected +0, ambiguous +0; no database write or artifact. No alternate credentials, transport or executor was attempted.
+- Evidence: `.ai/orchestration/evidence/cycle402_group01_normalization_capability_blocker.json`.
+- Resolving action: resume this same group01 block in the existing scoped Neon connector context, verify the retained bytes first, then execute/reread the bounded normalization and identical replay. Do not re-import the 86 raw rows and do not infer current legal rates from the historical source.
+
