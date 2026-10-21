@@ -25,6 +25,7 @@ from app.services.payment_data_coverage import (
     run_payment_data_coverage_report,
 )
 from app.services.payment_data_normalization import normalize_excise, run_payment_data_normalization_report
+from app.services.payment_revision_utils import is_conservative_official_excise_source_url
 
 try:
     from fastapi.testclient import TestClient
@@ -32,6 +33,48 @@ try:
     _API_OK = True
 except ImportError:
     _API_OK = False
+
+
+class TestExciseSourceUrlValidation(unittest.TestCase):
+    def test_registry_domain_requires_dns_label_boundary(self) -> None:
+        registry_url = "https://eec.eaeunion.org/registry/excise"
+
+        self.assertTrue(
+            is_conservative_official_excise_source_url(
+                "https://eec.eaeunion.org/docs/excise",
+                registry_official_url=registry_url,
+            )
+        )
+        self.assertTrue(
+            is_conservative_official_excise_source_url(
+                "https://docs.eec.eaeunion.org/excise",
+                registry_official_url=registry_url,
+            )
+        )
+        self.assertFalse(
+            is_conservative_official_excise_source_url(
+                "https://not-eec.eaeunion.org/excise",
+                registry_official_url=registry_url,
+            )
+        )
+        self.assertFalse(
+            is_conservative_official_excise_source_url(
+                "https://evil.example\\@docs.eec.eaeunion.org/excise",
+                registry_official_url=registry_url,
+            )
+        )
+        self.assertFalse(
+            is_conservative_official_excise_source_url(
+                "https://evil.example@docs.eec.eaeunion.org/excise",
+                registry_official_url=registry_url,
+            )
+        )
+        self.assertFalse(
+            is_conservative_official_excise_source_url(
+                "https://[eec.eaeunion.org/excise",
+                registry_official_url=registry_url,
+            )
+        )
 
 
 _TABLES = [
@@ -68,6 +111,7 @@ def _start_patches(sm: sessionmaker) -> tuple[unittest.mock._patch, ...]:
         unittest.mock.patch("app.services.payment_data_coverage.SessionLocal", sm),
         unittest.mock.patch("app.services.payment_data_normalization.SessionLocal", sm),
         unittest.mock.patch("app.services.normative_store.SessionLocal", sm),
+        unittest.mock.patch("app.services.rate_display.SessionLocal", sm),
     )
     for p in patches:
         p.start()
@@ -244,9 +288,55 @@ class TestExciseApplyOfficial(unittest.TestCase):
             self.assertEqual(row.excise_source_revision, "excise:2026-05-01")
             st = db.query(SourceStatus).filter(SourceStatus.source_code == "EEC_EXCISE").first()
             self.assertIsNotNone(st)
+            self.assertEqual(row.excise_source_url, st.source_url)
+            self.assertEqual(row.excise_synced_at, st.synced_at)
             logs = db.query(SyncLog).filter(SyncLog.source_code == "EEC_EXCISE").all()
             self.assertEqual(len(logs), 1)
             self.assertEqual(logs[0].status, "OK")
+
+    def test_repeat_apply_same_revision_keeps_display_admissible(self) -> None:
+        import app.services.excise_ingestion as ei
+        from app.services.rate_display import resolve_excise_for_hs
+
+        _seed_hs_rates_for_bundle(self.sm, duty_revision="ett:2026-05-01")
+        with _BundleFixture(_official_excise_bundle_payload()) as (root, rel):
+            with unittest.mock.patch.object(ei, "_BACKEND_ROOT", root):
+                first = run_excise_apply(rel_path=rel)
+                second = run_excise_apply(rel_path=rel)
+
+        self.assertEqual(first["status"], "OK")
+        self.assertEqual(second["status"], "OK")
+        self.assertEqual(second["row_counts"]["update"], 0)
+        self.assertEqual(second["row_counts"]["skip"], 2)
+        self.assertEqual(resolve_excise_for_hs("2203009900")[:2], ("percent", 5.0))
+
+    def test_row_official_urls_without_bundle_url_keep_display_admissible(self) -> None:
+        import app.services.excise_ingestion as ei
+        from app.services.rate_display import resolve_excise_for_hs
+
+        payload = _official_excise_bundle_payload(
+            rates=[
+                {
+                    "hs_code": "2203009900",
+                    "hs_prefix": "2203",
+                    "excise_type": "percent",
+                    "excise_value": 5.0,
+                    "excise_basis": "synthetic official row fixture",
+                    "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/akciz/",
+                }
+            ]
+        )
+        payload.pop("official_excise_url")
+        _seed_hs_rates_for_bundle(self.sm, duty_revision="ett:2026-05-01")
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(ei, "_BACKEND_ROOT", root):
+                report = run_excise_apply(rel_path=rel)
+
+        self.assertEqual(report["status"], "OK")
+        with self.sm() as db:
+            status = db.query(SourceStatus).filter(SourceStatus.source_code == "EEC_EXCISE").one()
+            self.assertTrue(status.source_url.startswith("https://"))
+        self.assertEqual(resolve_excise_for_hs("2203009900")[:2], ("percent", 5.0))
 
     def test_preserve_duty_and_vat_provenance(self) -> None:
         import app.services.excise_ingestion as ei

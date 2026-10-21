@@ -228,6 +228,22 @@ def _build_warnings(line_items: list[PaymentQuoteLineItem], raw: dict[str, Any])
             )
         )
 
+    animal_review_reasons = {
+        "vat_live_animal_characteristic_required",
+        "vat_live_animal_characteristic_invalid",
+        "vat_live_animal_characteristic_conflict",
+        "vat_live_animal_mapping_missing",
+    }
+    if animal_review_reasons.intersection(raw.get("payment_review_reasons") or []):
+        scope = raw.get("live_animal_vat_scope") or {}
+        warnings.append(
+            PaymentQuoteWarning(
+                code="vat_live_animal_characteristic_review",
+                message=str(scope.get("reason") or "Для ставки НДС требуется проверить племенной статус животного."),
+                severity="warning",
+            )
+        )
+
     for item in line_items:
         if item.status == "manual_review_required":
             warnings.append(
@@ -323,13 +339,29 @@ def _build_assumptions(payload: dict[str, Any], raw: dict[str, Any]) -> list[Pay
         assumptions.append(
             PaymentQuoteAssumption(key="net_weight_kg", label="Вес нетто", value=f"{weight} кг")
         )
+    breeding_status = payload.get("live_animal_breeding_status")
+    if breeding_status:
+        labels = {
+            "breeding": "племенное",
+            "non_breeding": "неплеменное (подтверждено документами)",
+            "unknown": "не подтверждено",
+        }
+        assumptions.append(
+            PaymentQuoteAssumption(
+                key="live_animal_breeding_status",
+                label="Племенной статус",
+                value=labels.get(str(breeding_status), str(breeding_status)),
+            )
+        )
     return assumptions
 
 
 def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     """Собирает product-facing quote поверх compute_payments без изменения расчётной семантики."""
     hs_code = str(payload.get("hs_code") or "").strip()
-    description = (payload.get("description") or "").strip() or None
+    description = (
+        payload.get("product_description") or payload.get("description") or ""
+    ).strip() or None
     invoice_currency = str(payload.get("invoice_currency") or "RUB").upper().strip()
     user_excise = float(payload["excise"]) if payload.get("excise") is not None else None
 
@@ -338,6 +370,8 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         raise ValueError(f"Неизвестная валюта инвойса: {invoice_currency}")
 
     calc_payload = dict(payload)
+    if description is not None:
+        calc_payload["product_description"] = description
     invoice_fx = float(rates.get(invoice_currency) or 1.0)
     calc_payload["customs_value"] = float(payload.get("customs_value") or 0.0) * invoice_fx
     calc_payload["_fx_rates"] = rates
@@ -402,6 +436,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         )
 
     manual_duty = payload.get("duty_rate") is not None
+    manual_vat = payload.get("vat_rate") is not None
     duty_source_pending = duty_rule_source_pending or (rate_source_pending and not manual_duty)
     duty_status: PaymentLineStatus = "manual_override" if manual_duty else "applied"
     duty_reason = str((raw.get("legal_basis") or {}).get("duty") or "")
@@ -425,13 +460,34 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         )
     vat_pending = str(breakdown.get("vat_status") or "applied") == "manual_review"
     vat_amount = None if vat_pending else float(breakdown.get("vat") or 0.0)
-    vat_status: PaymentLineStatus = "manual_review_required" if vat_pending else "applied"
+    vat_status: PaymentLineStatus = (
+        "manual_review_required"
+        if vat_pending
+        else ("manual_override" if manual_vat else "applied")
+    )
     vat_reason = str(breakdown.get("vat_reason") or "")
     if vat_pending:
-        vat_reason = (
+        animal_scope = raw.get("live_animal_vat_scope") or {}
+        vat_reason = str(animal_scope.get("reason") or "") or (
             "Сумма НДС не окончательна: хотя бы один вход в базу НДС или сама ставка "
             "не имеют подтверждённой применимости и требуют ручной проверки."
         )
+
+    duty_source = (
+        "ручной ввод ставки пошлины"
+        if manual_duty
+        else "hs_duty_rules / hs_rates (ЕТТ ЕАЭС)"
+    )
+    vat_source = (
+        "ручной ввод ставки НДС"
+        if manual_vat
+        else "hs_rates / vat_preferences (НК РФ)"
+    )
+    excise_source = (
+        "ручной ввод суммы акциза"
+        if user_excise is not None
+        else "hs_rates (НК РФ ст. 193)"
+    )
 
     line_items: list[PaymentQuoteLineItem] = [
         PaymentQuoteLineItem(
@@ -444,7 +500,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             ),
             status=duty_status,
             reason=duty_reason,
-            source="hs_duty_rules / hs_rates (ЕТТ ЕАЭС)",
+            source=duty_source,
             rate_label=f"{breakdown.get('duty_rate')}%" if breakdown.get("duty_rate") is not None else None,
         ),
         PaymentQuoteLineItem(
@@ -453,7 +509,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             amount_rub=vat_amount,
             status=vat_status,
             reason=vat_reason,
-            source="hs_rates / vat_preferences (НК РФ)",
+            source=vat_source,
             rate_label=f"{breakdown.get('vat_rate')}%",
         ),
         PaymentQuoteLineItem(
@@ -470,7 +526,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             amount_rub=excise_amount,
             status=excise_status,
             reason=excise_reason,
-            source="hs_rates (НК РФ ст. 193)",
+            source=excise_source,
         ),
         _resolve_antidumping_line(raw=raw),
         _resolve_special_duty_line(raw=raw, country=country, hs_code=hs_code),
@@ -492,9 +548,14 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     total_payable: float | None = (
         None if has_uncertain or engine_total is None else float(engine_total)
     )
+    quote_status = (
+        "REVIEW_REQUIRED"
+        if has_uncertain
+        else str(raw.get("status") or "OK")
+    )
 
     return PaymentQuoteResponse(
-        status=str(raw.get("status") or "OK"),
+        status=quote_status,
         hs_code=hs_code,
         country=country,
         description=description,

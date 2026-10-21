@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
 PaymentLineStatus = Literal[
     "applied",
@@ -52,11 +52,41 @@ class PaymentQuoteRequest(BaseModel):
     vat_rate: float | None = None
     excise: float | None = None
     country: str | None = Field(default=None, validation_alias=AliasChoices("country", "country_of_origin"))
+    manufacturer: str | None = None
     quantity: float | None = None
     net_weight_kg: float | None = Field(default=None, validation_alias=AliasChoices("net_weight_kg", "weight_kg"))
     extra_quantity: float | None = None
     apply_reduced_vat: bool = False
-    description: str | None = Field(default=None, description="Описание товара (контекст для UI, не влияет на расчёт).")
+    live_animal_breeding_status: Literal["breeding", "non_breeding", "unknown"] | None = Field(
+        default=None,
+        description=(
+            "Подтверждённый по товарным документам племенной статус для кодов 0102–0105."
+        ),
+    )
+    product_description: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("product_description", "description"),
+        description="Описание товара; используется только для точного scope-match специальных пошлин.",
+    )
+
+    @field_validator(
+        "customs_value",
+        "freight",
+        "insurance",
+        "duty_rate",
+        "vat_rate",
+        "excise",
+        "quantity",
+        "net_weight_kg",
+        "extra_quantity",
+        mode="before",
+    )
+    @classmethod
+    def reject_boolean_economic_inputs(cls, value):
+        """JSON booleans are not monetary or physical quantities."""
+        if isinstance(value, bool):
+            raise ValueError("значение должно быть числом, а не boolean")
+        return value
 
 
 class PaymentQuoteResponse(BaseModel):

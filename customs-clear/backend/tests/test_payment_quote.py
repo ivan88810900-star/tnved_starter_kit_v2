@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from app.services.normative_store import init_db
 from app.services.payment_engine import compute_payments
@@ -16,6 +17,281 @@ try:
     _API_OK = True
 except ImportError:
     _API_OK = False
+
+
+def _complete_payment_result() -> dict:
+    """Engine result with final arithmetic but no trade-remedy coverage."""
+    return {
+        "status": "OK",
+        "customs_value": 100_000.0,
+        "country": "DE",
+        "breakdown": {
+            "duty": 5_000.0,
+            "duty_rate": 5.0,
+            "vat": 23_100.0,
+            "vat_rate": 22.0,
+            "customs_fee": 1_067.0,
+            "excise": 0.0,
+            "antidumping": 0.0,
+            "special_duties_amount": 0.0,
+            "total_payable": 29_167.0,
+        },
+        "auto_detected": {
+            "excise_type": "none",
+            "antidumping_type": "none",
+        },
+        "data_quality": {
+            "match_length": 10,
+            "confidence": "high",
+            "antidumping_status": "n/a",
+        },
+        "payment_review_reasons": [],
+        "special_duties": [],
+        "sources": [],
+        "legal_basis": {},
+    }
+
+
+class PaymentQuoteStatusConsistencyTests(unittest.TestCase):
+    def _patch_complete_engine_without_special_duty_coverage(self):
+        return (
+            patch(
+                "app.services.payment_quote_service.get_rates_map",
+                return_value={"RUB": 1.0},
+            ),
+            patch(
+                "app.services.payment_quote_service.compute_payments",
+                return_value=_complete_payment_result(),
+            ),
+            patch(
+                "app.services.payment_quote_service._special_duties_configured_for_hs",
+                return_value=False,
+            ),
+        )
+
+    def test_unconfigured_special_duty_contour_marks_quote_for_review(self):
+        rates_patch, compute_patch, coverage_patch = (
+            self._patch_complete_engine_without_special_duty_coverage()
+        )
+        with rates_patch, compute_patch, coverage_patch:
+            quote = build_payment_quote(
+                {
+                    "hs_code": "0101210000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "country": "DE",
+                }
+            )
+
+        special = next(item for item in quote.line_items if item.code == "special_duty")
+        self.assertEqual(special.status, "not_configured")
+        self.assertIsNone(quote.total_payable_rub)
+        self.assertEqual(quote.status, "REVIEW_REQUIRED")
+
+    def test_manual_vat_rate_is_labeled_as_manual_override(self):
+        raw = _complete_payment_result()
+        raw["breakdown"].update(
+            vat=10_500.0,
+            vat_rate=10.0,
+            vat_reason="Указано вручную: 10%",
+            total_payable=16_567.0,
+        )
+        rates_patch, _, coverage_patch = (
+            self._patch_complete_engine_without_special_duty_coverage()
+        )
+        with (
+            rates_patch,
+            patch(
+                "app.services.payment_quote_service.compute_payments",
+                return_value=raw,
+            ),
+            coverage_patch,
+        ):
+            quote = build_payment_quote(
+                {
+                    "hs_code": "0101210000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "country": "DE",
+                    "vat_rate": 10,
+                }
+            )
+
+        vat = next(item for item in quote.line_items if item.code == "vat")
+        self.assertEqual(vat.status, "manual_override")
+        self.assertEqual(vat.amount_rub, 10_500.0)
+        self.assertIn("вручную", vat.reason.lower())
+        self.assertEqual(vat.source, "ручной ввод ставки НДС")
+
+    def test_manual_payment_inputs_do_not_claim_automatic_database_sources(self):
+        raw = _complete_payment_result()
+        raw["breakdown"].update(
+            duty=7_000.0,
+            duty_rate=7.0,
+            vat=24_420.0,
+            vat_rate=22.0,
+            excise=4_000.0,
+            total_payable=36_487.0,
+        )
+        rates_patch, _, coverage_patch = (
+            self._patch_complete_engine_without_special_duty_coverage()
+        )
+        with (
+            rates_patch,
+            patch(
+                "app.services.payment_quote_service.compute_payments",
+                return_value=raw,
+            ),
+            coverage_patch,
+        ):
+            quote = build_payment_quote(
+                {
+                    "hs_code": "0101210000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "country": "DE",
+                    "duty_rate": 7,
+                    "vat_rate": 22,
+                    "excise": 4_000,
+                }
+            )
+
+        line_items = {item.code: item for item in quote.line_items}
+        self.assertEqual(line_items["duty"].status, "manual_override")
+        self.assertEqual(line_items["duty"].source, "ручной ввод ставки пошлины")
+        self.assertEqual(line_items["vat"].status, "manual_override")
+        self.assertEqual(line_items["vat"].source, "ручной ввод ставки НДС")
+        self.assertEqual(line_items["excise"].status, "manual_override")
+        self.assertEqual(line_items["excise"].source, "ручной ввод суммы акциза")
+
+    def test_automatic_payment_inputs_keep_database_sources(self):
+        rates_patch, compute_patch, coverage_patch = (
+            self._patch_complete_engine_without_special_duty_coverage()
+        )
+        with rates_patch, compute_patch, coverage_patch:
+            quote = build_payment_quote(
+                {
+                    "hs_code": "0101210000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "country": "DE",
+                }
+            )
+
+        line_items = {item.code: item for item in quote.line_items}
+        self.assertEqual(
+            line_items["duty"].source,
+            "hs_duty_rules / hs_rates (ЕТТ ЕАЭС)",
+        )
+        self.assertEqual(
+            line_items["vat"].source,
+            "hs_rates / vat_preferences (НК РФ)",
+        )
+        self.assertEqual(line_items["excise"].source, "hs_rates (НК РФ ст. 193)")
+
+    def test_manual_vat_rate_stays_withheld_when_vat_basis_needs_review(self):
+        raw = _complete_payment_result()
+        raw["status"] = "REVIEW_REQUIRED"
+        raw["breakdown"].update(
+            vat=None,
+            vat_rate=10.0,
+            vat_reason="Указано вручную: 10%",
+            vat_status="manual_review",
+            vat_provisional=10_500.0,
+            total_payable=None,
+            total_payable_status="withheld",
+        )
+        rates_patch, _, coverage_patch = (
+            self._patch_complete_engine_without_special_duty_coverage()
+        )
+        with (
+            rates_patch,
+            patch(
+                "app.services.payment_quote_service.compute_payments",
+                return_value=raw,
+            ),
+            coverage_patch,
+        ):
+            quote = build_payment_quote(
+                {
+                    "hs_code": "0101210000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "country": "DE",
+                    "vat_rate": 10,
+                }
+            )
+
+        vat = next(item for item in quote.line_items if item.code == "vat")
+        self.assertEqual(vat.status, "manual_review_required")
+        self.assertIsNone(vat.amount_rub)
+        self.assertIsNone(quote.total_payable_rub)
+
+    @unittest.skipUnless(_API_OK, "payment quote API tests need FastAPI app")
+    def test_api_never_returns_ok_with_withheld_total(self):
+        rates_patch, compute_patch, coverage_patch = (
+            self._patch_complete_engine_without_special_duty_coverage()
+        )
+        with rates_patch, compute_patch, coverage_patch:
+            response = TestClient(app).post(
+                "/api/payments/quote",
+                json={
+                    "hs_code": "0101210000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "country": "DE",
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["status"], "REVIEW_REQUIRED")
+        self.assertIsNone(body["total_payable_rub"])
+
+    @unittest.skipUnless(_API_OK, "payment quote API tests need FastAPI app")
+    def test_api_rejects_negative_economic_input(self):
+        """API не возвращает quote для отрицательного фрахта."""
+        with patch(
+            "app.services.payment_quote_service.get_rates_map",
+            return_value={"RUB": 1.0},
+        ):
+            response = TestClient(app).post(
+                "/api/payments/quote",
+                json={
+                    "hs_code": "8509400000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "freight": -1,
+                },
+            )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Стоимость фрахта", response.json()["detail"])
+
+    @unittest.skipUnless(_API_OK, "payment quote API tests need FastAPI app")
+    def test_api_rejects_boolean_economic_inputs_before_float_coercion(self):
+        """Pydantic не должен превращать JSON boolean в 0.0/1.0."""
+        for key, value in (
+            ("customs_value", True),
+            ("freight", True),
+            ("insurance", False),
+            ("duty_rate", True),
+            ("vat_rate", False),
+            ("excise", True),
+            ("quantity", True),
+            ("net_weight_kg", False),
+            ("extra_quantity", True),
+        ):
+            with self.subTest(key=key):
+                payload = {
+                    "hs_code": "8509400000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    key: value,
+                }
+                response = TestClient(app).post("/api/payments/quote", json=payload)
+                self.assertEqual(response.status_code, 422)
+                self.assertIn("boolean", response.text)
 
 
 class PaymentQuoteServiceTests(unittest.TestCase):
@@ -104,6 +380,33 @@ class PaymentQuoteServiceTests(unittest.TestCase):
         self.assertTrue(any(a.key == "country" for a in quote.assumptions))
         self.assertIsInstance(quote.sources, list)
 
+    def test_ambiguous_live_animal_quote_requires_characteristic(self):
+        quote = self._quote(hs_code="0102291000", customs_value=100_000)
+        vat = self._line(quote, "vat")
+
+        self.assertEqual(quote.status, "REVIEW_REQUIRED")
+        self.assertEqual(vat.status, "manual_review_required")
+        self.assertIsNone(vat.amount_rub)
+        self.assertTrue(
+            any(w.code == "vat_live_animal_characteristic_review" for w in quote.warnings)
+        )
+
+    def test_confirmed_non_breeding_live_animal_quote_uses_vat10(self):
+        quote = self._quote(
+            hs_code="0102291000",
+            customs_value=100_000,
+            live_animal_breeding_status="non_breeding",
+        )
+        vat = self._line(quote, "vat")
+
+        self.assertEqual(vat.rate_label, "10.0%")
+        self.assertTrue(
+            any(
+                a.key == "live_animal_breeding_status" and "неплеменное" in a.value
+                for a in quote.assumptions
+            )
+        )
+
 
 @unittest.skipUnless(_API_OK, "payment quote API tests need FastAPI app")
 class PaymentQuoteApiTests(unittest.TestCase):
@@ -147,3 +450,14 @@ class PaymentQuoteApiTests(unittest.TestCase):
         self.assertEqual(ad["status"], "manual_review_required")
         self.assertIsNone(ad["amount_rub"])
         self.assertIsNone(body["total_payable_rub"])
+
+    def test_api_rejects_untyped_live_animal_characteristic(self):
+        r = self.client.post(
+            "/api/payments/quote",
+            json={
+                "hs_code": "0102291000",
+                "customs_value": 100_000,
+                "live_animal_breeding_status": "probably-not-breeding",
+            },
+        )
+        self.assertEqual(r.status_code, 422)

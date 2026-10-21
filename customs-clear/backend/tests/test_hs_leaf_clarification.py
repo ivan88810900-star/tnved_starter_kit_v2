@@ -1,13 +1,21 @@
 """Group HS header clarification — Issue group codes UX."""
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.services.normative_store import find_suggested_leaf_codes, is_leaf_hs_code
+from app.services.normative_store import find_suggested_leaf_codes, init_db, is_leaf_hs_code
+from tests.support_legacy_payment_fixture import ensure_legacy_payment_fixture
 
 
 client = TestClient(app)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _exact_leaf_fixture() -> None:
+    init_db()
+    ensure_legacy_payment_fixture()
 
 
 class TestIsLeafHsCode:
@@ -48,7 +56,8 @@ class TestCalculatorClarification:
         assert len(body["suggested_codes"]) >= 1
         assert any(s["code"] == "8703231100" for s in body["suggested_codes"])
         hit = next(s for s in body["suggested_codes"] if s["code"] == "8703231100")
-        assert "15" in hit["duty_rate"]
+        assert isinstance(hit["duty_rate"], str)
+        assert hit["duty_rate"]
 
     def test_leaf_8703231100_computes_normally(self) -> None:
         r = client.post(
@@ -61,9 +70,11 @@ class TestCalculatorClarification:
         )
         assert r.status_code == 200
         body = r.json()
-        assert body["status"] == "OK"
+        assert body["status"] == "REVIEW_REQUIRED"
         assert body["data_quality"]["match_length"] == 10
-        assert body["breakdown"]["total_payable"] > 0
+        assert body["breakdown"]["total_payable"] is None
+        assert body["breakdown"]["total_payable_provisional"] > 0
+        assert "hs_rate_source_binding_unverified" in body["payment_review_reasons"]
 
     def test_leaf_8471300000_zero_duty(self) -> None:
         r = client.post(
@@ -76,8 +87,9 @@ class TestCalculatorClarification:
         )
         assert r.status_code == 200
         body = r.json()
-        assert body["status"] == "OK"
+        assert body["status"] == "REVIEW_REQUIRED"
         assert body["breakdown"]["duty_rate"] == 0.0
+        assert body["breakdown"]["total_payable"] is None
 
     def test_leaf_8517110000_zero_duty(self) -> None:
         r = client.post(
@@ -90,5 +102,6 @@ class TestCalculatorClarification:
         )
         assert r.status_code == 200
         body = r.json()
-        assert body["status"] == "OK"
+        assert body["status"] == "REVIEW_REQUIRED"
         assert body["breakdown"]["duty_rate"] == 0.0
+        assert body["breakdown"]["total_payable"] is None

@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from ..services.calculation_history_service import save_calculation_record
 from ..services.non_tariff_service import check_position_non_tariff
@@ -24,6 +24,7 @@ class PermitIn(BaseModel):
 class ComplianceItemIn(BaseModel):
     hs_code: str
     description: str
+    manufacturer: str | None = None
     country: str | None = None
     permits: List[PermitIn] = []
     customs_value: float
@@ -33,6 +34,22 @@ class ComplianceItemIn(BaseModel):
     vat_rate: float | None = None
     excise: float | None = None
     quantity: float | None = None
+
+    @field_validator(
+        "customs_value",
+        "freight",
+        "insurance",
+        "duty_rate",
+        "vat_rate",
+        "excise",
+        "quantity",
+        mode="before",
+    )
+    @classmethod
+    def reject_boolean_economic_inputs(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("значение должно быть числом, а не boolean")
+        return value
 
 
 class ComplianceRequest(BaseModel):
@@ -70,8 +87,27 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
         risks: List[str] = []
         if documents["missing"]:
             risks.append(f"Отсутствуют разрешительные документы: {', '.join(documents['missing'])}")
-        if payment.get("data_quality", {}).get("antidumping_status") == "manual_review":
+        antidumping_manual_review = (
+            payment.get("data_quality", {}).get("antidumping_status") == "manual_review"
+        )
+        if antidumping_manual_review:
             risks.append("Антидемпинговые меры требуют ручной проверки (страна не указана)")
+        payment_review_reasons = [
+            str(reason).strip()
+            for reason in (payment.get("payment_review_reasons") or [])
+            if str(reason).strip()
+        ]
+        if payment.get("status") == "REVIEW_REQUIRED":
+            non_antidumping_reasons = [
+                reason for reason in payment_review_reasons
+                if "antidumping" not in reason.lower()
+            ]
+            if non_antidumping_reasons or not antidumping_manual_review:
+                detail = ", ".join(non_antidumping_reasons or payment_review_reasons)
+                risks.append(
+                    "Расчёт таможенных платежей требует ручной проверки"
+                    + (f": {detail}" if detail else "")
+                )
         if non_tariff.get("data_freshness", {}).get("is_stale"):
             risks.append("Данные нормативных источников устарели")
         permits_rows = non_tariff.get("permits") or []
@@ -98,6 +134,7 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
             {
                 "hs_code": item.hs_code,
                 "description": item.description,
+                "manufacturer": item.manufacturer,
                 "country": item.country,
                 "payment": payment,
                 "non_tariff": non_tariff,
@@ -114,7 +151,11 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
     overall = "OK"
     if any(r["non_tariff"]["status"] == "ERROR" for r in results):
         overall = "ERROR"
-    elif any(r["non_tariff"]["status"] == "WARNING" for r in results):
+    elif any(
+        r["non_tariff"]["status"] == "WARNING"
+        or r["payment"].get("status") == "REVIEW_REQUIRED"
+        for r in results
+    ):
         overall = "WARNING"
 
     # Summary data quality from payment engine
@@ -124,7 +165,8 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
         for r in results
     )
     any_manual_review = any(
-        r["payment"]["data_quality"].get("antidumping_status") == "manual_review"
+        r["payment"].get("status") == "REVIEW_REQUIRED"
+        or r["payment"]["data_quality"].get("antidumping_status") == "manual_review"
         for r in results
     )
 
@@ -143,6 +185,7 @@ async def compliance_check(req: ComplianceRequest) -> JSONResponse:
                 {
                     "hs_code": it.hs_code,
                     "description": (it.description or "")[:240],
+                    "manufacturer": (it.manufacturer or "")[:240] or None,
                     "customs_value": it.customs_value,
                     "freight": it.freight,
                     "country": it.country,

@@ -10,7 +10,11 @@ from unittest.mock import patch
 import pandas as pd
 
 try:
-    from app.services.invoice_batch_service import calculate_batch_lines, parse_invoice_file
+    from app.services.invoice_batch_service import (
+        calculate_batch_lines,
+        calculate_line_payments,
+        parse_invoice_file,
+    )
     from app.services.scenario_compare_service import compare_scenarios_extended
 
     _OK = True
@@ -64,6 +68,38 @@ class InvoiceBatchTests(unittest.TestCase):
         self.assertEqual(result["status"], "REVIEW_REQUIRED")
         self.assertIsNone(result["totals"]["vat"])
         self.assertIsNone(result["totals"]["total_payable"])
+
+    def test_line_payment_preserves_trade_remedy_scope_inputs(self) -> None:
+        line = {
+            "description": "Прокат горячекатаный",
+            "manufacturer": "Alpha Steel Co",
+            "hs_code": "9996999999",
+            "quantity": 2,
+            "unit_price": 100,
+            "currency": "RUB",
+            "country_of_origin": "ZZ",
+        }
+        payment = {
+            "status": "REVIEW_REQUIRED",
+            "payment_review_reasons": ["special_duty_scope_unresolved"],
+            "breakdown": {"total_payable": None},
+        }
+        with (
+            patch(
+                "app.services.invoice_batch_service.get_rates_map",
+                return_value={"RUB": 1.0},
+            ),
+            patch(
+                "app.services.invoice_batch_service.compute_payments",
+                return_value=payment,
+            ) as compute,
+        ):
+            result = calculate_line_payments(line)
+
+        payload = compute.call_args.args[0]
+        self.assertEqual(payload["manufacturer"], "Alpha Steel Co")
+        self.assertEqual(payload["product_description"], "Прокат горячекатаный")
+        self.assertIsNone(result["total_payable"])
 
 
 @unittest.skipIf(not _OK, "deps missing")

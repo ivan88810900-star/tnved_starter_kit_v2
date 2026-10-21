@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
-"""
-Build proper official VAT and Excise bundles with correct provenance.
+"""Deprecated unsafe VAT/excise normative-bundle builder.
 
-VAT: Sets vat_rule to "standard" (instead of "none") to trigger provenance stamps.
-     Identifies 10% VAT goods per НК РФ Ст. 164 п. 2 / Постановление Правительства РФ № 908.
-
-Excise: Full table of excisable goods per НК РФ Ст. 193 (2025-2026 rates).
-
-Usage:
-    cd customs-clear/backend
-    python3 -m scripts.build_vat_excise_official
+The VAT table below infers eligibility from broad four-digit prefixes, while
+the excise constants are a 2025 snapshot.  Stamping either set with today's
+date would assert provenance and freshness that the builder cannot prove.
+Every public build entry point therefore fails closed before reading the
+database or writing a file.
 """
 from __future__ import annotations
 
@@ -26,7 +22,23 @@ from app.db import SessionLocal
 
 TODAY = date.today().isoformat()
 OUT_DIR = BACKEND_ROOT / "data" / "raw_normative"
-OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+class UnsafeBundleBuildError(RuntimeError):
+    """Raised when a builder cannot prove exact official-source provenance."""
+
+
+UNSAFE_BUILD_MESSAGE = (
+    "Refusing to build VAT/excise official bundles: VAT eligibility requires "
+    "an exact-code verified PP 908 source snapshot and EXCISE_RATES_2025 is "
+    "not a current 2026 source. Supply retained immutable official-source "
+    "snapshots with explicit revisions; do not stamp inferred or old data "
+    "with today's date."
+)
+
+
+def _refuse_unverified_build() -> None:
+    raise UnsafeBundleBuildError(UNSAFE_BUILD_MESSAGE)
 
 NK_RF_164_URL = "https://www.nalog.gov.ru/rn77/taxation/taxes/nds/"
 NK_RF_193_URL = "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/"
@@ -122,6 +134,7 @@ def _vat_rule_for_hs(hs_code: str) -> tuple[str, float, str]:
 
 def build_vat_bundle() -> Path:
     """Build proper VAT bundle from DB hs_rates with correct vat_rule markers."""
+    _refuse_unverified_build()
     print("\n[1/2] Building EEC_VAT official bundle...")
 
     with SessionLocal() as db:
@@ -486,6 +499,7 @@ EXCISE_RATES_2025: list[dict[str, object]] = [
 
 def build_excise_bundle() -> Path:
     """Build comprehensive excise bundle from НК РФ Ст. 193."""
+    _refuse_unverified_build()
     print("\n[2/2] Building EEC_EXCISE official bundle (НК РФ Ст. 193)...")
 
     rates = []
@@ -526,20 +540,11 @@ def build_excise_bundle() -> Path:
 
 
 def main() -> int:
-    print("=" * 60)
-    print("Building official VAT & Excise bundles")
-    print(f"Date: {TODAY}")
-    print("=" * 60)
-
-    vat_path = build_vat_bundle()
-    excise_path = build_excise_bundle()
-
-    print("\n" + "=" * 60)
-    print("DONE")
-    print(f"  VAT bundle:    {vat_path}")
-    print(f"  Excise bundle: {excise_path}")
-    print("\nNext: run ingestion apply for both domains")
-    return 0
+    try:
+        _refuse_unverified_build()
+    except UnsafeBundleBuildError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

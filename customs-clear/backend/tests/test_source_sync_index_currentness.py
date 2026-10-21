@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -16,7 +17,6 @@ class _Response:
         return None
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("sync_fn", "source_code"),
     (
@@ -24,7 +24,7 @@ class _Response:
         (source_sync.sync_trade_defense, "TRADE_DEFENSE"),
     ),
 )
-async def test_landing_page_hash_does_not_claim_authoritative_currentness(
+def test_landing_page_hash_does_not_claim_authoritative_currentness(
     sync_fn,
     source_code: str,
 ) -> None:
@@ -37,7 +37,7 @@ async def test_landing_page_hash_does_not_claim_authoritative_currentness(
         patch.object(source_sync, "upsert_source_status") as upsert_status,
         patch.object(source_sync, "append_sync_log") as append_log,
     ):
-        result = await sync_fn()
+        result = asyncio.run(sync_fn())
 
     assert result["status"] == "PARTIAL"
     assert result["source"] == source_code
@@ -55,8 +55,7 @@ async def test_landing_page_hash_does_not_claim_authoritative_currentness(
     assert log_kwargs["rows_affected"] == 0
 
 
-@pytest.mark.asyncio
-async def test_source_pipeline_surfaces_index_only_observations_as_warning() -> None:
+def test_source_pipeline_surfaces_index_only_observations_as_warning() -> None:
     partial = {"status": "PARTIAL", "source": "EEC_ETT"}
     ok = {"status": "OK", "source": "OTHER"}
     skipped = {"status": "SKIPPED", "source": "OPTIONAL"}
@@ -74,7 +73,7 @@ async def test_source_pipeline_surfaces_index_only_observations_as_warning() -> 
         patch.object(source_sync, "sync_tamdoc_archive", return_value=skipped),
         patch.object(source_sync, "sync_trois_sources", new=AsyncMock(return_value=skipped)),
     ):
-        result = await source_sync.sync_all_sources()
+        result = asyncio.run(source_sync.sync_all_sources())
 
     assert result["status"] == "WARNING"
     assert any(item["status"] == "PARTIAL" for item in result["sources"])

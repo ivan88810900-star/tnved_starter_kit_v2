@@ -726,10 +726,11 @@ def run_excise_apply(*, rel_path: str | None = None) -> dict[str, Any]:
     upsert_source_status(
         source_code=_EXCISE_SOURCE_CODE,
         source_name=entry.name if entry else provenance.source_name,
-        source_url=provenance.official_url or bundle_path,
+        source_url=provenance.official_url or _registry_official_excise_url() or bundle_path,
         revision=revision,
         is_stale=False,
         note=note_txt,
+        synced_at=synced_at,
     )
     append_sync_log(
         source_code=_EXCISE_SOURCE_CODE,

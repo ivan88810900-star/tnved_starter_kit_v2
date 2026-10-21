@@ -3,8 +3,37 @@
 from __future__ import annotations
 
 import re
+from datetime import date
 from typing import Any
 from urllib.parse import urlparse
+
+# Shared payment-source freshness budget.  Runtime admission and the refresh
+# report must use the same threshold so a contour cannot be diagnostic-stale
+# while its rows still contribute to automatic payment totals.
+PAYMENT_SOURCE_STALE_THRESHOLD_DAYS = 90
+
+
+def payment_revision_date(revision: str | None) -> date | None:
+    """Extract the trailing ISO date from a typed payment revision."""
+    raw = (revision or "").strip()
+    try:
+        return date.fromisoformat(raw.rsplit(":", 1)[-1])
+    except ValueError:
+        return None
+
+
+def is_payment_revision_fresh(
+    revision: str | None,
+    *,
+    on_date: date | None = None,
+) -> bool:
+    """Return whether a typed revision is current enough for auto-admission."""
+    revision_date = payment_revision_date(revision)
+    if revision_date is None:
+        return False
+    reference_date = on_date or date.today()
+    age_days = (reference_date - revision_date).days
+    return 0 <= age_days <= PAYMENT_SOURCE_STALE_THRESHOLD_DAYS
 
 # Для официального EEC/ETT import-duty контура принимаем только явные versioned ревизии.
 # Допустимые формы: ett:YYYY-MM-DD | eec-ett:YYYY-MM-DD | eec:ett:YYYY-MM-DD
@@ -36,6 +65,26 @@ _UNSAFE_OFFICIAL_URL_SUBSTRINGS = (
 )
 
 
+def _matches_typed_revision(pattern: re.Pattern[str], revision: str | None) -> bool:
+    """Recognize a typed source revision with a real ISO date."""
+    rev = (revision or "").strip().lower()
+    if not pattern.fullmatch(rev):
+        return False
+    try:
+        date.fromisoformat(rev.rsplit(":", 1)[-1])
+    except ValueError:
+        return False
+    return True
+
+
+def _matches_non_future_revision(pattern: re.Pattern[str], revision: str | None) -> bool:
+    """Admit a typed source revision only when its ISO date is not in the future."""
+    if not _matches_typed_revision(pattern, revision):
+        return False
+    revision_date = date.fromisoformat((revision or "").strip().rsplit(":", 1)[-1])
+    return revision_date <= date.today()
+
+
 def is_official_eec_ett_revision(revision: str | None) -> bool:
     """Строгая проверка: revision должна быть explicit versioned EEC/ETT, не произвольная строка.
 
@@ -43,10 +92,9 @@ def is_official_eec_ett_revision(revision: str | None) -> bool:
     arbitrary non-versioned (`local-copy`, `foo`, `manual`, `prod`, `official`).
     Единый источник истины и для ingestion (apply/dry-run), и для official-only coverage.
     """
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    return bool(_EEC_ETT_REVISION_RE.match(rev))
+    # A future label cannot prove that retained bytes are the effective official
+    # tariff. Future-dated sources remain manual review until that date.
+    return _matches_non_future_revision(_EEC_ETT_REVISION_RE, revision)
 
 
 def is_official_vat_ingestion_revision(revision: str | None) -> bool:
@@ -55,10 +103,7 @@ def is_official_vat_ingestion_revision(revision: str | None) -> bool:
     Принимает: vat:YYYY-MM-DD | eec-vat:YYYY-MM-DD | eec:vat:YYYY-MM-DD.
     Отклоняет ett:/eec-ett:/eec:ett: и произвольные non-versioned строки.
     """
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    return bool(_EEC_VAT_REVISION_RE.match(rev))
+    return _matches_non_future_revision(_EEC_VAT_REVISION_RE, revision)
 
 
 def is_official_vat_revision(revision: str | None) -> bool:
@@ -67,12 +112,9 @@ def is_official_vat_revision(revision: str | None) -> bool:
     Принимает VAT-specific формы и legacy shared ETT versioned revisions из старых
     VAT import runs (ett:/eec-ett:/eec:ett:) — но не duty-only arbitrary strings.
     """
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    if _EEC_VAT_REVISION_RE.match(rev):
-        return True
-    return bool(_EEC_ETT_REVISION_RE.match(rev))
+    return _matches_typed_revision(_EEC_VAT_REVISION_RE, revision) or _matches_typed_revision(
+        _EEC_ETT_REVISION_RE, revision
+    )
 
 
 def is_official_vat_row_marker(*, vat_source_code: str | None, vat_source_revision: str | None) -> bool:
@@ -80,20 +122,20 @@ def is_official_vat_row_marker(*, vat_source_code: str | None, vat_source_revisi
     code = (vat_source_code or "").strip().upper()
     if code != "EEC_VAT":
         return False
-    return is_official_vat_ingestion_revision(vat_source_revision)
+    # Row proof is VAT-specific. The broader runtime SourceStatus classifier
+    # accepts historical shared ETT labels, but a duty-only label must never
+    # become proof for a VAT row.
+    return _matches_typed_revision(_EEC_VAT_REVISION_RE, vat_source_revision)
 
 
 def is_official_excise_ingestion_revision(revision: str | None) -> bool:
     """Строгая revision только для excise ingestion (не import-duty / VAT)."""
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    return bool(_EEC_EXCISE_REVISION_RE.match(rev))
+    return _matches_non_future_revision(_EEC_EXCISE_REVISION_RE, revision)
 
 
 def is_official_excise_revision(revision: str | None) -> bool:
     """Строгая проверка revision для official excise contour (SourceStatus EEC_EXCISE)."""
-    return is_official_excise_ingestion_revision(revision)
+    return _matches_typed_revision(_EEC_EXCISE_REVISION_RE, revision)
 
 
 def is_official_excise_row_marker(
@@ -103,7 +145,7 @@ def is_official_excise_row_marker(
     code = (excise_source_code or "").strip().upper()
     if code != "EEC_EXCISE":
         return False
-    return is_official_excise_ingestion_revision(excise_source_revision)
+    return is_official_excise_revision(excise_source_revision)
 
 
 def is_wrong_domain_revision_in_excise_bundle(revision: str | None) -> bool:
@@ -196,7 +238,20 @@ def is_import_duty_bundle_path(rel_path: str) -> bool:
 
 
 def _url_netloc(url: str) -> str:
-    return urlparse(url.strip()).netloc.lower()
+    raw = url.strip()
+    # Browsers treat backslashes as path separators for special schemes while
+    # urllib keeps them in netloc.  Never make an allowlist decision on that
+    # parser disagreement, and official source URLs must not carry userinfo.
+    if "\\" in raw:
+        return ""
+    try:
+        parsed = urlparse(raw)
+        has_userinfo = parsed.username is not None or parsed.password is not None
+    except (ValueError, UnicodeError):
+        return ""
+    if has_userinfo:
+        return ""
+    return parsed.netloc.lower()
 
 
 def is_conservative_official_excise_source_url(
@@ -224,7 +279,7 @@ def is_conservative_official_excise_source_url(
         reg_netloc = _url_netloc(registry_official_url)
         if reg_netloc and netloc == reg_netloc:
             return True
-        if reg_netloc and netloc.endswith(reg_netloc):
+        if reg_netloc and netloc.endswith("." + reg_netloc):
             return True
     return False
 
@@ -300,15 +355,12 @@ def is_safe_official_anti_dumping_source_url(
 
 def is_official_anti_dumping_ingestion_revision(revision: str | None) -> bool:
     """Strict revision only for anti-dumping ingestion (not duty/VAT/excise)."""
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    return bool(_EEC_ANTI_DUMPING_REVISION_RE.match(rev))
+    return _matches_non_future_revision(_EEC_ANTI_DUMPING_REVISION_RE, revision)
 
 
 def is_official_anti_dumping_revision(revision: str | None) -> bool:
     """Revision proof for official anti-dumping contour (SourceStatus EEC_ANTI_DUMPING)."""
-    return is_official_anti_dumping_ingestion_revision(revision)
+    return _matches_typed_revision(_EEC_ANTI_DUMPING_REVISION_RE, revision)
 
 
 def is_official_anti_dumping_row_marker(
@@ -318,7 +370,7 @@ def is_official_anti_dumping_row_marker(
     code = (source_code or "").strip().upper()
     if code != "EEC_ANTI_DUMPING":
         return False
-    return is_official_anti_dumping_ingestion_revision(source_revision)
+    return is_official_anti_dumping_revision(source_revision)
 
 
 def is_wrong_domain_revision_in_anti_dumping_bundle(revision: str | None) -> bool:
@@ -359,15 +411,12 @@ def is_safe_official_special_safeguard_source_url(
 
 def is_official_special_safeguard_ingestion_revision(revision: str | None) -> bool:
     """Strict revision only for special-safeguard ingestion (not duty/VAT/excise/anti-dumping)."""
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    return bool(_EEC_SPECIAL_SAFEGUARD_REVISION_RE.match(rev))
+    return _matches_non_future_revision(_EEC_SPECIAL_SAFEGUARD_REVISION_RE, revision)
 
 
 def is_official_special_safeguard_revision(revision: str | None) -> bool:
     """Revision proof for official special-safeguard contour (SourceStatus EEC_SPECIAL_SAFEGUARD)."""
-    return is_official_special_safeguard_ingestion_revision(revision)
+    return _matches_typed_revision(_EEC_SPECIAL_SAFEGUARD_REVISION_RE, revision)
 
 
 def is_official_special_safeguard_row_marker(
@@ -381,7 +430,7 @@ def is_official_special_safeguard_row_marker(
     code = (safeguard_source_code or "").strip().upper()
     if code != "EEC_SPECIAL_SAFEGUARD":
         return False
-    return is_official_special_safeguard_ingestion_revision(safeguard_source_revision)
+    return is_official_special_safeguard_revision(safeguard_source_revision)
 
 
 def is_wrong_domain_revision_in_special_safeguard_bundle(revision: str | None) -> bool:
@@ -427,15 +476,12 @@ def is_safe_official_countervailing_source_url(
 
 def is_official_countervailing_ingestion_revision(revision: str | None) -> bool:
     """Strict revision only for countervailing ingestion (not duty/VAT/excise/AD/SS)."""
-    rev = (revision or "").strip().lower()
-    if not rev:
-        return False
-    return bool(_EEC_COUNTERVAILING_REVISION_RE.match(rev))
+    return _matches_non_future_revision(_EEC_COUNTERVAILING_REVISION_RE, revision)
 
 
 def is_official_countervailing_revision(revision: str | None) -> bool:
     """Revision proof for official countervailing contour (SourceStatus EEC_COUNTERVAILING)."""
-    return is_official_countervailing_ingestion_revision(revision)
+    return _matches_typed_revision(_EEC_COUNTERVAILING_REVISION_RE, revision)
 
 
 def is_official_countervailing_row_marker(
@@ -449,7 +495,7 @@ def is_official_countervailing_row_marker(
     code = (countervailing_source_code or "").strip().upper()
     if code != "EEC_COUNTERVAILING":
         return False
-    return is_official_countervailing_ingestion_revision(countervailing_source_revision)
+    return is_official_countervailing_revision(countervailing_source_revision)
 
 
 def is_wrong_domain_revision_in_countervailing_bundle(revision: str | None) -> bool:

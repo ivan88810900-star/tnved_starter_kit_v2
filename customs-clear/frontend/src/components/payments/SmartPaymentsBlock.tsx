@@ -28,6 +28,12 @@ const STATUS_CLASS: Record<PaymentLineStatus, string> = {
   embargo: 'bg-red-50 text-red-800 border-red-200',
 };
 
+const WARNING_CLASS = {
+  info: 'border-blue-200 bg-blue-50 text-blue-800',
+  warning: 'border-amber-200 bg-amber-50 text-amber-900',
+  error: 'border-red-200 bg-red-50 text-red-800',
+} as const;
+
 function formatRub(value: number | null | undefined): string {
   if (value == null) return '—';
   return `${value.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`;
@@ -68,9 +74,13 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
   const [currency, setCurrency] = React.useState('RUB');
   const [country, setCountry] = React.useState('');
   const [quantity, setQuantity] = React.useState('');
+  const [liveAnimalBreedingStatus, setLiveAnimalBreedingStatus] = React.useState<
+    'breeding' | 'non_breeding' | 'unknown'
+  >('unknown');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [quote, setQuote] = React.useState<PaymentQuoteResponse | null>(null);
+  const isLiveAnimalCode = /^010[2-5]\d{6}$/.test(hsCode.replace(/\D/g, ''));
 
   const loadQuote = React.useCallback(async () => {
     const value = parseFloat(customsValue.replace(/\s/g, '').replace(',', '.'));
@@ -88,6 +98,7 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
         country: country.trim().toUpperCase() || null,
         description: description?.trim() || null,
         quantity: quantity.trim() ? parseFloat(quantity.replace(',', '.')) : null,
+        live_animal_breeding_status: isLiveAnimalCode ? liveAnimalBreedingStatus : null,
       };
       const result = await fetchPaymentQuote(payload);
       if (import.meta.env.DEV && result.warnings.length > 0) {
@@ -100,7 +111,7 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
     } finally {
       setLoading(false);
     }
-  }, [hsCode, customsValue, currency, country, quantity, description]);
+  }, [hsCode, customsValue, currency, country, quantity, description, isLiveAnimalCode, liveAnimalBreedingStatus]);
 
   React.useEffect(() => {
     setQuote(null);
@@ -167,6 +178,28 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
           </label>
         </div>
 
+        {isLiveAnimalCode ? (
+          <label className="mt-3 block text-xs">
+            <span className="mb-1 block font-medium text-slate-700">Племенной статус животного</span>
+            <select
+              value={liveAnimalBreedingStatus}
+              onChange={(e) =>
+                setLiveAnimalBreedingStatus(
+                  e.target.value as 'breeding' | 'non_breeding' | 'unknown',
+                )
+              }
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm sm:max-w-md"
+            >
+              <option value="unknown">Не подтверждён — требуется проверка</option>
+              <option value="non_breeding">Неплеменное — подтверждено документами</option>
+              <option value="breeding">Племенное — подтверждено документами</option>
+            </select>
+            <span className="mt-1 block text-[11px] text-slate-500">
+              Для неоднозначных кодов 0102–0105 ставка и итог не считаются окончательными без этого факта.
+            </span>
+          </label>
+        ) : null}
+
         <button
           type="button"
           onClick={() => void loadQuote()}
@@ -201,6 +234,14 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
                         <p className="font-medium text-slate-900">{item.label}</p>
                         {rateLabel ? (
                           <p className="mt-0.5 text-[11px] text-slate-500">Ставка: {rateLabel}</p>
+                        ) : null}
+                        {item.reason.trim() ? (
+                          <p className="mt-1 text-xs leading-relaxed text-slate-700">{item.reason}</p>
+                        ) : null}
+                        {item.source.trim() ? (
+                          <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+                            Источник: {item.source}
+                          </p>
                         ) : null}
                       </td>
                       <td className="px-4 py-3 align-top">
@@ -240,6 +281,53 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
               </tfoot>
             </table>
           </div>
+
+          {quote.warnings.length > 0 ? (
+            <section aria-labelledby="payment-warnings-heading" className="space-y-2">
+              <h4 id="payment-warnings-heading" className="text-sm font-semibold text-slate-800">
+                Требуют внимания
+              </h4>
+              <ul className="space-y-2">
+                {quote.warnings.map((warning, index) => (
+                  <li
+                    key={`${warning.code}-${index}`}
+                    className={`rounded-lg border px-3 py-2 text-xs leading-relaxed ${WARNING_CLASS[warning.severity]}`}
+                  >
+                    {warning.message}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {quote.assumptions.length > 0 ? (
+            <section aria-labelledby="payment-assumptions-heading">
+              <h4 id="payment-assumptions-heading" className="text-sm font-semibold text-slate-800">
+                Принято в расчёте
+              </h4>
+              <dl className="mt-2 grid gap-2 sm:grid-cols-2">
+                {quote.assumptions.map((assumption) => (
+                  <div key={assumption.key} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs">
+                    <dt className="font-medium text-slate-700">{assumption.label}</dt>
+                    <dd className="mt-0.5 text-slate-600">{assumption.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          ) : null}
+
+          {quote.legal_basis && Object.keys(quote.legal_basis).length > 0 ? (
+            <section aria-labelledby="payment-legal-basis-heading">
+              <h4 id="payment-legal-basis-heading" className="text-sm font-semibold text-slate-800">
+                Правовые основания
+              </h4>
+              <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                {Object.entries(quote.legal_basis).map(([key, value]) => (
+                  <li key={key}>{value}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
         </div>
       ) : loading ? (
         <p className="text-sm text-slate-500">Формирование расчёта платежей…</p>

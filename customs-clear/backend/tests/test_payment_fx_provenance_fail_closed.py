@@ -163,6 +163,18 @@ class ExchangeRateProvenanceTests(unittest.TestCase):
                 )
                 self.assertEqual(get_rates_map(), {"RUB": 1.0})
 
+    def test_stale_cbr_source_date_hides_recently_written_rate(self) -> None:
+        """A fresh DB write cannot make an old CBR business date current."""
+        synced_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        stale_source_date = datetime.now(timezone.utc).date() - timedelta(days=8)
+        self._add_rate(updated_at=synced_at)
+        self._add_status(
+            revision=f"cbrf:{stale_source_date.isoformat()}",
+            is_stale=False,
+            synced_at=synced_at,
+        )
+        self.assertEqual(get_rates_map(), {"RUB": 1.0})
+
 
 class CbrXmlDateTests(unittest.TestCase):
     def test_malformed_source_date_fails_closed(self) -> None:

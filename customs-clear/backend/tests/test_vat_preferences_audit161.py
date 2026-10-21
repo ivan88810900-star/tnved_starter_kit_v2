@@ -7,9 +7,16 @@ import unittest
 from app.db import SessionLocal
 from app.models.tnved import VatPreference
 from app.services.payment_engine import get_effective_vat_rate
+from app.services.normative_store import init_db
+from tests.support_legacy_payment_fixture import ensure_committed_vat_fixture
 
 
 class VatPreferencesAudit161Tests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        init_db()
+        ensure_committed_vat_fixture()
+
     def test_no_bad_broad_prefixes(self) -> None:
         with SessionLocal() as db:
             bad = (

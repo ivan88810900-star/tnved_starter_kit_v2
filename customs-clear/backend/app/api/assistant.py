@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Header, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse, PlainTextResponse
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 from loguru import logger
 
 from ..services.non_tariff_service import check_position_non_tariff
@@ -62,6 +62,7 @@ class CopilotRequest(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     description: str = ""
+    manufacturer: str | None = None
     hs_code: str = ""
     country: str | None = None
     customs_value: float | None = None
@@ -76,11 +77,21 @@ class CopilotRequest(BaseModel):
     document_id: str | None = None
     user_ref: str = ""
 
+    @field_validator(
+        "customs_value", "freight", "insurance", "quantity", mode="before"
+    )
+    @classmethod
+    def reject_boolean_economic_inputs(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("значение должно быть числом, а не boolean")
+        return value
+
 
 class CopilotLineIn(BaseModel):
     """Одна позиция в мульти-декларации."""
 
     description: str = ""
+    manufacturer: str | None = None
     hs_code: str = ""
     country: str | None = None
     customs_value: float | None = None
@@ -88,6 +99,15 @@ class CopilotLineIn(BaseModel):
     insurance: float | None = None
     quantity: float | None = None
     permits: List[PermitIn] = []
+
+    @field_validator(
+        "customs_value", "freight", "insurance", "quantity", mode="before"
+    )
+    @classmethod
+    def reject_boolean_economic_inputs(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("значение должно быть числом, а не boolean")
+        return value
 
 
 class CopilotBatchRequest(BaseModel):
@@ -311,6 +331,7 @@ async def assistant_copilot(req: CopilotRequest, request: Request) -> JSONRespon
         )
     bundle = await run_copilot_pipeline(
         description=(req.description or "").strip(),
+        manufacturer=(req.manufacturer or "").strip() or None,
         hs_code=(req.hs_code or "").strip(),
         country=req.country,
         customs_value=req.customs_value,

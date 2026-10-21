@@ -44,6 +44,20 @@ def _line_total_prices(declaration_lines: List[Dict[str, Any]], inv_items: List[
     return out
 
 
+def _invoice_item_for_declaration_line(
+    declaration_line: Dict[str, Any],
+    inv_items: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Resolve the original invoice item using the same 1-based line mapping as values."""
+    try:
+        idx = int(declaration_line.get("line") or 0) - 1
+    except (TypeError, ValueError):
+        return {}
+    if 0 <= idx < len(inv_items) and isinstance(inv_items[idx], dict):
+        return inv_items[idx]
+    return {}
+
+
 def _customs_values_per_line(
     declaration_lines: List[Dict[str, Any]],
     inv_items: List[Dict[str, Any]],
@@ -182,6 +196,7 @@ async def run_ved_intel_pipeline(
     run_registry = verify_fsa and not skip_registry and bool(permit_rows)
     batch_items: List[Dict[str, Any]] = []
     for i, dl in enumerate(lines50):
+        inv_item = _invoice_item_for_declaration_line(dl, inv_items)
         desc = str(dl.get("commercial_description") or "").strip()
         hs = str(dl.get("hs_code") or "").strip()
         cv_raw = customs_vals[i] if i < len(customs_vals) else 0.0
@@ -190,6 +205,12 @@ async def run_ved_intel_pipeline(
         batch_items.append(
             {
                 "description": desc or "—",
+                "manufacturer": (
+                    dl.get("manufacturer")
+                    or dl.get("manufacturer_exporter")
+                    or inv_item.get("manufacturer")
+                    or inv_item.get("manufacturer_exporter")
+                ),
                 "hs_code": hs,
                 "country": country,
                 "customs_value": cv,

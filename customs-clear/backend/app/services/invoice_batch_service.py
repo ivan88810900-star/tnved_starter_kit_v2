@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import io
 import re
+from math import isfinite
 from typing import Any
 
 import pandas as pd
@@ -58,6 +59,24 @@ def _cell(row: dict[str, Any], colmap: dict[str, str], field: str, default: Any 
     return val
 
 
+def _is_boolean_number(value: Any) -> bool:
+    """Recognise Python and pandas/numpy booleans before numeric coercion."""
+    return pd.api.types.is_bool(value)
+
+
+def _positive_invoice_number(value: Any, field: str) -> float:
+    """Admit one finite, strictly positive invoice operand."""
+    if _is_boolean_number(value):
+        raise ValueError(f"{field}: значение должно быть числом, а не boolean")
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(f"{field}: значение должно быть конечным положительным числом") from exc
+    if not isfinite(number) or number <= 0:
+        raise ValueError(f"{field}: значение должно быть конечным положительным числом")
+    return number
+
+
 def parse_invoice_file(content: bytes, filename: str) -> list[dict[str, Any]]:
     """Парсинг xlsx/xls/csv в список позиций."""
     name = (filename or "").lower()
@@ -81,12 +100,25 @@ def parse_invoice_file(content: bytes, filename: str) -> list[dict[str, Any]]:
         article = str(_cell(row, colmap, "article", "") or "").strip()
         manufacturer = str(_cell(row, colmap, "manufacturer", "") or "").strip()
         qty = _cell(row, colmap, "quantity", 1)
-        price = _cell(row, colmap, "unit_price", 0)
-        try:
-            qty_f = float(qty) if qty is not None else 1.0
-            price_f = float(price) if price is not None else 0.0
-        except (TypeError, ValueError):
-            qty_f, price_f = 1.0, 0.0
+        price = _cell(row, colmap, "unit_price")
+        gross = _cell(row, colmap, "weight_gross_kg")
+        net = _cell(row, colmap, "weight_net_kg")
+        qty_f = _positive_invoice_number(qty, "quantity")
+        price_f = _positive_invoice_number(price, "unit_price")
+        if not isfinite(qty_f * price_f):
+            raise ValueError("invoice_value: значение должно быть конечным положительным числом")
+        gross_f = (
+            _positive_invoice_number(gross, "weight_gross_kg")
+            if gross is not None
+            else None
+        )
+        net_f = (
+            _positive_invoice_number(net, "weight_net_kg")
+            if net is not None
+            else None
+        )
+        if gross_f is not None and net_f is not None and gross_f < net_f:
+            raise ValueError("weight_gross_kg должен быть не меньше weight_net_kg")
         rows.append(
             {
                 "description": desc,
@@ -95,8 +127,8 @@ def parse_invoice_file(content: bytes, filename: str) -> list[dict[str, Any]]:
                 "unit": str(_cell(row, colmap, "unit", "") or ""),
                 "unit_price": price_f,
                 "currency": str(_cell(row, colmap, "currency", "USD") or "USD").upper(),
-                "weight_gross_kg": _cell(row, colmap, "weight_gross_kg"),
-                "weight_net_kg": _cell(row, colmap, "weight_net_kg"),
+                "weight_gross_kg": gross_f,
+                "weight_net_kg": net_f,
                 "country_of_origin": str(_cell(row, colmap, "country_of_origin", "") or "").strip().upper(),
                 "image_url": image_url,
                 "image_base64": image_b64,
@@ -159,15 +191,40 @@ def calculate_line_payments(
 ) -> dict[str, Any]:
     """Расчёт всех платежей для одной строки инвойса."""
     hs = re.sub(r"\D", "", str(line.get("hs_code") or ""))[:10]
-    qty = float(line.get("quantity") or 1)
-    price = float(line.get("unit_price") or 0)
+    qty = _positive_invoice_number(
+        1 if line.get("quantity") is None else line.get("quantity"),
+        "quantity",
+    )
+    price = _positive_invoice_number(line.get("unit_price"), "unit_price")
     invoice_value = qty * price
+    if not isfinite(invoice_value):
+        raise ValueError("invoice_value: значение должно быть конечным положительным числом")
+    gross_raw = line.get("weight_gross_kg")
+    net_raw = line.get("weight_net_kg")
+    gross = (
+        _positive_invoice_number(gross_raw, "weight_gross_kg")
+        if gross_raw is not None
+        else None
+    )
+    net = (
+        _positive_invoice_number(net_raw, "weight_net_kg")
+        if net_raw is not None
+        else None
+    )
+    if gross is not None and net is not None and gross < net:
+        raise ValueError("weight_gross_kg должен быть не меньше weight_net_kg")
+    engine_volume_raw = line.get("engine_volume")
+    engine_volume = (
+        _positive_invoice_number(engine_volume_raw, "engine_volume")
+        if engine_volume_raw is not None
+        else None
+    )
     currency = str(line.get("currency") or "USD").upper().strip()
     rates = get_rates_map()
     fx_rate = _resolve_fx_rate(currency, rates)
     customs_value = invoice_value * fx_rate
-    gross = line.get("weight_gross_kg")
-    net = line.get("weight_net_kg")
+    if not isfinite(customs_value) or customs_value <= 0:
+        raise ValueError("customs_value: значение должно быть конечным положительным числом")
     country = (line.get("country_of_origin") or line.get("country") or "").strip().upper() or None
 
     pay_payload: dict[str, Any] = {
@@ -175,16 +232,18 @@ def calculate_line_payments(
         "customs_value": customs_value,
         "invoice_currency": "RUB",
         "country": country,
+        "manufacturer": str(line.get("manufacturer") or "").strip() or None,
+        "product_description": str(line.get("description") or "").strip() or None,
         "_fx_rates": rates,
     }
     if net is not None:
-        pay_payload["net_weight_kg"] = float(net)
+        pay_payload["net_weight_kg"] = net
     if gross is not None:
-        pay_payload["gross_weight_kg"] = float(gross)
+        pay_payload["gross_weight_kg"] = gross
     if line.get("vehicle_is_new") is not None:
         pay_payload["vehicle_is_new"] = line.get("vehicle_is_new")
-    if line.get("engine_volume") is not None:
-        pay_payload["engine_volume"] = line.get("engine_volume")
+    if engine_volume is not None:
+        pay_payload["engine_volume"] = engine_volume
 
     payments = compute_payments(pay_payload)
     bd = payments.get("breakdown") or {}
@@ -196,8 +255,8 @@ def calculate_line_payments(
             rop_block = calculate_rop(
                 db,
                 hs,
-                float(gross),
-                float(net),
+                gross,
+                net,
                 calendar_year=calendar_year,
             )
         finally:

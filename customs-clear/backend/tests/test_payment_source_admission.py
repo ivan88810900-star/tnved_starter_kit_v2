@@ -13,6 +13,19 @@ from app.models.tnved import HsDutyRule, SpecialDuty
 from app.services import normative_store
 from app.services import payment_engine
 from app.services import payment_quote_service
+from app.services.payment_revision_utils import (
+    is_official_anti_dumping_ingestion_revision,
+    is_official_anti_dumping_revision,
+    is_official_countervailing_ingestion_revision,
+    is_official_countervailing_revision,
+    is_official_excise_ingestion_revision,
+    is_official_excise_revision,
+    is_official_special_safeguard_ingestion_revision,
+    is_official_special_safeguard_revision,
+    is_official_vat_ingestion_revision,
+    is_official_vat_row_marker,
+    is_official_vat_revision,
+)
 
 
 CODE = "8501100000"
@@ -190,3 +203,41 @@ def test_manual_duty_remains_visible_when_other_row_fields_need_review(payments)
     assert lines["duty"].amount_rub == 70_000
     assert lines["vat"].amount_rub is None
     assert quote.total_payable_rub is None
+
+
+@pytest.mark.parametrize(
+    ("ingestion_validator", "runtime_validator", "revision"),
+    [
+        (is_official_vat_ingestion_revision, is_official_vat_revision, "vat:2999-01-01"),
+        (is_official_excise_ingestion_revision, is_official_excise_revision, "excise:2999-01-01"),
+        (
+            is_official_anti_dumping_ingestion_revision,
+            is_official_anti_dumping_revision,
+            "anti-dumping:2999-01-01",
+        ),
+        (
+            is_official_special_safeguard_ingestion_revision,
+            is_official_special_safeguard_revision,
+            "special-safeguard:2999-01-01",
+        ),
+        (
+            is_official_countervailing_ingestion_revision,
+            is_official_countervailing_revision,
+            "countervailing:2999-01-01",
+        ),
+    ],
+)
+def test_future_dated_payment_revision_is_not_admitted_but_remains_classifiable(
+    ingestion_validator, runtime_validator, revision
+):
+    assert ingestion_validator(revision) is False
+    assert runtime_validator(revision) is True
+
+
+def test_future_vat_row_marker_remains_classifiable_without_accepting_duty_revision():
+    assert is_official_vat_row_marker(
+        vat_source_code="EEC_VAT", vat_source_revision="vat:2999-01-01"
+    ) is True
+    assert is_official_vat_row_marker(
+        vat_source_code="EEC_VAT", vat_source_revision="ett:2026-05-01"
+    ) is False

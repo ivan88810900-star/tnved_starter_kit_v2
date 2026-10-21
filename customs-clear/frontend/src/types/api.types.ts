@@ -301,6 +301,7 @@ export interface CalculatorComputeRequest {
   net_weight_kg?: number | null;
   extra_quantity?: number | null;
   apply_reduced_vat?: boolean;
+  live_animal_breeding_status?: 'breeding' | 'non_breeding' | 'unknown' | null;
   vehicle_is_new?: boolean | null;
   engine_volume?: number | null;
   save_history?: boolean;
@@ -322,7 +323,7 @@ export interface CalculatorSpecialDutyItem {
   rate_percent: number;
   rate_specific: number;
   currency_code: string;
-  fx_rate: number;
+  fx_rate: number | null;
   regulatory_act: string;
   amount: number;
   match_len: number;
@@ -487,10 +488,13 @@ export interface CalculatorCompareSharedInput {
   freight?: number;
   insurance?: number | null;
   country?: string | null;
+  manufacturer?: string | null;
+  product_description?: string | null;
   quantity?: number | null;
   net_weight_kg?: number | null;
   extra_quantity?: number | null;
   apply_reduced_vat?: boolean;
+  live_animal_breeding_status?: 'breeding' | 'non_breeding' | 'unknown' | null;
 }
 
 export interface CalculatorCompareScenarioInput {
@@ -514,6 +518,8 @@ export interface CalculatorCompareSharedEconomic {
   freight: number;
   insurance?: number;
   country?: string;
+  manufacturer?: string;
+  product_description?: string;
   quantity?: number;
   _fx_rates?: Record<string, number>;
 }
