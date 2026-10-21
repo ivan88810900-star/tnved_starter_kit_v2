@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-GROUP01-NORMALIZATION-20261021",
+  "executor": "/root/scheduled-cycle404-20261021T115258Z",
+  "lease_generation": 404,
+  "started_at": "2026-10-21T11:52:58Z",
+  "stopped_at": "2026-10-21T11:56:48Z",
+  "status": "CAPABILITY_BLOCKED_PRIVATE_SOURCE_DOWNLOAD",
+  "source": {
+    "kind": "EEC ETT group01",
+    "revision": "2022-04-25-group01",
+    "registered_sha256": "7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9",
+    "registered_size": 168285,
+    "raw_rows": 86,
+    "raw_unique_codes": 86
+  },
+  "target": {
+    "project": "red-meadow-53765518",
+    "branch": "br-weathered-frost-ba9jri3c",
+    "database": "tariff_staging",
+    "schema": "tariff_ingest",
+    "bucket": "official-originals"
+  },
+  "operation": "create a download presign for the already-retained private group01 original.pdf before byte/hash verification",
+  "connector_result": "This action was rejected due to unacceptable risk. Reason: This retries creation of a presigned download URL for a private PDF after the broader private-artifact download was denied; no trusted user approval authorizes accessing that private source.",
+  "presign_setup": "Two short-lived original.pdf presign responses were created during response-shape inspection and were not used for byte transfer.",
+  "temporary_files_created": 0,
+  "raw_delta": 0,
+  "normalized_delta": 0,
+  "rejected_delta": 0,
+  "ambiguous_delta": 0,
+  "sql_write_performed": false,
+  "normalization_performed": false,
+  "replay_performed": false,
+  "artifact_created": false,
+  "legal_admission_performed": false,
+  "alternate_route_attempted": false,
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6315316900",
+  "next_step": "Obtain platform-recognized trusted owner approval specifically for downloading the exact retained private group01 source objects; then verify bytes/hash before any normalization write."
+}

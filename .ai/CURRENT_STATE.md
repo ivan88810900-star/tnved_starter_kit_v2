@@ -634,3 +634,13 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Evidence: `.ai/orchestration/evidence/cycle403_group01_capability_diagnosis.json`; receipt: [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6314204322).
 - Next gate: group01 normalization still requires separate applicable write authorization; this diagnostic neither grants nor performs it.
 
+## Cycle 404 blocker — retained group01 byte download denied (2026-10-21)
+
+- Fresh issue #257 comment `6314453820` clarified that the existing bounded group01 authorization remained applicable; A0 selected the same 86-row block and did not return to generic payment work.
+- Before any SQL write, A0 attempted the required byte/hash verification for the already-retained private `official-originals` objects in `red-meadow-53765518 / br-weathered-frost-ba9jri3c`.
+- Two short-lived `original.pdf` presign responses were created only while inspecting the connector response shape and were never used for a byte transfer. The prepared three-object download stopped when the connector rejected the PDF download-presign step as unacceptable risk, citing the earlier denied broader private-artifact download and absence of platform-recognized trusted user approval.
+- The platform explicitly prohibited workaround, indirect execution, another tool/executor or policy circumvention. No alternate route was attempted. The temporary target directory remained empty.
+- Result: **CAPABILITY_BLOCKED_PRIVATE_SOURCE_DOWNLOAD**. Raw +0, normalized +0, rejected +0, ambiguous +0; no SQL write/transaction, replay, result bundle, raw re-import or legal admission. The five `5 63С)` rows remain opaque and untouched.
+- Evidence: `.ai/orchestration/evidence/cycle404_group01_private_source_download_blocker.json`; receipt: [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6315316900).
+- Resolving action: platform-recognized trusted owner approval specifically for downloading these exact retained private group01 objects; only after byte/hash verification may the bounded normalization transaction begin.
+

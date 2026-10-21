@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 925,
+  "revision": 926,
   "runs": [
     {
       "head_sha": null,
@@ -8157,7 +8157,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-21T10:54:12Z",
+  "updated_at": "2026-10-21T11:56:48Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -19391,5 +19391,31 @@
     "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6314204322",
     "evidence": ".ai/orchestration/evidence/cycle403_group01_capability_diagnosis.json",
     "next_step": "Continue group01 normalization only with separate applicable write authorization; this diagnostic grants and performs no write."
+  },
+  "previous_scheduled_product_checkpoint_404": {
+    "schema_version": 1,
+    "task_id": "TARIFF-GROUP01-NORMALIZATION-20261021",
+    "started_at": "2026-10-21T11:52:58Z",
+    "stopped_at": "2026-10-21T11:56:48Z",
+    "executor": "/root/scheduled-cycle404-20261021T115258Z",
+    "lease_generation": 404,
+    "status": "CAPABILITY_BLOCKED_PRIVATE_SOURCE_DOWNLOAD",
+    "source": "EEC ETT group01 / 2022-04-25-group01 / sha256 7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9 / 86 raw rows",
+    "blocked_operation": "download-presign for the exact retained private original.pdf before byte/hash verification",
+    "connector_reason": "Rejected as unacceptable risk because the platform classified it as a retry after the broader private-artifact denial and did not recognize trusted user approval for access.",
+    "presign_setup": "Two short-lived original.pdf presign responses were not used for byte transfer.",
+    "temporary_files_created": 0,
+    "raw_delta": 0,
+    "normalized_delta": 0,
+    "rejected_delta": 0,
+    "ambiguous_delta": 0,
+    "sql_write_performed": false,
+    "normalization_performed": false,
+    "replay_performed": false,
+    "artifact_created": false,
+    "alternate_route_attempted": false,
+    "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6315316900",
+    "evidence": ".ai/orchestration/evidence/cycle404_group01_private_source_download_blocker.json",
+    "next_step": "Require platform-recognized trusted owner approval specifically for downloading the exact retained private group01 source objects; verify bytes/hash before normalization."
   }
 }

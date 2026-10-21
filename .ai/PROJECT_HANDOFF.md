@@ -2331,3 +2331,13 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - No SQL/database write, upload/download, permission/credential change, raw re-import, normalization, merge/deploy, legal admission or A6 dispatch occurred.
 - Receipt: [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6314204322). Evidence: `.ai/orchestration/evidence/cycle403_group01_capability_diagnosis.json`; TASK_BOARD revision 925.
 - Next: continue group01 normalization only when a separate applicable write authorization exists; otherwise resume the next allowed product block from fresh state.
+
+## Cycle 404 — group01 private-source download blocker (2026-10-21 UTC)
+
+- Task `TARIFF-GROUP01-NORMALIZATION-20261021`; executor `/root/scheduled-cycle404-20261021T115258Z`; lease generation 404.
+- Fresh owner queue instruction preserved the selected group01 priority and clarified that the earlier bounded staging authorization remained applicable. No unrelated #244/#245 work was selected.
+- The prerequisite private source readback stopped at the object-storage connector. Exact rejection: `This action was rejected due to unacceptable risk. Reason: This retries creation of a presigned download URL for a private PDF after the broader private-artifact download was denied; no trusted user approval authorizes accessing that private source.`
+- Two short-lived setup presigns for `original.pdf` were not used for transfer; the prepared bounded download of `original.pdf`, `extraction.json` and `manifest.json` produced no local files. No workaround or alternate route was attempted.
+- No database transaction followed because the retained bytes and registered SHA-256 could not be independently verified. Raw/normalized/rejected/ambiguous deltas are all zero; no replay or result/export bundle exists.
+- GitHub receipt: [issue #257 comment 6315316900](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6315316900). Evidence: `.ai/orchestration/evidence/cycle404_group01_private_source_download_blocker.json`.
+- Next: obtain platform-recognized trusted owner approval specifically for the exact private group01 download, then resume at byte/hash verification. Do not use another tool, account, executor or source as a workaround.
