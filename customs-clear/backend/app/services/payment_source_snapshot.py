@@ -44,9 +44,18 @@ def _safe_adjacent_file(bundle_path: Path, name: Any) -> tuple[Path | None, str 
 
 
 def _is_official_eec_url(value: str) -> bool:
+    raw = value.strip()
+    # Browsers treat backslashes as separators for special schemes while
+    # urllib keeps them in the authority.  Do not make an allowlist decision
+    # on that parser disagreement, and official evidence URLs need no userinfo.
+    if "\\" in raw:
+        return False
     try:
-        parsed = urlparse(value)
-    except ValueError:
+        parsed = urlparse(raw)
+        has_userinfo = parsed.username is not None or parsed.password is not None
+    except (ValueError, UnicodeError):
+        return False
+    if has_userinfo:
         return False
     host = (parsed.hostname or "").lower().rstrip(".")
     return parsed.scheme.lower() == "https" and (

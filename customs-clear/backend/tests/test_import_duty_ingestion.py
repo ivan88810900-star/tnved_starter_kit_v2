@@ -245,6 +245,19 @@ class TestImportDutySourceSnapshot(unittest.TestCase):
         report = self._apply_fixture(_BundleFixture(payload))
         self._assert_snapshot_blocked(report, "source_snapshot_source_url_not_official_eec")
 
+    def test_ambiguous_official_source_urls_block_apply(self) -> None:
+        for source_url in (
+            "https://user:secret@eec.eaeunion.org/ett",
+            r"https://attacker.example\@eec.eaeunion.org/ett",
+        ):
+            with self.subTest(source_url=source_url):
+                payload = _official_bundle_payload()
+                payload["official_ett_url"] = source_url
+                report = self._apply_fixture(_BundleFixture(payload))
+                self._assert_snapshot_blocked(
+                    report, "source_snapshot_source_url_not_official_eec"
+                )
+
     def test_source_path_traversal_blocks_apply(self) -> None:
         report = self._apply_fixture(
             _BundleFixture(
