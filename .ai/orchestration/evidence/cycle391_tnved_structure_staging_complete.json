@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-TNVED-STAGING-COMPLETE-20261021",
+  "executor": "/root/scheduled-cycle391-20261021T004852Z",
+  "started_at": "2026-10-21T00:48:52Z",
+  "completed_at": "2026-10-21T01:03:40Z",
+  "lease_generation": 391,
+  "owner_authorization": {
+    "issue": 257,
+    "comment_id": 6300523507,
+    "scope": "Complete exact accepted structural SQLite transfer to existing non-production Neon staging and verify identical rerun with no duplicates."
+  },
+  "candidate": {
+    "pr": 260,
+    "draft": true,
+    "head_sha": "f50f8cbe10daef44a4f42c516aaf19a5f5b156f4",
+    "tree_sha": "5327650562c1d276695bf45846cc79cd1f91d931",
+    "exact_head_ci_run_id": 39430147563,
+    "exact_head_ci_job_id": 118652765585,
+    "exact_head_ci_conclusion": "success"
+  },
+  "artifact": {
+    "sqlite_size_bytes": 73908224,
+    "sqlite_sha256": "c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4",
+    "logical_sha256": "be57fc61571bee51817e5a0915918d7f3baa86873c644ce148c613b1b20589e6",
+    "bundle_sha256": "a30004de21e6c6fd9bb1585a10542076d61b3c577f5d61dc1752827b23b69727",
+    "catalog_id": "eec-official-snapshot-d6a326922d85785d",
+    "source_count": 99,
+    "edition_count": 96,
+    "entry_count": 18014
+  },
+  "destination": {
+    "project_id": "red-meadow-53765518",
+    "branch_id": "br-weathered-frost-ba9jri3c",
+    "database": "tariff_staging",
+    "schema": "tariff_ingest",
+    "environment": "non-production"
+  },
+  "result": {
+    "artifact_status": "COLLECTED_UNVERIFIED",
+    "run_id": "tnved-structure:c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4",
+    "parser_version": "tnved-structure-sqlite-staging-v1",
+    "run_status": "COLLECTED_UNVERIFIED",
+    "row_count": 18014,
+    "unique_hs_codes": 18014,
+    "unique_ordinals": 18014,
+    "unique_row_hashes": 18014,
+    "min_ordinal": 1,
+    "max_ordinal": 18014,
+    "missing_ordinals": 0,
+    "duplicate_hs_groups": 0,
+    "ordered_row_hash_md5": "031c2fd0aa5accefefb97c13e25a2cb1",
+    "identical_replay_inserted_count": 0,
+    "post_replay_unchanged": true
+  },
+  "verification": {
+    "local_command": "sha256sum cycle391/lib/Tariff-tnved-structure-recovery-20261020.zip cycle391/extracted/Tariff-tnved-structure-recovery-20261020/tnved-structure.sqlite",
+    "local_exit_code": 0,
+    "independent_a5": "/root/a5_cycle391 PASS",
+    "a5_mode": "read-only"
+  },
+  "receipts": {
+    "pr260": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/260",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257"
+  },
+  "boundaries": {
+    "legal_or_rate_admission": false,
+    "ntm_completeness_admission": false,
+    "calculation_admission": false,
+    "production_write": false,
+    "merge": false,
+    "deploy": false,
+    "a6_dispatch": false,
+    "populated_synchronized_ntm_snapshot_available": false
+  }
+}
