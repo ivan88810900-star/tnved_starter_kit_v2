@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 924,
+  "revision": 925,
   "runs": [
     {
       "head_sha": null,
@@ -8157,7 +8157,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-21T10:04:18Z",
+  "updated_at": "2026-10-21T10:54:12Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -19367,5 +19367,29 @@
     "a6": "UNCHANGED_NOT_SENT",
     "evidence": ".ai/orchestration/evidence/cycle399_pr255_eec_source_url_admission.json",
     "next_step": "Continue the next distinct PR244 payment/source defect, then PR245; do not repeat completed fixture, CI coverage, future-revision or URL-admission work."
+  },
+  "previous_scheduled_product_checkpoint_403": {
+    "schema_version": 1,
+    "task_id": "TARIFF-GROUP01-CAPABILITY-DIAGNOSIS-20261021",
+    "started_at": "2026-10-21T10:50:22Z",
+    "completed_at": "2026-10-21T10:54:12Z",
+    "executor": "/root/scheduled-cycle403-20261021T105022Z",
+    "lease_generation": 403,
+    "status": "CAPABILITY_CONFIRMED_READ_ONLY",
+    "discovery_mechanism": "Current Work runtime ALL_TOOLS inventory",
+    "correction": "Cycle402 connector-absence conclusion was incorrect; Neon SQL and object-storage methods are available.",
+    "context": "red-meadow-53765518 / br-weathered-frost-ba9jri3c / tariff_staging / tariff_ingest; role tariff_staging_owner",
+    "object_result": "private official-originals visible; exact group01 prefix lists original.pdf 168285, extraction.json 21525, manifest.json 951 bytes; no download/re-hash",
+    "database_result": "86 rows / 86 codes / 86 hashes / ordinals 1..86 / all COLLECTED_UNVERIFIED; latest run raw/unique 86/86, normalized 0, rejected 0, cursor complete/87",
+    "duty_text": "0 x30; 5 x51; 5 63С) x5; opaque and not legally interpreted",
+    "write_performed": false,
+    "normalization_performed": false,
+    "raw_reimport_performed": false,
+    "legal_admission_performed": false,
+    "protected_actions_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6314204322",
+    "evidence": ".ai/orchestration/evidence/cycle403_group01_capability_diagnosis.json",
+    "next_step": "Continue group01 normalization only with separate applicable write authorization; this diagnostic grants and performs no write."
   }
 }

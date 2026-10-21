@@ -2320,3 +2320,14 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6313328808), [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6313328495).
 - No rate/source facts, fixtures, legal applicability, merge, deploy, database write, protected action or A6 dispatch changed. Full #244/#245 acceptance remains NOT PASS; the populated synchronized NTM snapshot remains unavailable.
 - Evidence: `.ai/orchestration/evidence/cycle401_pr255_manual_source_attribution.json`; TASK_BOARD revision 924. Next continue a distinct #244 payment/source defect from fresh state, then #245.
+
+## Cycle 403 — group01 Neon capability diagnosis (2026-10-21 UTC)
+
+- Task `TARIFF-GROUP01-CAPABILITY-DIAGNOSIS-20261021`; executor `/root/scheduled-cycle403-20261021T105022Z`; lease generation 403.
+- Current-runtime `ALL_TOOLS` discovery found the previously missed Neon SQL and object-storage methods. Cycle402's assertion that only GitHub was available is corrected.
+- Read-only checks succeeded against non-production `red-meadow-53765518 / br-weathered-frost-ba9jri3c / tariff_staging`. `tariff_ingest` is the schema; the available database role is `tariff_staging_owner`.
+- Private `official-originals` lists exact group01 objects: original PDF 168,285 bytes, extraction 21,525 bytes and manifest 951 bytes under the registered SHA-256 prefix. No object bytes were downloaded/rehashed.
+- Aggregated live SQL confirmed 86 rows, 86 distinct codes, 86 row hashes, ordinals 1..86, all `COLLECTED_UNVERIFIED`; latest run remains raw/unique 86/86, normalized 0, rejected 0, cursor complete/87.
+- No SQL/database write, upload/download, permission/credential change, raw re-import, normalization, merge/deploy, legal admission or A6 dispatch occurred.
+- Receipt: [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6314204322). Evidence: `.ai/orchestration/evidence/cycle403_group01_capability_diagnosis.json`; TASK_BOARD revision 925.
+- Next: continue group01 normalization only when a separate applicable write authorization exists; otherwise resume the next allowed product block from fresh state.

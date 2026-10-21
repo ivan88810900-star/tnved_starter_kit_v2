@@ -624,3 +624,13 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Evidence: `.ai/orchestration/evidence/cycle402_group01_normalization_capability_blocker.json`.
 - Resolving action: resume this same group01 block in the existing scoped Neon connector context, verify the retained bytes first, then execute/reread the bounded normalization and identical replay. Do not re-import the 86 raw rows and do not infer current legal rates from the historical source.
 
+## Cycle 403 correction — group01 Neon capability confirmed read-only (2026-10-21)
+
+- Cycle402's connector-absence conclusion was incorrect. Actual runtime discovery through `ALL_TOOLS` found scoped Neon SQL and branchable object-storage methods.
+- Harmless reads succeeded against non-production `red-meadow-53765518 / br-weathered-frost-ba9jri3c / tariff_staging`. The only listed database role is `tariff_staging_owner`; `tariff_ingest` is the schema, not a role.
+- Private bucket `official-originals` is visible. The exact group01 SHA prefix contains `original.pdf` (168,285 bytes), `extraction.json` (21,525 bytes) and `manifest.json` (951 bytes). Bytes were not downloaded or rehashed.
+- Aggregated SQL reread confirmed 86 rows, 86 codes, 86 row hashes, ordinals 1..86, all `COLLECTED_UNVERIFIED`; latest run remains raw/unique 86/86, normalized 0, rejected 0, cursor complete/87. Duty text remains opaque: `0`×30, `5`×51, `5 63С)`×5.
+- Result: **CAPABILITY_CONFIRMED_READ_ONLY**. No SQL/database write, object upload/download, credential/permission change, raw re-import, normalization or legal admission occurred.
+- Evidence: `.ai/orchestration/evidence/cycle403_group01_capability_diagnosis.json`; receipt: [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6314204322).
+- Next gate: group01 normalization still requires separate applicable write authorization; this diagnostic neither grants nor performs it.
+

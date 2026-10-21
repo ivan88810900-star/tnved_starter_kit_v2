@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-GROUP01-CAPABILITY-DIAGNOSIS-20261021",
+  "executor": "/root/scheduled-cycle403-20261021T105022Z",
+  "started_at": "2026-10-21T10:50:22Z",
+  "completed_at": "2026-10-21T10:54:12Z",
+  "lease_generation": 403,
+  "issue_instruction": {
+    "issue": 257,
+    "comment_id": 6314078768
+  },
+  "discovery": {
+    "mechanism": "Current Work runtime ALL_TOOLS inventory",
+    "runtime_identity": "/root/scheduled-cycle403-20261021T105022Z",
+    "available_methods": [
+      "mcp__codex_apps__neon_list_projects",
+      "mcp__codex_apps__neon_list_branches",
+      "mcp__codex_apps__neon_list_postgres_databases",
+      "mcp__codex_apps__neon_list_postgres_roles",
+      "mcp__codex_apps__neon_run_sql",
+      "mcp__codex_apps__neon_get_storage",
+      "mcp__codex_apps__neon_list_storage_buckets",
+      "mcp__codex_apps__neon_list_storage_objects",
+      "mcp__codex_apps__neon_presign_storage_object"
+    ],
+    "cycle402_connector_absence_claim_correct": false
+  },
+  "context": {
+    "project_id": "red-meadow-53765518",
+    "project_name": "tariff-staging",
+    "branch_id": "br-weathered-frost-ba9jri3c",
+    "branch_name": "staging",
+    "database": "tariff_staging",
+    "schema": "tariff_ingest",
+    "database_role": "tariff_staging_owner",
+    "environment": "non-production"
+  },
+  "read_results": {
+    "initial_role_override": {
+      "requested_role": "tariff_ingest",
+      "result": "INVALID_ARGUMENT",
+      "diagnosis": "tariff_ingest is the schema name; only tariff_staging_owner is listed as a database role"
+    },
+    "connection_probe": {
+      "database_name": "tariff_staging",
+      "role_name": "tariff_staging_owner",
+      "transaction_read_only": "off"
+    },
+    "storage": {
+      "enabled": true,
+      "bucket": "official-originals",
+      "access_level": "private",
+      "group01_prefix": "ett/2026-10-19/group01/7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9/",
+      "objects": [
+        {
+          "name": "original.pdf",
+          "size_bytes": 168285
+        },
+        {
+          "name": "extraction.json",
+          "size_bytes": 21525
+        },
+        {
+          "name": "manifest.json",
+          "size_bytes": 951
+        }
+      ],
+      "bytes_downloaded_or_rehashed": false
+    },
+    "group01_database": {
+      "source_id": "eec-ett:group01:7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9",
+      "source_revision": "2022-04-25-group01",
+      "source_status": "COLLECTED_UNVERIFIED",
+      "raw_rows": 86,
+      "distinct_hs_codes": 86,
+      "distinct_row_hashes": 86,
+      "ordinal_min": 1,
+      "ordinal_max": 86,
+      "duty_text_counts": {
+        "0": 30,
+        "5": 51,
+        "5 63С)": 5
+      },
+      "latest_run": {
+        "raw_count": 86,
+        "unique_count": 86,
+        "normalized_count": 0,
+        "rejected_count": 0,
+        "resume_cursor": {
+          "complete": true,
+          "raw_count": 86,
+          "next_ordinal": 87
+        }
+      }
+    }
+  },
+  "result": {
+    "status": "CAPABILITY_CONFIRMED_READ_ONLY",
+    "cycle402_capability_blocker_removed": true,
+    "sql_write_performed": false,
+    "database_write_performed": false,
+    "object_download_or_upload_performed": false,
+    "credential_or_permission_change": false,
+    "normalization_performed": false,
+    "raw_reimport_performed": false,
+    "legal_or_rate_admission": false
+  },
+  "next_gate": "A later cycle may continue group01 normalization only with separate applicable write authorization; this diagnostic authorizes and performs no write.",
+  "receipts": {
+    "issue257_comment_id": 6314204322
+  }
+}
