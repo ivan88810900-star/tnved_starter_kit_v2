@@ -76,3 +76,12 @@ jobs:
           tests/test_normative_bundle.py
           tests/test_rop_calculator.py
           tests/test_vat_preferences_audit161.py
+          tests/test_payment_quote.py
+          tests/test_payment_api_boolean_inputs.py
+          tests/test_invoice_economic_input_admission.py
+          tests/test_payment_fx_provenance_fail_closed.py
+          tests/test_source_import.py
+          tests/test_source_sync_index_currentness.py
+          tests/test_customs_procedures.py
+          tests/test_rop_coverage_audit.py
+          tests/test_trade_remedies_audit.py
