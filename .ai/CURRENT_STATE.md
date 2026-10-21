@@ -584,3 +584,15 @@ legacy (сверх structural). Контур по-прежнему **не под
 - A6 request/provider was not invoked. No merge, deploy, production/staging write, permission/secret change, or enforcement flag change occurred.
 - Evidence: `.ai/orchestration/evidence/cycle383_a6_command_trigger_filter.json`.
 - Next safe step: fresh independent A5 review of exact PR #261 head, followed by exact-head CI recheck; do not merge.
+
+## Cycle 392 checkpoint — PR #260 current status reconciliation (2026-10-21)
+
+- Main remains `e526dfbdb5a31b01bf6f743da0288b88f916de0c`; no protected action was performed.
+- Draft PR #260 product HEAD remains unchanged at `f50f8cbe10daef44a4f42c516aaf19a5f5b156f4`, tree `5327650562c1d276695bf45846cc79cd1f91d931`. Existing exact-head CI run `39430147563` / job `118652765585` remains completed/success; candidate A5 `/root/a5_cycle378` remains bound to that tree.
+- The PR body and this authoritative current-state record now supersede the historical partial-load wording with the completed cycle391 staging receipt: artifact, deterministic run and all 18,014 rows are `COLLECTED_UNVERIFIED`; unique HS codes, ordinals and row hashes are 18,014 each; ordinals are exactly 1..18,014; gaps and duplicate-code groups are zero.
+- The identical full remote replay inserted zero rows, and the post-replay read retained the exact counts and ordered digest `031c2fd0aa5accefefb97c13e25a2cb1`.
+- Digest recipe: `SELECT md5(string_agg(row_sha256, '' ORDER BY ordinal))` for artifact `c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4`; concatenate stored lowercase `row_sha256` text with an empty separator in integer `ordinal ASC` order, then apply PostgreSQL `md5(text)`.
+- Accepted-artifact attribution remains unchanged: bundle head `bc8a24542549725aa7c73ad7160ba41c7a76cc4f`, tree `4caf1d03f0d718cac7b8d462e66090c423ecb9ee`. Historical cycle374 recovery and cycle378 partial staging records remain valid for their times and are preserved.
+- Independent read-only A5 `/root/a5_cycle392` returned `PASS_NO_FINDINGS`: live PR body, exact head/tree, CI binding, historical continuity, 18,014-row Neon counts/status, 13,294 ten-digit codes, 96 chapters, digest recipe and legal boundaries all matched.
+- This is documentation/status reconciliation only. No product branch commit, staging/production DB write, legal/rate/NTM admission, merge, deploy, enforcement/permission/secret change or A6 dispatch occurred. The populated synchronized NTM snapshot remains unavailable.
+- Evidence: `.ai/orchestration/evidence/cycle392_pr260_current_status_reconciliation.json`; TASK_BOARD revision 916. Next resume coherent #244 payment/source acceptance and remaining fixture isolation, then #245.

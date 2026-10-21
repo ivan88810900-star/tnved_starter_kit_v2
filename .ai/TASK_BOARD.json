@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 915,
+  "revision": 916,
   "runs": [
     {
       "head_sha": null,
@@ -19103,7 +19103,7 @@
     "evidence": ".ai/orchestration/evidence/cycle386_pr255_customs_procedure_isolation.json",
     "next_step": "Continue coherent PR #244 source-by-source payment acceptance and fixture cleanup from the fresh live head, then #245."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_391": {
     "schema_version": 1,
     "task_id": "TARIFF-TNVED-STAGING-COMPLETE-20261021",
     "started_at": "2026-10-21T00:48:52Z",
@@ -19132,6 +19132,31 @@
     "merge_or_deploy_performed": false,
     "a6": "UNCHANGED_NOT_SENT",
     "evidence": ".ai/orchestration/evidence/cycle391_tnved_structure_staging_complete.json",
+    "next_step": "Resume coherent PR #244 payment/source acceptance and remaining fixture isolation from fresh live state, then #245."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR260-CURRENT-STATUS-RECONCILIATION-20261021",
+    "started_at": "2026-10-21T01:48:29Z",
+    "completed_at": "2026-10-21T01:53:03Z",
+    "executor": "/root/scheduled-cycle392-20261021T014829Z",
+    "lease_generation": 392,
+    "pr": 260,
+    "branch": "agent/tnved-structure-recovery-v1",
+    "head_sha": "f50f8cbe10daef44a4f42c516aaf19a5f5b156f4",
+    "tree_sha": "5327650562c1d276695bf45846cc79cd1f91d931",
+    "status": "PR_BODY_AND_CURRENT_STATE_RECONCILED_A5_PASS_HEAD_UNCHANGED",
+    "owner_instruction": "issue257 comment6305740521 requested current-status reconciliation while preserving cycle374/cycle378 history and exact candidate/CI/A5 binding",
+    "implementation": "PR260 body and authoritative CURRENT_STATE now record completed cycle391 staging: artifact/run/18014 rows COLLECTED_UNVERIFIED, 18014 unique codes/ordinals/hashes, ordinal1..18014, gaps0, duplicate groups0, full replay inserted0 and unchanged post-replay digest. Historical partial checkpoint and accepted-artifact attribution remain explicit.",
+    "digest_recipe": "SELECT md5(string_agg(row_sha256, '' ORDER BY ordinal)) over exact artifact SHA; empty separator, integer ordinal ascending, stored lowercase sha256 text; result031c2fd0aa5accefefb97c13e25a2cb1",
+    "a5": "/root/a5_cycle392 PASS_NO_FINDINGS: live PR metadata, Git head/tree, CI, historical attribution, cycle378 continuity, Neon counts/status/digest and legal boundaries independently checked read-only",
+    "exact_head_ci": "Unchanged recovery candidate f50f8cbe... retains completed/success run39430147563/job118652765585; metadata/state documentation did not change product HEAD",
+    "legal_boundary": "Structure-only COLLECTED_UNVERIFIED staging; no legal dates, rates, NTM completeness or calculation admission; populated synchronized NTM snapshot remains unavailable.",
+    "protected_actions_performed": false,
+    "product_branch_commit_created": false,
+    "production_or_staging_write_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "evidence": ".ai/orchestration/evidence/cycle392_pr260_current_status_reconciliation.json",
     "next_step": "Resume coherent PR #244 payment/source acceptance and remaining fixture isolation from fresh live state, then #245."
   }
 }

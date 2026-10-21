@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR260-CURRENT-STATUS-RECONCILIATION-20261021",
+  "executor": "/root/scheduled-cycle392-20261021T014829Z",
+  "started_at": "2026-10-21T01:48:29Z",
+  "completed_at": "2026-10-21T01:53:03Z",
+  "lease_generation": 392,
+  "owner_instruction": {
+    "issue": 257,
+    "comment_id": 6305740521,
+    "scope": "Reconcile PR260 body and authoritative CURRENT_STATE with completed cycle391 staging while preserving history and exact candidate binding."
+  },
+  "candidate": {
+    "pr": 260,
+    "head_sha": "f50f8cbe10daef44a4f42c516aaf19a5f5b156f4",
+    "tree_sha": "5327650562c1d276695bf45846cc79cd1f91d931",
+    "head_changed": false,
+    "exact_head_ci_run_id": 39430147563,
+    "exact_head_ci_job_id": 118652765585,
+    "exact_head_ci_conclusion": "success",
+    "candidate_a5": "/root/a5_cycle378 FINAL PASS"
+  },
+  "current_status": {
+    "artifact_sha256": "c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4",
+    "status": "COLLECTED_UNVERIFIED",
+    "rows": 18014,
+    "unique_hs_codes": 18014,
+    "unique_ordinals": 18014,
+    "unique_row_hashes": 18014,
+    "min_ordinal": 1,
+    "max_ordinal": 18014,
+    "missing_ordinals": 0,
+    "duplicate_hs_groups": 0,
+    "ten_digit_codes": 13294,
+    "chapters": 96,
+    "identical_replay_inserted_count": 0,
+    "post_replay_unchanged": true,
+    "ordered_row_hash_md5": "031c2fd0aa5accefefb97c13e25a2cb1"
+  },
+  "digest_recipe": {
+    "sql": "SELECT md5(string_agg(row_sha256, '' ORDER BY ordinal)) AS ordered_digest FROM tariff_ingest.tnved_structure_rows WHERE artifact_sha256 = 'c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4';",
+    "separator": "",
+    "ordering": "integer ordinal ASC",
+    "input": "stored lowercase row_sha256 text",
+    "non_lower_hex64": 0
+  },
+  "history_preserved": {
+    "accepted_bundle_head": "bc8a24542549725aa7c73ad7160ba41c7a76cc4f",
+    "accepted_bundle_tree": "4caf1d03f0d718cac7b8d462e66090c423ecb9ee",
+    "cycle374_preserved": true,
+    "cycle378_partial_checkpoint_preserved": true
+  },
+  "independent_a5": {
+    "session": "/root/a5_cycle392",
+    "result": "PASS_NO_FINDINGS",
+    "mode": "read-only",
+    "live_neon_digest_verified": true,
+    "live_pr_body_verified": true
+  },
+  "boundaries": {
+    "product_head_changed": false,
+    "database_write": false,
+    "legal_or_rate_admission": false,
+    "ntm_completeness_admission": false,
+    "calculation_admission": false,
+    "merge": false,
+    "deploy": false,
+    "a6_dispatch": false,
+    "populated_synchronized_ntm_snapshot_available": false
+  }
+}
