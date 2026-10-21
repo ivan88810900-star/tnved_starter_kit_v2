@@ -2229,3 +2229,13 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Historical cycle374/cycle378 records and accepted bundle attribution to `bc8a24542549725aa7c73ad7160ba41c7a76cc4f` / `4caf1d03f0d718cac7b8d462e66090c423ecb9ee` remain unchanged and explicit.
 - Independent read-only A5 `/root/a5_cycle392` returned `PASS_NO_FINDINGS`, including live Neon recomputation of `md5(string_agg(row_sha256, '' ORDER BY ordinal)) = 031c2fd0aa5accefefb97c13e25a2cb1` and verification that all stored row hashes are lowercase hex64.
 - No product commit, database write, legal/rate/NTM admission, merge, deploy, protected action or A6 dispatch occurred. Evidence: `.ai/orchestration/evidence/cycle392_pr260_current_status_reconciliation.json`; TASK_BOARD revision 916. Next resume coherent #244 source/payment acceptance and fixture isolation, then #245.
+
+## Cycle 393 — PR #255 source-import database isolation (2026-10-21 UTC)
+
+- Task `TARIFF-PR255-SOURCE-IMPORT-ISOLATION-20261021`; executor `/root/scheduled-cycle393-20261021T025423Z`; lease generation 393.
+- On parent `82318dd750d01acb314715ab49a0fbb597f96a05`, the source-import test created an ambient `customs.db` through retained `engine`/`SessionLocal` aliases during `init_db` and the declaration-document migration seed.
+- Live-state reconciliation found the same defect had already been solved and independently validated on PR #256 in cycle352. PR #255 now uses that exact validated file blob `d1aabeec60f83b55cf54107868ad6519f5609b16`; draft HEAD/tree are `7a293776621e5a846affc4bff6cb08246d96775e` / `7bab32efa0b3b8c9ab9c4083d1d38c846d23650c`, with local author commit `e75b793cf2652a84a3c8a5eec975ba5f0d1910e2` on the identical tree.
+- Author verification: focused **3 passed**; safe forward and reverse source/trade-remedy orders **65 passed** each; no ambient DB/WAL/SHM; py_compile and diff-check exit 0. Independent A5 `/root/a5_cycle393`: `PASS_NO_FINDINGS`, including cleanup fault injection.
+- A broader pytest tranche was stopped by platform security after attempted Microsoft telemetry egress. It was not retried or bypassed; no broad-suite PASS is claimed.
+- Exact-head CI success is not yet claimed. The branch push workflow is expected for this path, while the available workflow lookup exposes only pull-request-triggered runs and returned no run before checkpoint. Close the exact-head CI receipt on unchanged `7a293776…` next.
+- No product code, migration, rate/source fixture, payment arithmetic or legal applicability changed. No merge, deploy, database write, protected action or A6 dispatch occurred. Evidence: `.ai/orchestration/evidence/cycle393_pr255_source_import_isolation.json`; TASK_BOARD revision 917. Full #244 acceptance remains **NOT PASS**.

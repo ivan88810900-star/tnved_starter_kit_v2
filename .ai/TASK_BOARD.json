@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 916,
+  "revision": 917,
   "runs": [
     {
       "head_sha": null,
@@ -8118,7 +8118,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-20T20:05:39Z",
+  "updated_at": "2026-10-21T03:10:30Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -19136,27 +19136,27 @@
   },
   "latest_scheduled_product_checkpoint": {
     "schema_version": 1,
-    "task_id": "TARIFF-PR260-CURRENT-STATUS-RECONCILIATION-20261021",
-    "started_at": "2026-10-21T01:48:29Z",
-    "completed_at": "2026-10-21T01:53:03Z",
-    "executor": "/root/scheduled-cycle392-20261021T014829Z",
-    "lease_generation": 392,
-    "pr": 260,
-    "branch": "agent/tnved-structure-recovery-v1",
-    "head_sha": "f50f8cbe10daef44a4f42c516aaf19a5f5b156f4",
-    "tree_sha": "5327650562c1d276695bf45846cc79cd1f91d931",
-    "status": "PR_BODY_AND_CURRENT_STATE_RECONCILED_A5_PASS_HEAD_UNCHANGED",
-    "owner_instruction": "issue257 comment6305740521 requested current-status reconciliation while preserving cycle374/cycle378 history and exact candidate/CI/A5 binding",
-    "implementation": "PR260 body and authoritative CURRENT_STATE now record completed cycle391 staging: artifact/run/18014 rows COLLECTED_UNVERIFIED, 18014 unique codes/ordinals/hashes, ordinal1..18014, gaps0, duplicate groups0, full replay inserted0 and unchanged post-replay digest. Historical partial checkpoint and accepted-artifact attribution remain explicit.",
-    "digest_recipe": "SELECT md5(string_agg(row_sha256, '' ORDER BY ordinal)) over exact artifact SHA; empty separator, integer ordinal ascending, stored lowercase sha256 text; result031c2fd0aa5accefefb97c13e25a2cb1",
-    "a5": "/root/a5_cycle392 PASS_NO_FINDINGS: live PR metadata, Git head/tree, CI, historical attribution, cycle378 continuity, Neon counts/status/digest and legal boundaries independently checked read-only",
-    "exact_head_ci": "Unchanged recovery candidate f50f8cbe... retains completed/success run39430147563/job118652765585; metadata/state documentation did not change product HEAD",
-    "legal_boundary": "Structure-only COLLECTED_UNVERIFIED staging; no legal dates, rates, NTM completeness or calculation admission; populated synchronized NTM snapshot remains unavailable.",
+    "task_id": "TARIFF-PR255-SOURCE-IMPORT-ISOLATION-20261021",
+    "started_at": "2026-10-21T02:54:23Z",
+    "completed_at": "2026-10-21T03:10:30Z",
+    "executor": "/root/scheduled-cycle393-20261021T025423Z",
+    "lease_generation": 393,
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "previous_head_sha": "82318dd750d01acb314715ab49a0fbb597f96a05",
+    "head_sha": "7a293776621e5a846affc4bff6cb08246d96775e",
+    "tree_sha": "7bab32efa0b3b8c9ab9c4083d1d38c846d23650c",
+    "local_author_commit": "e75b793cf2652a84a3c8a5eec975ba5f0d1910e2",
+    "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_RECEIPT_PENDING",
+    "implementation": "Backported byte-identical cycle352 source-import fixture isolation: delayed imports, identity-based app/scripts DB alias rebinding, explicit callback rebinding and fault-tolerant cleanup.",
+    "tests": "Focused 3 passed; safe forward/reverse 65 passed each; no ambient db/wal/shm; py_compile and diff-check exit0.",
+    "a5": "/root/a5_cycle393 PASS_NO_FINDINGS on exact tree; cleanup fault injection PASS and validated cycle352 blob identity confirmed.",
+    "exact_head_ci": "Receipt pending/unobservable: available lookup exposes pull_request runs only, but this path triggers the branch push workflow; no success claim.",
+    "blocked_broad_run": "Platform stopped broader pytest after attempted Microsoft telemetry egress; no retry/bypass and no broad PASS claim.",
+    "legal_boundary": "Test fixture only; no product code, migration, rate/source data, payment arithmetic or legal applicability changed. Full #244 acceptance remains NOT PASS.",
     "protected_actions_performed": false,
-    "product_branch_commit_created": false,
-    "production_or_staging_write_performed": false,
     "a6": "UNCHANGED_NOT_SENT",
-    "evidence": ".ai/orchestration/evidence/cycle392_pr260_current_status_reconciliation.json",
-    "next_step": "Resume coherent PR #244 payment/source acceptance and remaining fixture isolation from fresh live state, then #245."
+    "evidence": ".ai/orchestration/evidence/cycle393_pr255_source_import_isolation.json",
+    "next_step": "Close exact-head push CI receipt on unchanged 7a293776..., then continue the next distinct PR244 payment/source defect; do not repeat cycle352 work."
   }
 }

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-SOURCE-IMPORT-ISOLATION-20261021",
+  "started_at": "2026-10-21T02:54:23Z",
+  "completed_at": "2026-10-21T03:10:30Z",
+  "executor": "/root/scheduled-cycle393-20261021T025423Z",
+  "lease_generation": 393,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "parent_sha": "82318dd750d01acb314715ab49a0fbb597f96a05",
+  "intermediate_head_sha": "0204844d34bcc298252f6a8c6e6b3a3bde9798e0",
+  "head_sha": "7a293776621e5a846affc4bff6cb08246d96775e",
+  "tree_sha": "7bab32efa0b3b8c9ab9c4083d1d38c846d23650c",
+  "local_author_commit": "e75b793cf2652a84a3c8a5eec975ba5f0d1910e2",
+  "changed_files": [
+    "customs-clear/backend/tests/test_source_import.py"
+  ],
+  "finding": "The PR255 source-import tests wrote an ambient customs.db because init_db and the declaration-document migration seed retained module-level engine/session aliases.",
+  "implementation": "Backported the exact cycle352 independently validated fixture blob d1aabeec60f83b55cf54107868ad6519f5609b16: delayed runtime imports, identity-based rebinding of loaded app/scripts aliases, explicit source-import callback rebinding, and fault-tolerant engine/temp cleanup.",
+  "author_verification": [
+    {"command": ".venv/bin/python -m unittest -q tests.test_source_import", "result": "3 passed", "exit_code": 0},
+    {"command": ".venv/bin/python -m unittest -q tests.test_source_import tests.test_countervailing_ingestion tests.test_special_safeguard_ingestion", "result": "65 passed; no ambient db/wal/shm", "exit_code": 0},
+    {"command": ".venv/bin/python -m unittest -q tests.test_special_safeguard_ingestion tests.test_countervailing_ingestion tests.test_source_import", "result": "65 passed; no ambient db/wal/shm", "exit_code": 0},
+    {"command": "py_compile plus git diff --check", "result": "PASS", "exit_code": 0}
+  ],
+  "independent_a5": {
+    "session": "/root/a5_cycle393",
+    "status": "PASS_NO_FINDINGS",
+    "focused": "3 passed",
+    "forward": "65 passed",
+    "reverse": "65 passed",
+    "fault_cleanup": "FAULT_CLEANUP_PASS",
+    "ambient_sqlite": false,
+    "blob_identity": "d1aabeec60f83b55cf54107868ad6519f5609b16 equals validated cycle352 blob"
+  },
+  "blocked_broad_run": "A broader pytest tranche was stopped by platform security after an imported component attempted Microsoft telemetry egress. It was not retried or bypassed; no broad-suite PASS is claimed.",
+  "exact_head_ci": {
+    "head_sha": "7a293776621e5a846affc4bff6cb08246d96775e",
+    "status": "RECEIPT_PENDING_UNOBSERVABLE",
+    "reason": "The available workflow lookup exposes pull-request-triggered runs only; this test-file path triggers the branch push workflow, and no run was visible through that lookup before checkpoint. Success is not claimed."
+  },
+  "legal_boundary": "Test fixture only; no product code, migration, source/rate fixture, payment arithmetic or legal applicability changed. Full PR244 acceptance remains NOT PASS.",
+  "protected_actions_performed": false,
+  "a6": "UNCHANGED_NOT_SENT",
+  "next_step": "Close the exact-head push CI receipt for 7a293776... without changing the candidate, then continue the next distinct PR244 payment/source defect; do not repeat cycle352 source-import work."
+}
