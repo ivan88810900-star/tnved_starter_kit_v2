@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 921,
+  "revision": 922,
   "runs": [
     {
       "head_sha": null,
@@ -8118,7 +8118,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-21T07:09:25Z",
+  "updated_at": "2026-10-21T08:05:14Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -19241,7 +19241,7 @@
     "evidence": ".ai/orchestration/evidence/cycle397_pr255_source_admission_ci_coverage.json",
     "next_step": "Superseded by cycle398 future-dated payment-source revision admission closure."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_398": {
     "schema_version": 1,
     "task_id": "TARIFF-PR255-FUTURE-SOURCE-REVISION-20261021",
     "started_at": "2026-10-21T06:55:59Z",
@@ -19269,6 +19269,35 @@
     "protected_actions_performed": false,
     "a6": "UNCHANGED_NOT_SENT",
     "evidence": ".ai/orchestration/evidence/cycle398_pr255_future_source_revision_admission.json",
-    "next_step": "Continue the next distinct PR244 payment/source defect, then PR245; do not repeat completed fixture, CI coverage or future-revision work."
+    "next_step": "Superseded by cycle399 ambiguous EEC provenance URL admission closure."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR255-EEC-SOURCE-URL-ADMISSION-20261021",
+    "started_at": "2026-10-21T07:56:13Z",
+    "completed_at": "2026-10-21T08:05:14Z",
+    "executor": "/root/scheduled-cycle399-20261021T075613Z",
+    "lease_generation": 399,
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "previous_head_sha": "3fe7c3b702bbd8ce213884493d425ba51b3a113d",
+    "head_sha": "ee84254ce1ba3802d864294f8d48b5616ff061d2",
+    "tree_sha": "9e7e4b33d6a54341f95f4672a2232aa45ad991ab",
+    "local_author_commit": "a98efd7114e4b07097b926853df3e400d5572812",
+    "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+    "implementation": "The retained-source EEC allowlist now rejects URL userinfo and backslash parser ambiguity before official-host admission; ordinary EEC root and subdomain URLs remain accepted.",
+    "static_validation": "py_compile -Werror, pure-module URL/verifier matrices, AST regression-test presence and git diff --check exit0.",
+    "a5": "/root/a5_cycle399 PASS_NO_FINDINGS on exact local commit/tree; exploit forms, ordinary controls, mutation assertions and scope independently reviewed.",
+    "exact_head_ci": "Push run39566306119 completed/success; offline-safety job119109299624 success; payment-regression job119109299039 success with 608 passed plus 229 subtests.",
+    "receipts": {
+      "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6311134921",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6311135323"
+    },
+    "blocked_local_run": "Local pytest was not retried after the recorded unexpected Microsoft telemetry attempt; exact-head GitHub CI is the behavioral receipt.",
+    "legal_boundary": "No rate/source facts, fixtures or legal applicability changed. Full #244/#245 acceptance remains NOT PASS; populated synchronized NTM remains unavailable.",
+    "protected_actions_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "evidence": ".ai/orchestration/evidence/cycle399_pr255_eec_source_url_admission.json",
+    "next_step": "Continue the next distinct PR244 payment/source defect, then PR245; do not repeat completed fixture, CI coverage, future-revision or URL-admission work."
   }
 }

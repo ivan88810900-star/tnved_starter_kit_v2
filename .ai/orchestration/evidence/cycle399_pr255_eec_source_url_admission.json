@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-EEC-SOURCE-URL-ADMISSION-20261021",
+  "executor": "/root/scheduled-cycle399-20261021T075613Z",
+  "started_at": "2026-10-21T07:56:13Z",
+  "completed_at": "2026-10-21T08:05:14Z",
+  "lease_generation": 399,
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "parent_sha": "3fe7c3b702bbd8ce213884493d425ba51b3a113d",
+  "head_sha": "ee84254ce1ba3802d864294f8d48b5616ff061d2",
+  "tree_sha": "9e7e4b33d6a54341f95f4672a2232aa45ad991ab",
+  "local_author_commit": "a98efd7114e4b07097b926853df3e400d5572812",
+  "changed_files": [
+    "customs-clear/backend/app/services/payment_source_snapshot.py",
+    "customs-clear/backend/tests/test_import_duty_ingestion.py"
+  ],
+  "reproduction": {
+    "command": "isolated runpy of payment_source_snapshot.py _is_official_eec_url against userinfo, backslash ambiguity and normal EEC controls",
+    "exit_code": 0,
+    "parent_result": "Both https://user:secret@eec.eaeunion.org/path and https://attacker.example\\@eec.eaeunion.org/path returned true."
+  },
+  "implementation": "Reject backslashes before URL parsing and reject any parsed username/password before the HTTPS EEC root/subdomain allowlist. No rate, source fact or legal applicability rule changed.",
+  "author_validation": [
+    {
+      "command": "python3 -Werror -m py_compile customs-clear/backend/app/services/payment_source_snapshot.py customs-clear/backend/tests/test_import_duty_ingestion.py",
+      "exit_code": 0
+    },
+    {
+      "command": "isolated pure-module URL and retained-source verifier matrices",
+      "exit_code": 0,
+      "result": "ambiguous URLs manual_review_required/source_url_not_official_eec; normal EEC URL verified"
+    },
+    {
+      "command": "AST regression-test presence check and git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "a5": {
+    "session": "/root/a5_cycle399",
+    "status": "PASS_NO_FINDINGS",
+    "reviewed_local_commit": "a98efd7114e4b07097b926853df3e400d5572812",
+    "reviewed_tree_sha": "9e7e4b33d6a54341f95f4672a2232aa45ad991ab",
+    "notes": "Independent static, py_compile, runpy matrix, AST and diff checks; no edits, pytest, network or GitHub writes."
+  },
+  "ci": {
+    "run_id": 39566306119,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39566306119",
+    "conclusion": "success",
+    "offline_safety_job": 119109299624,
+    "payment_regression_job": 119109299039,
+    "payment_regression_result": "608 passed, 229 subtests passed"
+  },
+  "receipts": {
+    "pr255_comment": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6311134921",
+    "issue257_comment": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6311135323"
+  },
+  "blocked_local_run": "Local pytest was not retried after the previously recorded unexpected Microsoft telemetry attempt; exact-head GitHub CI is the behavioral receipt.",
+  "legal_boundary": "No source facts, rates, fixtures or legal applicability changed. Full #244/#245 acceptance remains NOT PASS and populated synchronized NTM remains unavailable.",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "next_step": "Continue the next distinct PR244 payment/source defect, then PR245; do not repeat completed fixture, CI coverage, future-revision or URL-admission work."
+}

@@ -2281,3 +2281,16 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Independent A5 `/root/a5_cycle397`: **PASS_NO_FINDINGS** on the exact remote tree. Exact-head CI [run 39552685877](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39552685877) is **success**: payment-regression **601 passed + 227 subtests**, offline-safety success.
 - Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6309235079), [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6309238413). Durable evidence: `.ai/orchestration/evidence/cycle397_pr255_source_admission_ci_coverage.json`.
 - Full #244/#245 acceptance remains NOT PASS; the populated synchronized NTM snapshot remains unavailable. A6 is unchanged and was not sent. Next: continue the next distinct #244 payment/source defect without repeating completed fixture or CI coverage work.
+
+## Cycle 399 — PR #255 ambiguous EEC source URL admission (2026-10-21 UTC)
+
+- Task `TARIFF-PR255-EEC-SOURCE-URL-ADMISSION-20261021`; executor `/root/scheduled-cycle399-20261021T075613Z`; lease generation 399.
+- On parent `3fe7c3b702bbd8ce213884493d425ba51b3a113d`, the retained-source allowlist accepted EEC URLs carrying userinfo and a backslash parser-ambiguity URL. Those strings could be classified as official provenance despite unsafe or conflicting URL interpretation.
+- Draft PR #255 advanced by non-force CAS to exact head `ee84254ce1ba3802d864294f8d48b5616ff061d2`, tree `9e7e4b33d6a54341f95f4672a2232aa45ad991ab`; local author commit `a98efd7114e4b07097b926853df3e400d5572812` has the identical tree.
+- The verifier now rejects backslashes before parsing and any parsed username/password before EEC host admission. Normal HTTPS EEC root/subdomain URLs remain accepted. Integration negative cases require `manual_review_required` and no SourceStatus/SyncLog mutation.
+- Safe author checks exited 0: `py_compile -Werror`, pure-module URL/verifier matrices, AST regression-test presence and `git diff --check`. Local pytest was not retried after the prior unexpected Microsoft telemetry security stop.
+- Independent read-only A5 `/root/a5_cycle399` returned `PASS_NO_FINDINGS` on the exact local commit/tree.
+- Exact-head CI [run 39566306119](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39566306119) succeeded: payment-regression job `119109299039` reported **608 passed plus 229 subtests**; offline-safety job `119109299624` succeeded.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6311134921), [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6311135323).
+- No rate/source facts, fixtures, legal applicability, production/staging DB, merge, deploy, protected action or A6 dispatch changed. Full #244/#245 acceptance remains NOT PASS; the populated synchronized NTM snapshot remains unavailable.
+- Evidence: `.ai/orchestration/evidence/cycle399_pr255_eec_source_url_admission.json`; TASK_BOARD revision 922. Next continue a distinct #244 payment/source defect from fresh state, then #245.
