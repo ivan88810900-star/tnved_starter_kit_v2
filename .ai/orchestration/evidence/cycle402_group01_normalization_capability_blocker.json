@@ -81,5 +81,8 @@
     "enforcement_change": false,
     "permission_or_secret_change": false,
     "a6_dispatch": false
+  },
+  "receipts": {
+    "issue257_comment_id": 6313667630
   }
 }
