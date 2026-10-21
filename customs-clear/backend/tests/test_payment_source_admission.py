@@ -23,6 +23,7 @@ from app.services.payment_revision_utils import (
     is_official_special_safeguard_ingestion_revision,
     is_official_special_safeguard_revision,
     is_official_vat_ingestion_revision,
+    is_official_vat_row_marker,
     is_official_vat_revision,
 )
 
@@ -231,3 +232,12 @@ def test_future_dated_payment_revision_is_not_admitted_but_remains_classifiable(
 ):
     assert ingestion_validator(revision) is False
     assert runtime_validator(revision) is True
+
+
+def test_future_vat_row_marker_remains_classifiable_without_accepting_duty_revision():
+    assert is_official_vat_row_marker(
+        vat_source_code="EEC_VAT", vat_source_revision="vat:2999-01-01"
+    ) is True
+    assert is_official_vat_row_marker(
+        vat_source_code="EEC_VAT", vat_source_revision="ett:2026-05-01"
+    ) is False

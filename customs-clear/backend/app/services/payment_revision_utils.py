@@ -122,7 +122,10 @@ def is_official_vat_row_marker(*, vat_source_code: str | None, vat_source_revisi
     code = (vat_source_code or "").strip().upper()
     if code != "EEC_VAT":
         return False
-    return is_official_vat_revision(vat_source_revision)
+    # Row proof is VAT-specific. The broader runtime SourceStatus classifier
+    # accepts historical shared ETT labels, but a duty-only label must never
+    # become proof for a VAT row.
+    return _matches_typed_revision(_EEC_VAT_REVISION_RE, vat_source_revision)
 
 
 def is_official_excise_ingestion_revision(revision: str | None) -> bool:
