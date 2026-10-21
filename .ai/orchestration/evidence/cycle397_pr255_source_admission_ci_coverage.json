@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-SOURCE-ADMISSION-CI-COVERAGE-20261021",
+  "started_at": "2026-10-21T05:57:57Z",
+  "completed_at": "2026-10-21T06:03:12Z",
+  "executor": "/root/scheduled-cycle397-20261021T055354Z",
+  "lease_generation": 397,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "previous_head_sha": "e71f48f5314cb427c052219aabd0645932a77f7e",
+  "head_sha": "bc03b58be1c7e7ecb2be93acc05011959aab103b",
+  "tree_sha": "72749e7514254d2f3ec1dda8dbeedc54ec53b5f1",
+  "local_author_commit": "11e82cf58d3135cd08006cb7e4574f153448b13e",
+  "changed_paths": [
+    ".github/workflows/tariff-agent-safety.yml"
+  ],
+  "added_test_modules": [
+    "tests/test_payment_data_coverage.py",
+    "tests/test_payment_data_normalization.py",
+    "tests/test_payment_source_admission.py",
+    "tests/test_payment_source_ingestion.py",
+    "tests/test_anti_dumping_ingestion.py",
+    "tests/test_countervailing_ingestion.py",
+    "tests/test_special_safeguard_ingestion.py",
+    "tests/test_official_payment_coverage_audit.py"
+  ],
+  "static_validation": {
+    "command": "python AST/path validation; git diff --check",
+    "exit_code": 0,
+    "workflow_test_paths": 31,
+    "unique_workflow_test_paths": 31,
+    "missing_paths": 0,
+    "added_test_functions": 222
+  },
+  "local_behavioral_boundary": "A focused local pytest command was rejected because it triggered unexpected Microsoft telemetry. It was not retried or bypassed.",
+  "a5": {
+    "identity": "/root/a5_cycle397",
+    "status": "PASS_NO_FINDINGS",
+    "reviewed_head_sha": "bc03b58be1c7e7ecb2be93acc05011959aab103b",
+    "reviewed_tree_sha": "72749e7514254d2f3ec1dda8dbeedc54ec53b5f1"
+  },
+  "exact_head_ci": {
+    "run_id": 39552685877,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39552685877",
+    "conclusion": "success",
+    "offline_safety_job_id": 119065241022,
+    "payment_regression_job_id": 119065241303,
+    "payment_regression": "601 passed, 227 subtests passed, 2 warnings, exit 0"
+  },
+  "receipts": {
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6309235079",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6309238413"
+  },
+  "legal_boundary": "CI coverage only; no product logic, fixtures, rates, source facts or legal applicability changed.",
+  "protected_actions_performed": false,
+  "a6": "UNCHANGED_NOT_SENT",
+  "next_step": "Continue the next distinct PR244 payment/source defect from fresh live state."
+}

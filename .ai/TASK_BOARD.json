@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 919,
+  "revision": 920,
   "runs": [
     {
       "head_sha": null,
@@ -8118,7 +8118,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-21T05:00:15Z",
+  "updated_at": "2026-10-21T06:03:12Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -19184,7 +19184,7 @@
     "evidence": ".ai/orchestration/evidence/cycle394_pr255_source_import_ci_closure.json",
     "next_step": "Superseded by cycle396 recovery of the next workflow-only PR255 payment CI coverage block."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_396": {
     "schema_version": 1,
     "task_id": "TARIFF-PR255-PAYMENT-CI-COVERAGE-RECOVERY-20261021",
     "started_at": "2026-10-21T04:56:31Z",
@@ -19210,6 +19210,35 @@
     "protected_actions_performed": false,
     "a6": "UNCHANGED_NOT_SENT",
     "evidence": ".ai/orchestration/evidence/cycle396_pr255_payment_ci_coverage_recovery.json",
-    "next_step": "Continue the next distinct PR244 payment/source defect from fresh state; do not repeat already repaired isolation modules."
+    "next_step": "Superseded by cycle397 source-admission CI closure on the successor exact head."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR255-SOURCE-ADMISSION-CI-COVERAGE-20261021",
+    "started_at": "2026-10-21T05:57:57Z",
+    "completed_at": "2026-10-21T06:03:12Z",
+    "executor": "/root/scheduled-cycle397-20261021T055354Z",
+    "lease_generation": 397,
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "previous_head_sha": "e71f48f5314cb427c052219aabd0645932a77f7e",
+    "head_sha": "bc03b58be1c7e7ecb2be93acc05011959aab103b",
+    "tree_sha": "72749e7514254d2f3ec1dda8dbeedc54ec53b5f1",
+    "local_author_commit": "11e82cf58d3135cd08006cb7e4574f153448b13e",
+    "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+    "implementation": "Workflow-only: eight existing payment source admission, normalization, ingestion, remedy and coverage suites are now mandatory in payment-regression; no product code or data changed.",
+    "static_validation": "One changed file, +8/-0; 31 unique existing workflow paths; 0 duplicates/missing; 222 added test functions; YAML/static/diff checks exit0.",
+    "a5": "/root/a5_cycle397 PASS_NO_FINDINGS on exact remote head/tree; one-file scope, YAML, path uniqueness, no weakening and no risky imports verified.",
+    "exact_head_ci": "Push run39552685877 completed/success; offline-safety job119065241022 success; payment-regression job119065241303 success with 601 passed plus 227 subtests.",
+    "receipts": {
+      "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6309235079",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6309238413"
+    },
+    "blocked_local_run": "Local focused source/payment pytest was stopped by platform security after unexpected Microsoft telemetry; no retry/bypass. Exact-head GitHub CI is the behavioral receipt.",
+    "legal_boundary": "CI coverage only; no product/test data, rate/source/legal semantics changed. Full #244/#245 acceptance remains NOT PASS; populated synchronized NTM remains unavailable.",
+    "protected_actions_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "evidence": ".ai/orchestration/evidence/cycle397_pr255_source_admission_ci_coverage.json",
+    "next_step": "Continue the next distinct PR244 payment/source defect from fresh state without repeating completed fixture or CI coverage work."
   }
 }
