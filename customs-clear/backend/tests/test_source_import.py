@@ -1,8 +1,14 @@
 """Тесты импорта нормативных ставок: upsert с vat_rule, antidumping_countries."""
 import io
+import os
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 from openpyxl import Workbook
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from app.services.normative_store import find_rate_for_hs, init_db, upsert_hs_rate
 from app.services.source_import import import_normative_file
@@ -13,6 +19,33 @@ class SourceImportTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls._tmpdir = tempfile.TemporaryDirectory()
+        db_path = Path(cls._tmpdir.name) / "source-import.db"
+        cls._engine = create_engine(f"sqlite:///{db_path}")
+        cls._session_local = sessionmaker(
+            bind=cls._engine,
+            autocommit=False,
+            autoflush=False,
+        )
+        cls.addClassCleanup(cls._tmpdir.cleanup)
+        cls.addClassCleanup(cls._engine.dispose)
+        cls._patchers = (
+            mock.patch.dict(os.environ, {"DATABASE_URL": f"sqlite:///{db_path}"}),
+            mock.patch("app.db.engine", cls._engine),
+            mock.patch("app.db.SessionLocal", cls._session_local),
+            mock.patch("app.services.normative_store.engine", cls._engine),
+            mock.patch("app.services.normative_store.SessionLocal", cls._session_local),
+            mock.patch("app.services.tnved_fts.engine", cls._engine),
+            mock.patch("app.services.tnved_fts._fts_ready", None),
+            mock.patch("scripts.seed_declaration_documents.engine", cls._engine),
+            mock.patch(
+                "scripts.seed_declaration_documents.SessionLocal",
+                cls._session_local,
+            ),
+        )
+        for patcher in cls._patchers:
+            patcher.start()
+            cls.addClassCleanup(patcher.stop)
         init_db()
 
     def test_upsert_with_vat_rule(self):
