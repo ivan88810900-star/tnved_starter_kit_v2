@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-MANUAL-VAT-STATUS-20261021",
+  "executor": "/root/scheduled-cycle400-20261021T085428Z",
+  "started_at": "2026-10-21T08:54:28Z",
+  "completed_at": "2026-10-21T09:02:02Z",
+  "lease": {
+    "generation": 400,
+    "holder": "/root/scheduled-cycle400-20261021T085428Z",
+    "token_verified_before_writes": true
+  },
+  "candidate": {
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "parent_sha": "ee84254ce1ba3802d864294f8d48b5616ff061d2",
+    "head_sha": "64be642394f700e637ca3bed985533cdd7331842",
+    "tree_sha": "8861a5073eead4782550bd176b6759d036b06f1f",
+    "local_author_commit": "db945591d4835197fbd2ae42703791262984e22e"
+  },
+  "defect": "Explicit user vat_rate was displayed with automatic applied status in the product quote.",
+  "repair": "Use manual_override for a final explicit VAT rate while preserving manual_review_required precedence and withholding whenever VAT is provisional.",
+  "author_checks": [
+    {
+      "command": "python3 -Werror -m py_compile customs-clear/backend/app/services/payment_quote_service.py customs-clear/backend/tests/test_payment_quote.py",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "result": "PASS"
+    },
+    {
+      "command": "isolated pure-service manual/fail-closed VAT matrix",
+      "exit_code": 0,
+      "result": "2/2 PASS"
+    }
+  ],
+  "local_pytest": {
+    "run": false,
+    "reason": "not retried after prior platform security refusal caused by unexpected Microsoft telemetry egress"
+  },
+  "a5": {
+    "identity": "/root/a5_cycle400",
+    "result": "PASS_NO_FINDINGS",
+    "reviewed_local_commit": "db945591d4835197fbd2ae42703791262984e22e",
+    "tree_sha": "8861a5073eead4782550bd176b6759d036b06f1f"
+  },
+  "ci": {
+    "run_id": 39573555808,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39573555808",
+    "head_sha": "64be642394f700e637ca3bed985533cdd7331842",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 119133410470,
+        "name": "offline-safety",
+        "conclusion": "success",
+        "tests": "120 plus 4"
+      },
+      {
+        "id": 119133410735,
+        "name": "payment-regression",
+        "conclusion": "success",
+        "tests": "610 passed plus 229 subtests"
+      }
+    ]
+  },
+  "receipts": {
+    "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6312170949",
+    "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6312173491"
+  },
+  "ntm_snapshot": {
+    "populated_synchronized_available": false
+  },
+  "a6": {
+    "request": "core-s1-6415f443120f-r9-g106",
+    "status": "UNCHANGED_NOT_SENT"
+  },
+  "protected_actions_performed": false,
+  "scope_limits": [
+    "No rate/source facts or fixtures changed",
+    "No arithmetic or legal applicability changed",
+    "No merge/deploy/database write",
+    "Full PR244/PR245 acceptance not claimed"
+  ]
+}

@@ -2294,3 +2294,16 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6311134921), [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6311135323).
 - No rate/source facts, fixtures, legal applicability, production/staging DB, merge, deploy, protected action or A6 dispatch changed. Full #244/#245 acceptance remains NOT PASS; the populated synchronized NTM snapshot remains unavailable.
 - Evidence: `.ai/orchestration/evidence/cycle399_pr255_eec_source_url_admission.json`; TASK_BOARD revision 922. Next continue a distinct #244 payment/source defect from fresh state, then #245.
+
+## Cycle 400 — PR #255 manual VAT status auditability (2026-10-21 UTC)
+
+- Task `TARIFF-PR255-MANUAL-VAT-STATUS-20261021`; executor `/root/scheduled-cycle400-20261021T085428Z`; lease generation 400.
+- On parent `ee84254ce1ba3802d864294f8d48b5616ff061d2`, a user-supplied `vat_rate` with final arithmetic was exposed as automatic `applied` in the Smart Payments line item.
+- Draft PR #255 advanced by non-force CAS to exact head `64be642394f700e637ca3bed985533cdd7331842`, tree `8861a5073eead4782550bd176b6759d036b06f1f`; local author commit `db945591d4835197fbd2ae42703791262984e22e` has the identical tree.
+- A completed explicit VAT rate is now `manual_override`. When any VAT base/rate input remains unconfirmed, `manual_review_required`, withheld amount and withheld final total still take precedence.
+- Safe author checks exited 0: `py_compile -Werror`, `git diff --check`, and an isolated pure-service 2/2 status matrix. Local pytest/application import was not retried after the recorded unexpected Microsoft telemetry security stop.
+- Independent A5 `/root/a5_cycle400` returned `PASS_NO_FINDINGS`.
+- Exact-head CI [run 39573555808](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39573555808) succeeded: payment-regression job `119133410735` reported **610 passed plus 229 subtests**; offline-safety job `119133410470` reported **120 plus 4 tests**.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6312170949), [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6312173491).
+- No rate/source facts, fixtures, payment arithmetic, legal applicability, merge, deploy, database write, protected action or A6 dispatch changed. Full #244/#245 acceptance remains NOT PASS; the populated synchronized NTM snapshot remains unavailable.
+- Evidence: `.ai/orchestration/evidence/cycle400_pr255_manual_vat_status.json`; TASK_BOARD revision 923. Next continue a distinct #244 payment/source defect from fresh state, then #245.
