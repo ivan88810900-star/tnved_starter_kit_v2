@@ -1,19 +1,18 @@
 {
   "acquisition_note": "cycle383 bounded PR255 payment defect review",
-  "expires_at": "2026-10-21T16:47:33.686Z",
+  "expires_at": null,
   "generation": 405,
-  "holder": "/root/scheduled-cycle405-20261021T161418Z",
+  "holder": null,
   "lease_repair": {},
   "previous_holder_end": {
     "generation": 390,
-    "holder": "/root/scheduled-cycle390-20261020T234919Z",
-    "token": "22fdead9b2eb4508bea00058fa6bfd2b"
+    "holder": "/root/scheduled-cycle390-20261020T234919Z"
   },
-  "release_reason": "cycle395 PR255 CI coverage completed; TASK_BOARD rev919 write denied at connector approval boundary",
-  "released_by": "/root/scheduled-cycle395-20261021T041417Z",
+  "release_reason": "cycle405 group01 runtime capability blocker recorded; TASK_BOARD rev927 write rejected at connector approval boundary",
+  "released_by": "/root/scheduled-cycle405-20261021T161418Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "cf320fbef9ab4da6a8af188316616c9e",
-  "updated_at": "2026-10-21T16:17:33.686Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-21T16:20:21.801Z"
 }
