@@ -1,3 +1,14 @@
+## 2026-10-21 — Future-dated payment-source revisions fail closed at ingestion
+
+- Draft [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255) now publishes exact head `3fe7c3b702bbd8ce213884493d425ba51b3a113d`, tree `084c54ee9bc7cb9f7f27c84b02f3d9b611e1c34d`.
+- On parent `bc03b58be1c7e7ecb2be93acc05011959aab103b`, isolated execution showed all five official ingestion validators accepted future labels such as `*:2999-01-01`. VAT, excise, anti-dumping, special-safeguard and countervailing ingestion now reject them.
+- Runtime classifiers and same-domain row markers still recognize typed future revisions so the existing exact `*_future` diagnostics remain reachable. VAT row proof remains domain-isolated and rejects ETT duty revisions.
+- Safe author checks: `py_compile`, isolated pure-module admission/runtime/row-marker matrices and `git diff --check` all exit 0. Local pytest was not retried after the recorded unexpected telemetry attempt.
+- Independent A5 `/root/a5_cycle398`: final **PASS_NO_FINDINGS** after catching two intermediate boundary regressions that were repaired before publication.
+- Exact-head CI [run 39559751568](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39559751568) is `success`; offline-safety job `119088087587` and payment-regression job `119088087325` succeeded with **607 passed + 227 subtests**.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6310241746), [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6310242027). Durable evidence: `.ai/orchestration/evidence/cycle398_pr255_future_source_revision_admission.json`.
+- No source facts, rates, fixtures, legal applicability, DB, flag, merge/deploy or A6 action changed. Full #244/#245 acceptance remains NOT PASS; populated synchronized NTM remains unavailable. Next: a distinct #244 payment/source defect, then #245.
+
 ## 2026-10-20 — Trade-remedies audit owns its Alembic boundary
 
 - Draft [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255) now publishes exact head `82318dd750d01acb314715ab49a0fbb597f96a05`, tree `9b50208ed62a3f496f7a503483c65659b555d46a`.

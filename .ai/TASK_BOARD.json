@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 920,
+  "revision": 921,
   "runs": [
     {
       "head_sha": null,
@@ -8118,7 +8118,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-21T06:03:12Z",
+  "updated_at": "2026-10-21T07:09:25Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -19212,7 +19212,7 @@
     "evidence": ".ai/orchestration/evidence/cycle396_pr255_payment_ci_coverage_recovery.json",
     "next_step": "Superseded by cycle397 source-admission CI closure on the successor exact head."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_397": {
     "schema_version": 1,
     "task_id": "TARIFF-PR255-SOURCE-ADMISSION-CI-COVERAGE-20261021",
     "started_at": "2026-10-21T05:57:57Z",
@@ -19239,6 +19239,36 @@
     "protected_actions_performed": false,
     "a6": "UNCHANGED_NOT_SENT",
     "evidence": ".ai/orchestration/evidence/cycle397_pr255_source_admission_ci_coverage.json",
-    "next_step": "Continue the next distinct PR244 payment/source defect from fresh state without repeating completed fixture or CI coverage work."
+    "next_step": "Superseded by cycle398 future-dated payment-source revision admission closure."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR255-FUTURE-SOURCE-REVISION-20261021",
+    "started_at": "2026-10-21T06:55:59Z",
+    "completed_at": "2026-10-21T07:09:25Z",
+    "executor": "/root/scheduled-cycle398-20261021T065559Z",
+    "lease_generation": 398,
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "previous_head_sha": "bc03b58be1c7e7ecb2be93acc05011959aab103b",
+    "head_sha": "3fe7c3b702bbd8ce213884493d425ba51b3a113d",
+    "tree_sha": "084c54ee9bc7cb9f7f27c84b02f3d9b611e1c34d",
+    "local_author_commit": "ec7c1f23b84645d8ec887351307c50fbdf6ef0b2",
+    "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+    "implementation": "All five payment-source ingestion validators now reject future-dated typed revisions while runtime diagnostics and same-domain row-marker isolation remain intact.",
+    "static_validation": "py_compile, isolated pure-module admission/runtime/row-marker matrices and exact remote diff-check exit0.",
+    "a5": "/root/a5_cycle398 final PASS_NO_FINDINGS on exact tree after two intermediate boundary findings were repaired.",
+    "exact_head_ci": "Push run39559751568 completed/success; offline-safety job119088087587 success; payment-regression job119088087325 success with 607 passed plus 227 subtests.",
+    "superseded_ci": "Run39559345887 failed on an intermediate loss of the exact future diagnostic and was repaired before the final checkpoint.",
+    "receipts": {
+      "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6310241746",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6310242027"
+    },
+    "blocked_local_run": "Local pytest was not retried after the recorded unexpected Microsoft telemetry attempt; exact-head GitHub CI is the behavioral receipt.",
+    "legal_boundary": "No source facts, rates, fixtures or legal applicability changed. Full #244/#245 acceptance remains NOT PASS; populated synchronized NTM remains unavailable.",
+    "protected_actions_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "evidence": ".ai/orchestration/evidence/cycle398_pr255_future_source_revision_admission.json",
+    "next_step": "Continue the next distinct PR244 payment/source defect, then PR245; do not repeat completed fixture, CI coverage or future-revision work."
   }
 }

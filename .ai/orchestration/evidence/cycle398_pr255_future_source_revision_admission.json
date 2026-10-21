@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR255-FUTURE-SOURCE-REVISION-20261021",
+  "executor": "/root/scheduled-cycle398-20261021T065559Z",
+  "started_at": "2026-10-21T06:55:59Z",
+  "completed_at": "2026-10-21T07:09:25Z",
+  "lease_generation": 398,
+  "pr": 255,
+  "branch": "agent/core-payment-regressions-v1",
+  "parent_sha": "bc03b58be1c7e7ecb2be93acc05011959aab103b",
+  "head_sha": "3fe7c3b702bbd8ce213884493d425ba51b3a113d",
+  "tree_sha": "084c54ee9bc7cb9f7f27c84b02f3d9b611e1c34d",
+  "local_author_commit": "ec7c1f23b84645d8ec887351307c50fbdf6ef0b2",
+  "changed_files": [
+    "customs-clear/backend/app/services/payment_revision_utils.py",
+    "customs-clear/backend/tests/test_payment_source_admission.py"
+  ],
+  "reproduction": {
+    "command": "isolated runpy of payment_revision_utils.py against five typed *:2999-01-01 revisions",
+    "exit_code": 0,
+    "parent_result": "VAT, excise, anti-dumping, special-safeguard and countervailing ingestion validators all returned true"
+  },
+  "implementation": "Shared ingestion validators now require a real typed ISO revision date that is not in the future. Runtime classifiers and same-domain row markers retain typed future recognition for exact downstream future diagnostics. VAT row proof remains VAT-domain-only and rejects ETT duty revisions.",
+  "author_validation": [
+    {
+      "command": "python3 -m py_compile payment_revision_utils.py test_payment_source_admission.py",
+      "exit_code": 0
+    },
+    {
+      "command": "isolated runpy future admission/runtime/row-marker and historical-control matrices",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check bc03b58be1c7e7ecb2be93acc05011959aab103b..3fe7c3b702bbd8ce213884493d425ba51b3a113d",
+      "exit_code": 0
+    }
+  ],
+  "a5": {
+    "session": "/root/a5_cycle398",
+    "status": "PASS_NO_FINDINGS",
+    "reviewed_tree_sha": "084c54ee9bc7cb9f7f27c84b02f3d9b611e1c34d",
+    "notes": "A5 first caught the intermediate runtime diagnostic regression, then the VAT row-domain leak; both were repaired before final PASS."
+  },
+  "ci": {
+    "run_id": 39559751568,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39559751568",
+    "conclusion": "success",
+    "offline_safety_job": 119088087587,
+    "payment_regression_job": 119088087325,
+    "payment_regression_result": "607 passed, 227 subtests passed"
+  },
+  "superseded_ci": {
+    "run_id": 39559345887,
+    "conclusion": "failure",
+    "finding": "Intermediate candidate lost special_duty_provenance_future diagnostic; repaired and superseded."
+  },
+  "receipts": {
+    "pr255_comment": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6310241746",
+    "issue257_comment": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6310242027"
+  },
+  "blocked_local_run": "Local pytest was not retried after the previously recorded unexpected Microsoft telemetry attempt; exact-head GitHub CI is the behavioral receipt.",
+  "legal_boundary": "No source facts, rates, fixtures or legal applicability changed. Full #244/#245 acceptance remains NOT PASS and populated synchronized NTM remains unavailable.",
+  "a6": "UNCHANGED_NOT_SENT",
+  "protected_actions_performed": false,
+  "next_step": "Continue the next distinct PR244 payment/source defect, then PR245; do not repeat completed fixture, CI coverage or future-revision work."
+}
