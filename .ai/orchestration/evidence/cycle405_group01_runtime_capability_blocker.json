@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-GROUP01-NORMALIZATION-20261021",
+  "executor": "/root/scheduled-cycle405-20261021T161418Z",
+  "lease_generation": 405,
+  "started_at": "2026-10-21T16:14:18Z",
+  "checked_at": "2026-10-21T16:18:40.366Z",
+  "status": "CAPABILITY_BLOCKED_RUNTIME_CONNECTOR_ABSENT_AFTER_OWNER_APPROVAL",
+  "source": {
+    "kind": "EEC ETT group01",
+    "revision": "2022-04-25-group01",
+    "registered_sha256": "7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9",
+    "registered_size": 168285,
+    "raw_rows": 86,
+    "raw_unique_codes": 86
+  },
+  "owner_approval": {
+    "issue": 257,
+    "comment_id": 6317422453,
+    "scope": "previously requested bounded group01 operation; all other restrictions preserved; stop on renewed denial"
+  },
+  "runtime_discovery": {
+    "mechanism": "current scheduled runtime ALL_TOOLS inventory",
+    "neon_postgresql_object_storage_methods": [],
+    "result": "No Neon, PostgreSQL, object-storage bucket/list/download/presign methods are exposed in this runtime."
+  },
+  "observed_workflow": {
+    "run_id": 39609284650,
+    "conclusion": "failure",
+    "context_gate": "failure",
+    "live_audit": "skipped",
+    "provider_called": false,
+    "reason": "The owner approval comment is not the exact /tariff-a6-live command. This is an unrelated false-red A6 trigger and does not consume or alter the immutable pending A6 request."
+  },
+  "action": "No private-object download/presign or SQL operation was issued because the required scoped connectors are absent in this runtime. The prior denied operation was not retried through another route.",
+  "raw_delta": 0,
+  "normalized_delta": 0,
+  "rejected_delta": 0,
+  "ambiguous_delta": 0,
+  "sql_write_performed": false,
+  "download_attempted": false,
+  "normalization_performed": false,
+  "replay_performed": false,
+  "artifact_created": false,
+  "alternate_route_attempted": false,
+  "a6_provider_called": false,
+  "exact_main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "exact_state_sha_before_lease": "fb6661e69a4c017664a3de19d2c8262fd8d8fa44",
+  "next_step": "Run the same approved bounded group01 continuation in a runtime that exposes the previously verified scoped Neon and retained-object connectors; recheck approval and live raw state, verify retained bytes/hash, then normalize and prove identical replay. Stop on any renewed denial."
+}
