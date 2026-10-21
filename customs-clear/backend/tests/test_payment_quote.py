@@ -88,6 +88,78 @@ class PaymentQuoteStatusConsistencyTests(unittest.TestCase):
         self.assertIsNone(quote.total_payable_rub)
         self.assertEqual(quote.status, "REVIEW_REQUIRED")
 
+    def test_manual_vat_rate_is_labeled_as_manual_override(self):
+        raw = _complete_payment_result()
+        raw["breakdown"].update(
+            vat=10_500.0,
+            vat_rate=10.0,
+            vat_reason="Указано вручную: 10%",
+            total_payable=16_567.0,
+        )
+        rates_patch, _, coverage_patch = (
+            self._patch_complete_engine_without_special_duty_coverage()
+        )
+        with (
+            rates_patch,
+            patch(
+                "app.services.payment_quote_service.compute_payments",
+                return_value=raw,
+            ),
+            coverage_patch,
+        ):
+            quote = build_payment_quote(
+                {
+                    "hs_code": "0101210000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "country": "DE",
+                    "vat_rate": 10,
+                }
+            )
+
+        vat = next(item for item in quote.line_items if item.code == "vat")
+        self.assertEqual(vat.status, "manual_override")
+        self.assertEqual(vat.amount_rub, 10_500.0)
+        self.assertIn("вручную", vat.reason.lower())
+
+    def test_manual_vat_rate_stays_withheld_when_vat_basis_needs_review(self):
+        raw = _complete_payment_result()
+        raw["status"] = "REVIEW_REQUIRED"
+        raw["breakdown"].update(
+            vat=None,
+            vat_rate=10.0,
+            vat_reason="Указано вручную: 10%",
+            vat_status="manual_review",
+            vat_provisional=10_500.0,
+            total_payable=None,
+            total_payable_status="withheld",
+        )
+        rates_patch, _, coverage_patch = (
+            self._patch_complete_engine_without_special_duty_coverage()
+        )
+        with (
+            rates_patch,
+            patch(
+                "app.services.payment_quote_service.compute_payments",
+                return_value=raw,
+            ),
+            coverage_patch,
+        ):
+            quote = build_payment_quote(
+                {
+                    "hs_code": "0101210000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "country": "DE",
+                    "vat_rate": 10,
+                }
+            )
+
+        vat = next(item for item in quote.line_items if item.code == "vat")
+        self.assertEqual(vat.status, "manual_review_required")
+        self.assertIsNone(vat.amount_rub)
+        self.assertIsNone(quote.total_payable_rub)
+
     @unittest.skipUnless(_API_OK, "payment quote API tests need FastAPI app")
     def test_api_never_returns_ok_with_withheld_total(self):
         rates_patch, compute_patch, coverage_patch = (

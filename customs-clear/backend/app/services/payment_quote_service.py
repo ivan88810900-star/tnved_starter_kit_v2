@@ -436,6 +436,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         )
 
     manual_duty = payload.get("duty_rate") is not None
+    manual_vat = payload.get("vat_rate") is not None
     duty_source_pending = duty_rule_source_pending or (rate_source_pending and not manual_duty)
     duty_status: PaymentLineStatus = "manual_override" if manual_duty else "applied"
     duty_reason = str((raw.get("legal_basis") or {}).get("duty") or "")
@@ -459,7 +460,11 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         )
     vat_pending = str(breakdown.get("vat_status") or "applied") == "manual_review"
     vat_amount = None if vat_pending else float(breakdown.get("vat") or 0.0)
-    vat_status: PaymentLineStatus = "manual_review_required" if vat_pending else "applied"
+    vat_status: PaymentLineStatus = (
+        "manual_review_required"
+        if vat_pending
+        else ("manual_override" if manual_vat else "applied")
+    )
     vat_reason = str(breakdown.get("vat_reason") or "")
     if vat_pending:
         animal_scope = raw.get("live_animal_vat_scope") or {}
