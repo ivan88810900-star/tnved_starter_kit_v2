@@ -1,8 +1,8 @@
 {
   "acquisition_note": "cycle383 bounded PR255 payment defect review",
-  "expires_at": null,
-  "generation": 395,
-  "holder": null,
+  "expires_at": "2026-10-21T05:29:53.629944Z",
+  "generation": 396,
+  "holder": "/root/scheduled-cycle396-20261021T045631Z",
   "lease_repair": {},
   "previous_holder_end": {
     "evidence_ref": "codex-thread prior automation turn: 15526-15825 bounded batch returned 'aborted by user'; turn ended by Auto-review",
@@ -17,7 +17,7 @@
   "released_by": "/root/scheduled-cycle395-20261021T041417Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-21T04:29:07.120487Z"
+  "state": "active",
+  "token": "fbb2be43e98041e381e015c8b2fe56de",
+  "updated_at": "2026-10-21T04:59:53.629944Z"
 }
