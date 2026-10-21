@@ -2239,3 +2239,14 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - A broader pytest tranche was stopped by platform security after attempted Microsoft telemetry egress. It was not retried or bypassed; no broad-suite PASS is claimed.
 - Exact-head CI success is not yet claimed. The branch push workflow is expected for this path, while the available workflow lookup exposes only pull-request-triggered runs and returned no run before checkpoint. Close the exact-head CI receipt on unchanged `7a293776…` next.
 - No product code, migration, rate/source fixture, payment arithmetic or legal applicability changed. No merge, deploy, database write, protected action or A6 dispatch occurred. Evidence: `.ai/orchestration/evidence/cycle393_pr255_source_import_isolation.json`; TASK_BOARD revision 917. Full #244 acceptance remains **NOT PASS**.
+
+## Cycle 394 — PR #255 source-import exact-head CI closure (2026-10-21 UTC)
+
+- Task `TARIFF-PR255-SOURCE-IMPORT-CI-CLOSURE-20261021`; executor `/root/scheduled-cycle394-20261021T034729Z`; lease generation 394.
+- Draft PR #255 remains unchanged at exact HEAD `7a293776621e5a846affc4bff6cb08246d96775e`, tree `7bab32efa0b3b8c9ab9c4083d1d38c846d23650c`. `git fetch` plus `git rev-parse refs/remotes/origin/agent/core-payment-regressions-v1` returned that HEAD, exit 0.
+- Exact-head push CI is now closed: [run 39537051746](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39537051746) completed with `success`; `payment-regression` job `119016010593` and `offline-safety` job `119016012929` both completed with `success`.
+- Cycle393 author evidence remains bound to this tree: focused **3 passed**, safe forward/reverse **65 passed** each, no ambient DB/WAL/SHM, py_compile and diff-check exit 0. Independent A5 `/root/a5_cycle393` remains `PASS_NO_FINDINGS`, including cleanup fault injection.
+- Receipts: [PR #255](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6307590773) and [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6307592392).
+- A broader cycle393 pytest tranche was stopped by platform security after attempted Microsoft telemetry egress; it was not retried or bypassed and no broad-suite PASS is claimed.
+- No product or test data changed in this closure. No merge, deploy, staging/production write, protected action or A6 dispatch occurred. The populated synchronized NTM snapshot remains unavailable; full #244/#245 acceptance remains **NOT PASS**.
+- Evidence: `.ai/orchestration/evidence/cycle394_pr255_source_import_ci_closure.json`; TASK_BOARD revision 918. Next continue the next distinct #244 payment/source defect from fresh state without repeating cycle352/cycle393 work.

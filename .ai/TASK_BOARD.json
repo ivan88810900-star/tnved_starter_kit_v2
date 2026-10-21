@@ -2179,7 +2179,7 @@
       "unique_source_pr_count": 29
     }
   },
-  "revision": 917,
+  "revision": 918,
   "runs": [
     {
       "head_sha": null,
@@ -8118,7 +8118,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-21T03:10:30Z",
+  "updated_at": "2026-10-21T03:50:47Z",
   "previous_scheduled_product_checkpoint_174": {
     "updated_at": "2026-10-11T18:04:51.196Z",
     "checked_at": "2026-10-11T18:04:51.196Z",
@@ -19134,7 +19134,7 @@
     "evidence": ".ai/orchestration/evidence/cycle391_tnved_structure_staging_complete.json",
     "next_step": "Resume coherent PR #244 payment/source acceptance and remaining fixture isolation from fresh live state, then #245."
   },
-  "latest_scheduled_product_checkpoint": {
+  "previous_scheduled_product_checkpoint_393": {
     "schema_version": 1,
     "task_id": "TARIFF-PR255-SOURCE-IMPORT-ISOLATION-20261021",
     "started_at": "2026-10-21T02:54:23Z",
@@ -19151,12 +19151,39 @@
     "implementation": "Backported byte-identical cycle352 source-import fixture isolation: delayed imports, identity-based app/scripts DB alias rebinding, explicit callback rebinding and fault-tolerant cleanup.",
     "tests": "Focused 3 passed; safe forward/reverse 65 passed each; no ambient db/wal/shm; py_compile and diff-check exit0.",
     "a5": "/root/a5_cycle393 PASS_NO_FINDINGS on exact tree; cleanup fault injection PASS and validated cycle352 blob identity confirmed.",
-    "exact_head_ci": "Receipt pending/unobservable: available lookup exposes pull_request runs only, but this path triggers the branch push workflow; no success claim.",
+    "exact_head_ci": "Receipt pending/unobservable at the cycle393 checkpoint; superseded by cycle394 exact-head closure.",
     "blocked_broad_run": "Platform stopped broader pytest after attempted Microsoft telemetry egress; no retry/bypass and no broad PASS claim.",
     "legal_boundary": "Test fixture only; no product code, migration, rate/source data, payment arithmetic or legal applicability changed. Full #244 acceptance remains NOT PASS.",
     "protected_actions_performed": false,
     "a6": "UNCHANGED_NOT_SENT",
     "evidence": ".ai/orchestration/evidence/cycle393_pr255_source_import_isolation.json",
-    "next_step": "Close exact-head push CI receipt on unchanged 7a293776..., then continue the next distinct PR244 payment/source defect; do not repeat cycle352 work."
+    "next_step": "Superseded by cycle394 exact-head CI closure on unchanged 7a293776621e5a846affc4bff6cb08246d96775e."
+  },
+  "latest_scheduled_product_checkpoint": {
+    "schema_version": 1,
+    "task_id": "TARIFF-PR255-SOURCE-IMPORT-CI-CLOSURE-20261021",
+    "started_at": "2026-10-21T03:47:29Z",
+    "completed_at": "2026-10-21T03:50:47Z",
+    "executor": "/root/scheduled-cycle394-20261021T034729Z",
+    "lease_generation": 394,
+    "pr": 255,
+    "branch": "agent/core-payment-regressions-v1",
+    "head_sha": "7a293776621e5a846affc4bff6cb08246d96775e",
+    "tree_sha": "7bab32efa0b3b8c9ab9c4083d1d38c846d23650c",
+    "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+    "candidate_unchanged": true,
+    "inherited_tests": "Cycle393 focused 3 passed; safe forward/reverse 65 passed each; no ambient db/wal/shm; py_compile and diff-check exit0.",
+    "inherited_a5": "/root/a5_cycle393 PASS_NO_FINDINGS on exact tree, including cleanup fault injection.",
+    "exact_head_ci": "Push run 39537051746 completed/success on exact head; payment-regression job 119016010593 and offline-safety job 119016012929 completed/success.",
+    "receipts": {
+      "pr255": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/255#issuecomment-6307590773",
+      "issue257": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6307592392"
+    },
+    "blocked_broad_run": "Cycle393 broader pytest was stopped by platform security after attempted Microsoft telemetry egress; no retry/bypass and no broad PASS claim.",
+    "legal_boundary": "CI closure only; no product or test data changed. Full #244 acceptance and legal/source completeness remain NOT PASS; populated synchronized NTM remains unavailable.",
+    "protected_actions_performed": false,
+    "a6": "UNCHANGED_NOT_SENT",
+    "evidence": ".ai/orchestration/evidence/cycle394_pr255_source_import_ci_closure.json",
+    "next_step": "Continue the next distinct PR244 payment/source defect from fresh live state; do not repeat cycle352/cycle393 source-import isolation work."
   }
 }

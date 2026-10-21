@@ -596,3 +596,11 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Independent read-only A5 `/root/a5_cycle392` returned `PASS_NO_FINDINGS`: live PR body, exact head/tree, CI binding, historical continuity, 18,014-row Neon counts/status, 13,294 ten-digit codes, 96 chapters, digest recipe and legal boundaries all matched.
 - This is documentation/status reconciliation only. No product branch commit, staging/production DB write, legal/rate/NTM admission, merge, deploy, enforcement/permission/secret change or A6 dispatch occurred. The populated synchronized NTM snapshot remains unavailable.
 - Evidence: `.ai/orchestration/evidence/cycle392_pr260_current_status_reconciliation.json`; TASK_BOARD revision 916. Next resume coherent #244 payment/source acceptance and remaining fixture isolation, then #245.
+
+## Cycle 394 checkpoint — PR #255 source-import exact-head CI closure (2026-10-21)
+
+- Draft PR #255 product HEAD/tree remain unchanged at `7a293776621e5a846affc4bff6cb08246d96775e` / `7bab32efa0b3b8c9ab9c4083d1d38c846d23650c`.
+- Exact-head push workflow [run 39537051746](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/39537051746) completed successfully; payment-regression job `119016010593` and offline-safety job `119016012929` both passed.
+- Cycle393 author tests and independent A5 remain bound to the unchanged tree. The bounded source-import isolation block is now **DRAFT PUBLISHED / A5 PASS / EXACT-HEAD CI PASS**.
+- This is a CI/state closure only. No product/test data, merge, deploy, database, protected action or A6 dispatch changed. Full #244 acceptance remains NOT PASS and the populated synchronized NTM snapshot remains unavailable.
+- Evidence: `.ai/orchestration/evidence/cycle394_pr255_source_import_ci_closure.json`; TASK_BOARD revision 918. Next continue the next distinct PR #244 payment/source defect from fresh live state.
