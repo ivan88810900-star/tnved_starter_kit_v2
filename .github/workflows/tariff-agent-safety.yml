@@ -85,3 +85,11 @@ jobs:
           tests/test_customs_procedures.py
           tests/test_rop_coverage_audit.py
           tests/test_trade_remedies_audit.py
+          tests/test_payment_data_coverage.py
+          tests/test_payment_data_normalization.py
+          tests/test_payment_source_admission.py
+          tests/test_payment_source_ingestion.py
+          tests/test_anti_dumping_ingestion.py
+          tests/test_countervailing_ingestion.py
+          tests/test_special_safeguard_ingestion.py
+          tests/test_official_payment_coverage_audit.py
