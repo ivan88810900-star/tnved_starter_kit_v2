@@ -15,10 +15,15 @@ from app.services import payment_engine
 from app.services import payment_quote_service
 from app.services.payment_revision_utils import (
     is_official_anti_dumping_ingestion_revision,
+    is_official_anti_dumping_revision,
     is_official_countervailing_ingestion_revision,
+    is_official_countervailing_revision,
     is_official_excise_ingestion_revision,
+    is_official_excise_revision,
     is_official_special_safeguard_ingestion_revision,
+    is_official_special_safeguard_revision,
     is_official_vat_ingestion_revision,
+    is_official_vat_revision,
 )
 
 
@@ -200,14 +205,29 @@ def test_manual_duty_remains_visible_when_other_row_fields_need_review(payments)
 
 
 @pytest.mark.parametrize(
-    ("validator", "revision"),
+    ("ingestion_validator", "runtime_validator", "revision"),
     [
-        (is_official_vat_ingestion_revision, "vat:2999-01-01"),
-        (is_official_excise_ingestion_revision, "excise:2999-01-01"),
-        (is_official_anti_dumping_ingestion_revision, "anti-dumping:2999-01-01"),
-        (is_official_special_safeguard_ingestion_revision, "special-safeguard:2999-01-01"),
-        (is_official_countervailing_ingestion_revision, "countervailing:2999-01-01"),
+        (is_official_vat_ingestion_revision, is_official_vat_revision, "vat:2999-01-01"),
+        (is_official_excise_ingestion_revision, is_official_excise_revision, "excise:2999-01-01"),
+        (
+            is_official_anti_dumping_ingestion_revision,
+            is_official_anti_dumping_revision,
+            "anti-dumping:2999-01-01",
+        ),
+        (
+            is_official_special_safeguard_ingestion_revision,
+            is_official_special_safeguard_revision,
+            "special-safeguard:2999-01-01",
+        ),
+        (
+            is_official_countervailing_ingestion_revision,
+            is_official_countervailing_revision,
+            "countervailing:2999-01-01",
+        ),
     ],
 )
-def test_future_dated_payment_revision_is_not_official(validator, revision):
-    assert validator(revision) is False
+def test_future_dated_payment_revision_is_not_admitted_but_remains_classifiable(
+    ingestion_validator, runtime_validator, revision
+):
+    assert ingestion_validator(revision) is False
+    assert runtime_validator(revision) is True
