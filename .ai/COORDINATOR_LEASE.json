@@ -1,8 +1,8 @@
 {
   "acquisition_note": "cycle383 bounded PR255 payment defect review",
-  "expires_at": "2026-10-21T05:20:33.825787Z",
+  "expires_at": null,
   "generation": 395,
-  "holder": "/root/scheduled-cycle395-20261021T041417Z",
+  "holder": null,
   "lease_repair": {},
   "previous_holder_end": {
     "evidence_ref": "codex-thread prior automation turn: 15526-15825 bounded batch returned 'aborted by user'; turn ended by Auto-review",
@@ -13,11 +13,11 @@
     "terminal_status": "terminated",
     "token": "22fdead9b2eb4508bea00058fa6bfd2b"
   },
-  "release_reason": "cycle383 draft PR261 and state checkpoint completed",
-  "released_by": "/root/scheduled-cycle383-20261020T161418Z",
+  "release_reason": "cycle395 PR255 CI coverage completed; TASK_BOARD rev919 write denied at connector approval boundary",
+  "released_by": "/root/scheduled-cycle395-20261021T041417Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "active",
-  "token": "2511647d058343e78477085560afa31a",
-  "updated_at": "2026-10-21T04:20:33.825787Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-21T04:29:07.120487Z"
 }
