@@ -644,3 +644,12 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Evidence: `.ai/orchestration/evidence/cycle404_group01_private_source_download_blocker.json`; receipt: [issue #257](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6315316900).
 - Resolving action: platform-recognized trusted owner approval specifically for downloading these exact retained private group01 objects; only after byte/hash verification may the bounded normalization transaction begin.
 
+
+## Cycle 405 blocker — approved group01 continuation unavailable in this runtime (2026-10-21)
+
+- Owner approval is now explicit in issue #257 comment `6317422453` for the previously requested bounded ETT group01 operation; the prior approval blocker is resolved within that exact scope.
+- This scheduled runtime's actual `ALL_TOOLS` inventory contains no Neon/PostgreSQL or retained-object-storage list/download/presign methods. The scoped connectors verified in cycle403 are therefore unavailable here.
+- No private-object download/presign or SQL operation was issued. The cycle404 denial was not retried through another tool, executor or route. Result: raw +0, normalized +0, rejected +0, ambiguous +0; no transaction, replay, artifact or legal admission.
+- The approval comment triggered Actions run `39609284650`, but the exact A6 command gate failed and the live-audit job was skipped. No provider call occurred and immutable A6 request `core-s1-6415f443120f-r9-g106` remains unchanged/unconsumed. This is the false-red behavior already isolated in draft PR #261, not a failed provider execution.
+- Status: **CAPABILITY_BLOCKED_RUNTIME_CONNECTOR_ABSENT_AFTER_OWNER_APPROVAL**. Evidence: `.ai/orchestration/evidence/cycle405_group01_runtime_capability_blocker.json`.
+- Next step: continue this same approved group01 block only in a runtime exposing the previously verified scoped Neon and retained-object connectors; recheck live state, verify retained bytes/hash, then normalize and prove identical replay. Stop on any renewed denial.
