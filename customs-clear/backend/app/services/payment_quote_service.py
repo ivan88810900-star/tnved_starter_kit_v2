@@ -473,6 +473,22 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             "не имеют подтверждённой применимости и требуют ручной проверки."
         )
 
+    duty_source = (
+        "ручной ввод ставки пошлины"
+        if manual_duty
+        else "hs_duty_rules / hs_rates (ЕТТ ЕАЭС)"
+    )
+    vat_source = (
+        "ручной ввод ставки НДС"
+        if manual_vat
+        else "hs_rates / vat_preferences (НК РФ)"
+    )
+    excise_source = (
+        "ручной ввод суммы акциза"
+        if user_excise is not None
+        else "hs_rates (НК РФ ст. 193)"
+    )
+
     line_items: list[PaymentQuoteLineItem] = [
         PaymentQuoteLineItem(
             code="duty",
@@ -484,7 +500,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             ),
             status=duty_status,
             reason=duty_reason,
-            source="hs_duty_rules / hs_rates (ЕТТ ЕАЭС)",
+            source=duty_source,
             rate_label=f"{breakdown.get('duty_rate')}%" if breakdown.get("duty_rate") is not None else None,
         ),
         PaymentQuoteLineItem(
@@ -493,7 +509,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             amount_rub=vat_amount,
             status=vat_status,
             reason=vat_reason,
-            source="hs_rates / vat_preferences (НК РФ)",
+            source=vat_source,
             rate_label=f"{breakdown.get('vat_rate')}%",
         ),
         PaymentQuoteLineItem(
@@ -510,7 +526,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             amount_rub=excise_amount,
             status=excise_status,
             reason=excise_reason,
-            source="hs_rates (НК РФ ст. 193)",
+            source=excise_source,
         ),
         _resolve_antidumping_line(raw=raw),
         _resolve_special_duty_line(raw=raw, country=country, hs_code=hs_code),

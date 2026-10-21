@@ -121,6 +121,73 @@ class PaymentQuoteStatusConsistencyTests(unittest.TestCase):
         self.assertEqual(vat.status, "manual_override")
         self.assertEqual(vat.amount_rub, 10_500.0)
         self.assertIn("вручную", vat.reason.lower())
+        self.assertEqual(vat.source, "ручной ввод ставки НДС")
+
+    def test_manual_payment_inputs_do_not_claim_automatic_database_sources(self):
+        raw = _complete_payment_result()
+        raw["breakdown"].update(
+            duty=7_000.0,
+            duty_rate=7.0,
+            vat=24_420.0,
+            vat_rate=22.0,
+            excise=4_000.0,
+            total_payable=36_487.0,
+        )
+        rates_patch, _, coverage_patch = (
+            self._patch_complete_engine_without_special_duty_coverage()
+        )
+        with (
+            rates_patch,
+            patch(
+                "app.services.payment_quote_service.compute_payments",
+                return_value=raw,
+            ),
+            coverage_patch,
+        ):
+            quote = build_payment_quote(
+                {
+                    "hs_code": "0101210000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "country": "DE",
+                    "duty_rate": 7,
+                    "vat_rate": 22,
+                    "excise": 4_000,
+                }
+            )
+
+        line_items = {item.code: item for item in quote.line_items}
+        self.assertEqual(line_items["duty"].status, "manual_override")
+        self.assertEqual(line_items["duty"].source, "ручной ввод ставки пошлины")
+        self.assertEqual(line_items["vat"].status, "manual_override")
+        self.assertEqual(line_items["vat"].source, "ручной ввод ставки НДС")
+        self.assertEqual(line_items["excise"].status, "manual_override")
+        self.assertEqual(line_items["excise"].source, "ручной ввод суммы акциза")
+
+    def test_automatic_payment_inputs_keep_database_sources(self):
+        rates_patch, compute_patch, coverage_patch = (
+            self._patch_complete_engine_without_special_duty_coverage()
+        )
+        with rates_patch, compute_patch, coverage_patch:
+            quote = build_payment_quote(
+                {
+                    "hs_code": "0101210000",
+                    "customs_value": 100_000,
+                    "invoice_currency": "RUB",
+                    "country": "DE",
+                }
+            )
+
+        line_items = {item.code: item for item in quote.line_items}
+        self.assertEqual(
+            line_items["duty"].source,
+            "hs_duty_rules / hs_rates (ЕТТ ЕАЭС)",
+        )
+        self.assertEqual(
+            line_items["vat"].source,
+            "hs_rates / vat_preferences (НК РФ)",
+        )
+        self.assertEqual(line_items["excise"].source, "hs_rates (НК РФ ст. 193)")
 
     def test_manual_vat_rate_stays_withheld_when_vat_basis_needs_review(self):
         raw = _complete_payment_result()
