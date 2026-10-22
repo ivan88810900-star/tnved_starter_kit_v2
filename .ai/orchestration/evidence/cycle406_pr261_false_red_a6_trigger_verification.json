@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-PR261-A6-UNRELATED-COMMENT-GATE-20261022",
+  "executor": "/root/scheduled-cycle406-20261022T161417Z",
+  "lease_generation": 406,
+  "checked_at": "2026-10-22T16:21:00Z",
+  "status": "A0_VERIFIED_EXACT_HEAD_CI_PASS_A5_NOT_OBSERVED",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "pull_request": {
+    "number": 261,
+    "draft": true,
+    "base": "main",
+    "head_branch": "agent/a6-command-trigger-filter-20261020",
+    "head_sha": "981ba68d666e42d441e2065f27e6df15083c75c3",
+    "mergeable": true,
+    "changed_files": 2,
+    "additions": 32,
+    "deletions": 1,
+    "review_threads": 0,
+    "reviews": 0
+  },
+  "reproduction": {
+    "workflow_run_id": 39609284650,
+    "event": "issue_comment",
+    "comment_scope": "owner approval for bounded ETT group01 operation, not an A6 command",
+    "conclusion": "failure",
+    "context_gate": "failure",
+    "live_audit": "skipped",
+    "provider_called": false,
+    "main_workflow_behavior": "The unrelated comment started context-gate, which failed before checkout and immutable request resolution."
+  },
+  "candidate_fix": {
+    "workflow_change": "Add exact owner-command job-level if gate before runner allocation; replace comment-controlled run name with a fixed label.",
+    "test_change": "Pin the complete job-level security predicate and fixed run name in the offline workflow contract test.",
+    "immutable_request_or_dedupe_changed": false,
+    "environment_or_credentials_changed": false
+  },
+  "ci": [
+    {
+      "run_id": 39457979308,
+      "event": "push",
+      "head_sha": "981ba68d666e42d441e2065f27e6df15083c75c3",
+      "job_id": 118749901026,
+      "job": "offline-safety",
+      "conclusion": "success"
+    },
+    {
+      "run_id": 39458245803,
+      "event": "pull_request",
+      "head_sha": "981ba68d666e42d441e2065f27e6df15083c75c3",
+      "job_id": 118750632343,
+      "job": "offline-safety",
+      "conclusion": "success"
+    }
+  ],
+  "boundaries": {
+    "provider_call_performed": false,
+    "request_created_or_retried": false,
+    "protected_action_performed": false,
+    "merge_performed": false,
+    "production_change_performed": false
+  },
+  "next_step": "Obtain fresh independent exact-head security review for PR #261. Do not merge without a separate owner decision; do not exercise the live A6 provider path for this verification."
+}
