@@ -653,3 +653,13 @@ legacy (сверх structural). Контур по-прежнему **не под
 - The approval comment triggered Actions run `39609284650`, but the exact A6 command gate failed and the live-audit job was skipped. No provider call occurred and immutable A6 request `core-s1-6415f443120f-r9-g106` remains unchanged/unconsumed. This is the false-red behavior already isolated in draft PR #261, not a failed provider execution.
 - Status: **CAPABILITY_BLOCKED_RUNTIME_CONNECTOR_ABSENT_AFTER_OWNER_APPROVAL**. Evidence: `.ai/orchestration/evidence/cycle405_group01_runtime_capability_blocker.json`.
 - Next step: continue this same approved group01 block only in a runtime exposing the previously verified scoped Neon and retained-object connectors; recheck live state, verify retained bytes/hash, then normalize and prove identical replay. Stop on any renewed denial.
+
+
+## Cycle 406 checkpoint — PR #261 false-red A6 trigger fix verified (2026-10-22)
+
+- Main remains at `e526dfbdb5a31b01bf6f743da0288b88f916de0c`. Draft PR #261 remains mergeable at exact head `981ba68d666e42d441e2065f27e6df15083c75c3`, with 2 changed files, 32 additions, 1 deletion, zero review threads and zero submitted reviews.
+- Fresh production-path evidence is Actions run `39609284650`: an unrelated owner approval comment started the main-branch A6 context gate, failed there, and skipped `live-audit`; no provider call occurred. This reproduces the false-red defect without consuming or changing the immutable pending request.
+- The candidate moves the exact recovery-issue/owner/command/first-attempt predicate to the job-level `if`, before runner allocation, checkout, state reads, dedupe or credentials, and replaces the comment-controlled run name with a fixed label. Immutable request resolution, generation-scoped dedupe and environment boundaries are unchanged.
+- Exact-head offline-safety passed for push run `39457979308` / job `118749901026` and pull-request run `39458245803` / job `118750632343`. No unresolved review input exists, but no fresh independent exact-head security review is recorded.
+- Status: **A0_VERIFIED_EXACT_HEAD_CI_PASS_A5_NOT_OBSERVED**. Evidence: `.ai/orchestration/evidence/cycle406_pr261_false_red_a6_trigger_verification.json`.
+- Next: obtain fresh independent exact-head security review for PR #261. Do not merge without a separate owner decision and do not invoke the live A6 provider path for this verification.
