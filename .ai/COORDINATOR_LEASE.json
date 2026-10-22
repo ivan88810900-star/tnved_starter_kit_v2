@@ -1,18 +1,18 @@
 {
-  "acquisition_note": "cycle383 bounded PR255 payment defect review",
-  "expires_at": null,
-  "generation": 405,
-  "holder": null,
+  "acquisition_note": "cycle406 bounded PR261 false-red A6 trigger verification",
+  "expires_at": "2026-10-22T16:49:12Z",
+  "generation": 406,
+  "holder": "/root/scheduled-cycle406-20261022T161417Z",
   "lease_repair": {},
   "previous_holder_end": {
-    "generation": 390,
-    "holder": "/root/scheduled-cycle390-20261020T234919Z"
+    "generation": 405,
+    "holder": "/root/scheduled-cycle405-20261021T161418Z"
   },
   "release_reason": "cycle405 group01 runtime capability blocker recorded; TASK_BOARD rev927 write rejected at connector approval boundary",
   "released_by": "/root/scheduled-cycle405-20261021T161418Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-21T16:20:21.801Z"
+  "state": "active",
+  "token": "cc6eff82eacc1b306bbe9e26df1a0d66",
+  "updated_at": "2026-10-22T16:19:12Z"
 }
