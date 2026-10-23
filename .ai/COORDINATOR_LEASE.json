@@ -1,8 +1,8 @@
 {
   "acquisition_note": "cycle406 bounded PR261 false-red A6 trigger verification",
-  "expires_at": null,
-  "generation": 406,
-  "holder": null,
+  "expires_at": "2026-10-23T16:47:58.739Z",
+  "generation": 407,
+  "holder": "/root/scheduled-cycle407-20261023T161418Z",
   "lease_repair": {},
   "previous_holder_end": {
     "generation": 405,
@@ -12,7 +12,7 @@
   "released_by": "/root/scheduled-cycle406-20261022T161417Z",
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-22T16:21:06Z"
+  "state": "active",
+  "token": "5d001712c5f803526e510b0037b27a9a",
+  "updated_at": "2026-10-23T16:17:58.739Z"
 }
