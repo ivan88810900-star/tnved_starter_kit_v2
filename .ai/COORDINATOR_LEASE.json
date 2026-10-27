@@ -1,8 +1,8 @@
 {
   "acquisition_note": "cycle409 strengthen PR261 A6 job-level command-gate regression coverage",
-  "expires_at": "2026-10-27T23:19:42Z",
+  "expires_at": null,
   "generation": 409,
-  "holder": "/root/scheduled-cycle409-20261027T221942Z",
+  "holder": null,
   "lease_repair": {},
   "owner_recovery_release": {
     "source": "github_owner_receipt",
@@ -19,8 +19,8 @@
     "generation": 405,
     "holder": "/root/scheduled-cycle405-20261021T161418Z"
   },
-  "release_reason": "cycle408 owner recovery receipt and group01 runtime capability blocker persisted; scoped data connectors absent",
-  "released_by": "/root/scheduled-cycle408-20261027T194622Z",
+  "release_reason": "cycle409 PR261 complete job-level owner-command regression pin published and exact-head CI passed; independent A5 remains pending",
+  "released_by": "/root/scheduled-cycle409-20261027T221942Z",
   "schema_version": 1,
   "serialization_repair": {
     "repaired_at": "2026-10-27T19:46:22Z",
@@ -30,7 +30,7 @@
     "state_preserved": "released",
     "generation_preserved": 407
   },
-  "state": "active",
-  "token": "71c8d02e4f6a9b3c5d7e8f1029384756",
-  "updated_at": "2026-10-27T22:19:42Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-27T22:23:14Z"
 }
