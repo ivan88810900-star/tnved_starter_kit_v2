@@ -1,8 +1,8 @@
 {
   "acquisition_note": "cycle408 approved ETT group01 continuation after verified owner recovery",
-  "expires_at": "2026-10-27T20:46:50Z",
+  "expires_at": null,
   "generation": 408,
-  "holder": "/root/scheduled-cycle408-20261027T194622Z",
+  "holder": null,
   "lease_repair": {},
   "owner_recovery_release": {
     "source": "github_owner_receipt",
@@ -19,8 +19,8 @@
     "generation": 405,
     "holder": "/root/scheduled-cycle405-20261021T161418Z"
   },
-  "release_reason": "cycle406 PR261 exact-head A0 verification and state checkpoint completed; independent A5 review remains",
-  "released_by": "/root/scheduled-cycle406-20261022T161417Z",
+  "release_reason": "cycle408 owner recovery receipt and group01 runtime capability blocker persisted; scoped data connectors absent",
+  "released_by": "/root/scheduled-cycle408-20261027T194622Z",
   "schema_version": 1,
   "serialization_repair": {
     "repaired_at": "2026-10-27T19:46:22Z",
@@ -30,7 +30,7 @@
     "state_preserved": "released",
     "generation_preserved": 407
   },
-  "state": "active",
-  "token": "6afcf45109dc2e38a92483c171c6f03f",
-  "updated_at": "2026-10-27T19:46:50Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-27T19:50:04Z"
 }
