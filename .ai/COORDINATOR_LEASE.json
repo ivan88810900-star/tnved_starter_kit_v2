@@ -5,8 +5,15 @@
   "holder": null,
   "lease_repair": {},
   "owner_recovery_release": {
+    "source": "github_owner_receipt",
+    "owner_login": "ivan88810900-star",
+    "decision": "release_stale_holder",
+    "holder": "/root/scheduled-cycle407-20261023T161418Z",
     "generation": 407,
-    "holder": "/root/scheduled-cycle407-20261023T161418Z"
+    "lease_blob_sha": "95836643430299d8c99b706ec834faee3f4d18d9",
+    "verified_by_connector": true,
+    "evidence_ref": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/214#issuecomment-6451880898",
+    "confirmed_at": "2026-10-27T19:44:12Z"
   },
   "previous_holder_end": {
     "generation": 405,
@@ -15,8 +22,15 @@
   "release_reason": "cycle406 PR261 exact-head A0 verification and state checkpoint completed; independent A5 review remains",
   "released_by": "/root/scheduled-cycle406-20261022T161417Z",
   "schema_version": 1,
-  "serialization_repair": {},
+  "serialization_repair": {
+    "repaired_at": "2026-10-27T19:46:22Z",
+    "prior_commit_sha": "59e59990cdcde50199f548854ce77c314842a1d9",
+    "prior_blob_sha": "fff3f8e360ddfd4d9730cb394b6bb5d27a5ad2bc",
+    "defect": "nested owner_recovery_release fields omitted by JSON serialization replacer",
+    "state_preserved": "released",
+    "generation_preserved": 407
+  },
   "state": "released",
   "token": null,
-  "updated_at": "2026-10-27T19:46:03Z"
+  "updated_at": "2026-10-27T19:46:22Z"
 }
