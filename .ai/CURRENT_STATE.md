@@ -674,3 +674,15 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Evidence: `.ai/orchestration/evidence/cycle408_owner_recovery_group01_capability_blocker.json`.
 - `TASK_BOARD.json` revision 927 CAS was attempted from verified revision 926 but the MCP write was rejected with `user rejected MCP tool call`; it was not retried after that exact rejection. Canonical board remains revision 926; evidence and CURRENT_STATE carry this recovery receipt.
 - Next: resume this same approved bounded group01 operation only in a runtime exposing the scoped Neon and retained-object connectors; reread live state, verify retained bytes/hash, normalize the existing 86 rows without re-import, preserve footnote 63C ambiguity, and prove identical replay. Stop on any renewed denial.
+
+## Cycle 409 checkpoint — PR #261 owner-command gate regression pin (2026-10-27)
+
+- Main remains `e526dfbdb5a31b01bf6f743da0288b88f916de0c`; no protected action was performed.
+- Draft PR #261 advanced by non-force CAS from `981ba68d666e42d441e2065f27e6df15083c75c3` to exact head `ac1984158a8f5603be09139eb7136093fe804424`, tree `29aa15487a395f8d7987a4a526dadea3aff05860`.
+- Confirmed test defect: the static workflow test asserted each owner-command predicate independently, so an operator weakening or predicate relocation could retain all substrings and still pass.
+- The repair pins the complete `&&`-joined `context-gate` job-level `if` block as one exact regression boundary. The workflow, immutable request resolution, generation-scoped dedupe, environment boundary and provider credential path were not changed in this cycle.
+- Exact-head `Tariff agent safety` run [40594111345](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/40594111345), job `122505504920`, completed `success`; deterministic control/adapter tests and committed-state validation both passed.
+- PR #261 remains draft and mergeable with zero review threads and zero submitted reviews. Fresh independent exact-head A5 security review remains pending.
+- No A6 dispatch/provider call, merge, deploy, production/staging write, permission/secret change or feature-flag change occurred.
+- Evidence: `.ai/orchestration/evidence/cycle409_pr261_gate_regression_pin.json`.
+- Next: obtain fresh independent exact-head security review for PR #261, then recheck exact-head CI. Do not merge without a separate owner decision and do not invoke live A6 for this verification.
