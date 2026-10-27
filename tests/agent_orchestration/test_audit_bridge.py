@@ -592,6 +592,41 @@ class AuditBridgeTests(unittest.TestCase):
         self.assertIn("permissions:\n  actions: read\n  contents: read", workflow)
         self.assertIn("github.event.repository.default_branch", workflow)
         self.assertIn("  context-gate:\n", workflow)
+        self.assertIn("run-name: Tariff A6 owner command gate", workflow)
+        owner_command_gate = (
+            "  context-gate:\n"
+            "    # issue_comment cannot filter by body at trigger time. Skip unrelated\n"
+            "    # comments before checkout, state reads, dedupe, or provider credentials.\n"
+            "    if: >-\n"
+            "      ${{\n"
+            "        github.event.action == 'created' &&\n"
+            "        github.event.issue.number == 214 &&\n"
+            "        github.event.issue.pull_request == null &&\n"
+            "        github.event.comment.body == '/tariff-a6-live run-pending' &&\n"
+            "        github.event.comment.user.login == github.repository_owner &&\n"
+            "        github.event.comment.author_association == 'OWNER' &&\n"
+            "        github.actor == github.repository_owner &&\n"
+            "        github.run_attempt == 1\n"
+            "      }}\n"
+        )
+        self.assertIn(owner_command_gate, workflow)
+        self.assertIn("github.event.action == 'created'", workflow)
+        self.assertIn("github.event.issue.number == 214", workflow)
+        self.assertIn("github.event.issue.pull_request == null", workflow)
+        self.assertIn(
+            "github.event.comment.body == '/tariff-a6-live run-pending'",
+            workflow,
+        )
+        self.assertIn(
+            "github.event.comment.user.login == github.repository_owner",
+            workflow,
+        )
+        self.assertIn(
+            "github.event.comment.author_association == 'OWNER'",
+            workflow,
+        )
+        self.assertIn("github.actor == github.repository_owner", workflow)
+        self.assertIn("github.run_attempt == 1", workflow)
         self.assertIn("    needs: context-gate\n", workflow)
         self.assertIn("    environment: tariff-a6-trusted\n", workflow)
         self.assertIn("group: tariff-a6-live-pending-request", workflow)
