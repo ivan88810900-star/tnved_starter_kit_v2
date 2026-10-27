@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "cycle": 409,
+  "recorded_at": "2026-10-27T22:22:38Z",
+  "executor": "/root/scheduled-cycle409-20261027T221942Z",
+  "lease_generation": 409,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "pull_request": {
+    "number": 261,
+    "draft": true,
+    "base": "main",
+    "head_branch": "agent/a6-command-trigger-filter-20261020",
+    "prior_head_sha": "981ba68d666e42d441e2065f27e6df15083c75c3",
+    "head_sha": "ac1984158a8f5603be09139eb7136093fe804424",
+    "tree_sha": "29aa15487a395f8d7987a4a526dadea3aff05860",
+    "mergeable": true,
+    "review_threads": 0,
+    "submitted_reviews": 0
+  },
+  "confirmed_gap": "The workflow security regression test asserted gate predicates independently and did not bind their conjunction or placement in the context-gate job-level if expression.",
+  "repair": {
+    "path": "tests/agent_orchestration/test_audit_bridge.py",
+    "commit_sha": "ac1984158a8f5603be09139eb7136093fe804424",
+    "behavior": "Pin the complete comment-to-provider owner command gate, including every && operator, as one exact job-level block.",
+    "workflow_changed_in_cycle": false
+  },
+  "verification": {
+    "workflow_run_id": 40594111345,
+    "workflow_job_id": 122505504920,
+    "workflow_name": "Tariff agent safety",
+    "head_sha": "ac1984158a8f5603be09139eb7136093fe804424",
+    "status": "completed",
+    "conclusion": "success",
+    "deterministic_control_and_adapter_tests": "success",
+    "committed_persistent_state_schema": "success"
+  },
+  "a5": {
+    "status": "PENDING_FRESH_INDEPENDENT_EXACT_HEAD_REVIEW",
+    "head_sha": "ac1984158a8f5603be09139eb7136093fe804424"
+  },
+  "safety": {
+    "a6_dispatch_attempted": false,
+    "provider_called": false,
+    "immutable_request_changed": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "production_or_staging_write": false,
+    "permission_or_secret_change": false,
+    "feature_flag_change": false
+  },
+  "next_safe_step": "Obtain fresh independent exact-head security review for PR 261; then recheck exact-head CI. Do not merge without a separate owner decision and do not invoke A6."
+}
