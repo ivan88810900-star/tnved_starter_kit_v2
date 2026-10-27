@@ -1,8 +1,8 @@
 {
-  "acquisition_note": "cycle408 approved ETT group01 continuation after verified owner recovery",
-  "expires_at": null,
-  "generation": 408,
-  "holder": null,
+  "acquisition_note": "cycle409 strengthen PR261 A6 job-level command-gate regression coverage",
+  "expires_at": "2026-10-27T23:19:42Z",
+  "generation": 409,
+  "holder": "/root/scheduled-cycle409-20261027T221942Z",
   "lease_repair": {},
   "owner_recovery_release": {
     "source": "github_owner_receipt",
@@ -30,7 +30,7 @@
     "state_preserved": "released",
     "generation_preserved": 407
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-27T19:50:04Z"
+  "state": "active",
+  "token": "71c8d02e4f6a9b3c5d7e8f1029384756",
+  "updated_at": "2026-10-27T22:19:42Z"
 }
