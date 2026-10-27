@@ -54,5 +54,14 @@
   "a6_provider_called": false,
   "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
   "pr261_head_sha": "981ba68d666e42d441e2065f27e6df15083c75c3",
-  "next_step": "Resume the same approved bounded group01 operation only in a runtime exposing the scoped Neon and retained-object connectors; reread live state, verify retained bytes/hash, normalize existing 86 raw rows without re-import, preserve footnote 63C ambiguity, and prove identical replay. Stop on any renewed denial."
+  "next_step": "Resume the same approved bounded group01 operation only in a runtime exposing the scoped Neon and retained-object connectors; reread live state, verify retained bytes/hash, normalize existing 86 raw rows without re-import, preserve footnote 63C ambiguity, and prove identical replay. Stop on any renewed denial.",
+  "persistent_state": {
+    "evidence_commit_sha": "97c2d76f10a5cb7dfe199d3902a87b3a3c98c59d",
+    "current_state_commit_sha": "6a8c44b76e24bdedd76d6a43da78f5eddf13627b",
+    "task_board_expected_revision": 927,
+    "task_board_actual_revision": 926,
+    "task_board_update_status": "NOT_UPDATED_MCP_TOOL_CALL_REJECTED",
+    "task_board_update_error": "user rejected MCP tool call",
+    "retry_performed_after_exact_rejection": false
+  }
 }
