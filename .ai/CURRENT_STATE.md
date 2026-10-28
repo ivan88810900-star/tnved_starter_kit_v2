@@ -696,3 +696,11 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Status: **A5 PASS / EXACT-HEAD CI PASS / DRAFT**. No A6 dispatch/provider call, merge, deploy, production/staging write, permission/secret change or feature-flag change occurred.
 - Evidence updated: `.ai/orchestration/evidence/cycle409_pr261_gate_regression_pin.json`.
 - Next: keep PR #261 draft. Merge to `main` is an owner gate requiring a separate explicit decision; do not invoke live A6 for this verification.
+
+## Cycle 411 checkpoint — PR #261 metadata reconciled (2026-10-28)
+
+- GitHub was reread before action: main remains `e526dfbdb5a31b01bf6f743da0288b88f916de0c`; draft PR #261 remains mergeable at exact head `ac1984158a8f5603be09139eb7136093fe804424` with exact-head `Tariff agent safety` run [40594111345](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/40594111345), job `122505504920`, completed/success.
+- The PR body still said independent review was pending although cycle410 had already persisted A5 **PASS, no actionable findings**. The body was updated to match the verified state; code, workflow, tests and candidate SHA were unchanged.
+- PR #261 remains draft. No A6 dispatch/provider call, merge, deploy, production/staging write, permission/secret change or feature-flag change occurred.
+- Evidence: `.ai/orchestration/evidence/cycle411_pr261_metadata_reconcile.json`.
+- Next: keep PR #261 draft. Merge to `main` remains an owner gate requiring a separate explicit decision.
