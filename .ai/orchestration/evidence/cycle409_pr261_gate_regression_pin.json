@@ -36,8 +36,20 @@
     "committed_persistent_state_schema": "success"
   },
   "a5": {
-    "status": "PENDING_FRESH_INDEPENDENT_EXACT_HEAD_REVIEW",
-    "head_sha": "ac1984158a8f5603be09139eb7136093fe804424"
+    "status": "PASSED_NO_ACTIONABLE_FINDINGS",
+    "head_sha": "ac1984158a8f5603be09139eb7136093fe804424",
+    "reviewer_session_id": "/root/a5_pr261_review",
+    "reviewed_at": "2026-10-28T10:19:00Z",
+    "verification": [
+      "job-level fail-closed owner command gate",
+      "fixed run name removes untrusted comment interpolation",
+      "trusted checkout, inert state, environment, immutable request generation, dedupe and credential boundaries preserved",
+      "exact-head offline-safety run 40594111345 job 122505504920 success"
+    ],
+    "residual_risks": [
+      "workflow regression remains a textual YAML assertion rather than event-level GitHub expression simulation",
+      "reviewer connector returned MCP -32602; exact-head diff and CI evidence were relayed by A0 after direct connector verification"
+    ]
   },
   "safety": {
     "a6_dispatch_attempted": false,
@@ -49,5 +61,6 @@
     "permission_or_secret_change": false,
     "feature_flag_change": false
   },
-  "next_safe_step": "Obtain fresh independent exact-head security review for PR 261; then recheck exact-head CI. Do not merge without a separate owner decision and do not invoke A6."
+  "next_safe_step": "PR 261 is exact-head A5 PASS and CI PASS. Keep draft; any merge to main requires a separate explicit owner decision. Do not invoke live A6 for this verification.",
+  "updated_at": "2026-10-28T10:20:00Z"
 }
