@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "cycle": 411,
+  "recorded_at": "2026-10-28T16:22:18Z",
+  "executor": "/root/scheduled-cycle411-20261028T161417Z",
+  "lease_generation": 411,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "pull_request": {
+    "number": 261,
+    "draft": true,
+    "base": "main",
+    "head_sha": "ac1984158a8f5603be09139eb7136093fe804424",
+    "mergeable": true,
+    "metadata_updated_at": "2026-10-28T16:22:18Z"
+  },
+  "reconciliation": {
+    "stale_claim": "Fresh independent exact-head security review remains pending.",
+    "verified_state": "A5 PASS with no actionable findings; exact-head CI PASS; PR remains draft.",
+    "a5_session": "/root/a5_pr261_review",
+    "ci_run_id": 40594111345,
+    "ci_job_id": 122505504920,
+    "action": "Updated PR body only to match already-persisted cycle410 evidence."
+  },
+  "safety": {
+    "code_changed": false,
+    "a6_dispatch_attempted": false,
+    "provider_called": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "production_write": false,
+    "permission_or_secret_change": false,
+    "feature_flag_change": false
+  },
+  "next_safe_step": "Keep PR 261 draft. Any merge to main requires a separate explicit owner decision."
+}
