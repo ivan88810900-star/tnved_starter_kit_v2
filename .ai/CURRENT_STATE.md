@@ -686,3 +686,13 @@ legacy (сверх structural). Контур по-прежнему **не под
 - No A6 dispatch/provider call, merge, deploy, production/staging write, permission/secret change or feature-flag change occurred.
 - Evidence: `.ai/orchestration/evidence/cycle409_pr261_gate_regression_pin.json`.
 - Next: obtain fresh independent exact-head security review for PR #261, then recheck exact-head CI. Do not merge without a separate owner decision and do not invoke live A6 for this verification.
+
+## Cycle 410 checkpoint — PR #261 independent exact-head A5 pass (2026-10-28)
+
+- Main remains `e526dfbdb5a31b01bf6f743da0288b88f916de0c`; draft PR #261 remains mergeable at exact head `ac1984158a8f5603be09139eb7136093fe804424`, tree `29aa15487a395f8d7987a4a526dadea3aff05860`, with zero review threads and zero submitted GitHub reviews.
+- Fresh independent A5 session `/root/a5_pr261_review` returned **PASS, no actionable findings**. It verified the job-level fail-closed owner-command gate, fixed run name, trusted checkout/state/environment boundary, immutable request generation, dedupe, single provider invocation boundary and scrubbed fail-closed receipt path.
+- Exact-head `Tariff agent safety` run [40594111345](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/40594111345), job `122505504920`, remains completed/success.
+- Residual risk is bounded: the regression is a textual YAML assertion rather than an event-level simulation of GitHub's expression engine. The A5 subtask's connector returned MCP `-32602`; A0 directly verified and relayed the exact-head diff and CI evidence.
+- Status: **A5 PASS / EXACT-HEAD CI PASS / DRAFT**. No A6 dispatch/provider call, merge, deploy, production/staging write, permission/secret change or feature-flag change occurred.
+- Evidence updated: `.ai/orchestration/evidence/cycle409_pr261_gate_regression_pin.json`.
+- Next: keep PR #261 draft. Merge to `main` is an owner gate requiring a separate explicit decision; do not invoke live A6 for this verification.
