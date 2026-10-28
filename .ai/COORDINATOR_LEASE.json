@@ -1,8 +1,8 @@
 {
   "acquisition_note": "cycle410 independent exact-head A5 review and persistent-state closure for PR261",
-  "expires_at": null,
-  "generation": 410,
-  "holder": null,
+  "expires_at": "2026-10-28T16:50:40.965322Z",
+  "generation": 411,
+  "holder": "/root/scheduled-cycle411-20261028T161417Z",
   "lease_repair": {},
   "owner_recovery_release": {
     "confirmed_at": "2026-10-27T19:44:12Z",
@@ -30,7 +30,7 @@
     "repaired_at": "2026-10-27T19:46:22Z",
     "state_preserved": "released"
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-28T10:22:44.037306Z"
+  "state": "active",
+  "token": "ea1b4e0653764933866cf6f172f70351",
+  "updated_at": "2026-10-28T16:20:40.965322Z"
 }
