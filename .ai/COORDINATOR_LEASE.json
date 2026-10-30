@@ -1,8 +1,8 @@
 {
-  "acquisition_note": "offline deterministic ETT normalization implementation from PR258 exact head",
-  "expires_at": null,
-  "generation": 413,
-  "holder": null,
+  "acquisition_note": "dependency-free offline ETT export/plan runner from PR262 exact head",
+  "expires_at": "2026-10-30T21:29:50Z",
+  "generation": 414,
+  "holder": "/root/a0-ett-offline-plan-20261030",
   "lease_repair": {
     "defect": "release serialization replacer omitted nested lease metadata",
     "work_generation": 412,
@@ -36,7 +36,7 @@
     "repaired_at": "2026-10-27T19:46:22Z",
     "state_preserved": "released"
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-30T20:26:32Z"
+  "state": "active",
+  "token": "2c117d68b67d0314c0bca98296445011",
+  "updated_at": "2026-10-30T20:29:50Z"
 }
