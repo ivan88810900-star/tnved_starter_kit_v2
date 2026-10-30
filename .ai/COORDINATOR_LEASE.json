@@ -1,8 +1,8 @@
 {
   "acquisition_note": "offline deterministic ETT normalization implementation from PR258 exact head",
-  "expires_at": null,
-  "generation": 412,
-  "holder": null,
+  "expires_at": "2026-10-30T20:56:18Z",
+  "generation": 413,
+  "holder": "/root/a0-ett-normalizer-20261030",
   "lease_repair": {},
   "owner_recovery_release": {
     "generation": 407,
@@ -14,7 +14,7 @@
   },
   "schema_version": 1,
   "serialization_repair": {},
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-30T20:26:02Z"
+  "state": "active",
+  "token": "a3e8e4863d7e947749fb325fbe55a20f",
+  "updated_at": "2026-10-30T20:26:18Z"
 }
