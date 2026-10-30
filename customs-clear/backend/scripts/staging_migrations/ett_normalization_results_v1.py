@@ -20,8 +20,15 @@ class MigrationResult:
     created: bool
 
 
-def _type_affinity(column_type: sa.types.TypeEngine) -> type[sa.types.TypeEngine]:
-    return column_type._type_affinity
+def _type_signature(
+    column_type: sa.types.TypeEngine, dialect
+) -> tuple[str, int | None, int | None, int | None]:
+    return (
+        column_type.compile(dialect=dialect).upper(),
+        getattr(column_type, "length", None),
+        getattr(column_type, "precision", None),
+        getattr(column_type, "scale", None),
+    )
 
 
 def _require_caller_transaction(connection) -> sa.engine.Connection:
@@ -32,10 +39,10 @@ def _require_caller_transaction(connection) -> sa.engine.Connection:
     return connection
 
 
-def _expected_contract(table: sa.Table) -> dict[str, object]:
+def _expected_contract(table: sa.Table, *, dialect) -> dict[str, object]:
     return {
         "columns": tuple(
-            (column.name, _type_affinity(column.type), column.nullable)
+            (column.name, _type_signature(column.type, dialect), column.nullable)
             for column in table.columns
         ),
         "primary_key": tuple(column.name for column in table.primary_key.columns),
@@ -56,6 +63,8 @@ def _expected_contract(table: sa.Table) -> dict[str, object]:
                     )
                     for element in constraint.elements
                 ),
+                constraint.ondelete,
+                constraint.deferrable,
             )
             for constraint in table.constraints
             if isinstance(constraint, sa.ForeignKeyConstraint)
@@ -77,7 +86,11 @@ def _existing_contract(
     foreign_keys = inspector.get_foreign_keys(table_name, schema=schema)
     return {
         "columns": tuple(
-            (column["name"], _type_affinity(column["type"]), column["nullable"])
+            (
+                column["name"],
+                _type_signature(column["type"], connection.dialect),
+                column["nullable"],
+            )
             for column in columns
         ),
         "primary_key": tuple(primary_key.get("constrained_columns") or ()),
@@ -97,6 +110,8 @@ def _existing_contract(
                     )
                     for column in constraint["referred_columns"]
                 ),
+                (constraint.get("options") or {}).get("ondelete"),
+                (constraint.get("options") or {}).get("deferrable"),
             )
             for constraint in foreign_keys
         ),
@@ -111,7 +126,7 @@ def apply(
     connection = _require_caller_transaction(connection)
     table = ett_normalization_table(sa.MetaData(), schema=schema)
     existing = _existing_contract(connection, schema=schema)
-    expected = _expected_contract(table)
+    expected = _expected_contract(table, dialect=connection.dialect)
     if existing is not None:
         if existing != expected:
             raise RuntimeError(
@@ -132,7 +147,7 @@ def revert(
     existing = _existing_contract(connection, schema=schema)
     if existing is None:
         return MigrationResult(table.fullname, False)
-    if existing != _expected_contract(table):
+    if existing != _expected_contract(table, dialect=connection.dialect):
         raise RuntimeError(
             "refusing to drop conflicting staging ett_normalization_results contract"
         )
