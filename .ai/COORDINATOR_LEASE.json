@@ -1,34 +1,20 @@
 {
   "acquisition_note": "offline deterministic ETT normalization implementation from PR258 exact head",
-  "expires_at": "2026-10-30T20:54:28.225Z",
+  "expires_at": null,
   "generation": 412,
-  "holder": "/root/a0-ett-normalizer-20261030",
+  "holder": null,
   "lease_repair": {},
   "owner_recovery_release": {
-    "confirmed_at": "2026-10-27T19:44:12Z",
-    "decision": "release_stale_holder",
-    "evidence_ref": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/214#issuecomment-6451880898",
     "generation": 407,
-    "holder": "/root/scheduled-cycle407-20261023T161418Z",
-    "lease_blob_sha": "95836643430299d8c99b706ec834faee3f4d18d9",
-    "owner_login": "ivan88810900-star",
-    "source": "github_owner_receipt",
-    "verified_by_connector": true
+    "holder": "/root/scheduled-cycle407-20261023T161418Z"
   },
   "previous_holder_end": {
     "generation": 405,
     "holder": "/root/scheduled-cycle405-20261021T161418Z"
   },
   "schema_version": 1,
-  "serialization_repair": {
-    "defect": "nested owner_recovery_release fields omitted by JSON serialization replacer",
-    "generation_preserved": 407,
-    "prior_blob_sha": "fff3f8e360ddfd4d9730cb394b6bb5d27a5ad2bc",
-    "prior_commit_sha": "59e59990cdcde50199f548854ce77c314842a1d9",
-    "repaired_at": "2026-10-27T19:46:22Z",
-    "state_preserved": "released"
-  },
-  "state": "active",
-  "token": "93a3fdee055a34517273ee5129141528",
-  "updated_at": "2026-10-30T19:54:28.225Z"
+  "serialization_repair": {},
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-10-30T20:26:02Z"
 }
