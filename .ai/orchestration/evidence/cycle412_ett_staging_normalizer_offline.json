@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-ETT-STAGING-NORMALIZER-OFFLINE-20261030",
+  "started_at": "2026-10-30T19:54:28.225Z",
+  "completed_at": "2026-10-30T20:24:58Z",
+  "executor": "/root/a0-ett-normalizer-20261030",
+  "lease_generation": 412,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "base": {
+    "pr": 258,
+    "branch": "agent/nsi-sgr-pagination-v1",
+    "sha": "c2d4a51a52246dbe436d3073a42143aae63f90c5"
+  },
+  "result": {
+    "status": "DRAFT_PUBLISHED_A5_PASS_EXACT_HEAD_CI_SUCCESS",
+    "pr": 262,
+    "branch": "agent/ett-staging-normalizer-v1",
+    "head_sha": "1f8b84132e7448b167db90173b8d1ab24d5caf3d",
+    "draft": true
+  },
+  "implementation": [
+    "Pure deterministic syntactic ETT normalizer with canonical seven-field RAW SHA and full provenance/source identity/run_id validation",
+    "Technical result history keyed by source/raw hash/parser version; exact replay is read-only and returns the same digest",
+    "Caller-bound staging migration with exact reflected schema replay and caller-owned active transaction",
+    "Credential-free offline workflow with immutable action SHAs and pinned Python dependencies"
+  ],
+  "pilot": {
+    "rows": 86,
+    "parsed": 81,
+    "ambiguous": 5,
+    "duty_counts": {
+      "0": 30,
+      "5": 51,
+      "5 63С)": 5
+    },
+    "digest": "a8505e8754342f082ce0d1018ba691a64b079e7130facaddf9dbfd51dc27c2f3",
+    "legal_status": "UNVERIFIED",
+    "verified": 0,
+    "admitted": 0
+  },
+  "verification": {
+    "local": [
+      "python -m py_compile scripts/staging_migrations/ett_normalization_results_v1.py tests/test_staging_ett_normalization.py: exit 0",
+      "dependency-free pure pilot/failure probes: 86 accounted, 81 parsed, 5 ambiguous; bool ordinal, identity hash, run_id, provenance SHA and canonical SHA corruptions rejected",
+      "local SQLAlchemy/Alembic/pytest integration not run because dependency download was unavailable; exact tests ran in GitHub Actions"
+    ],
+    "exact_head_ci": {
+      "workflow": "ETT normalization offline",
+      "run_id": 41122404491,
+      "job_id": 124291715106,
+      "conclusion": "success",
+      "tests": "65 passed in 1.59s",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41122404491/job/124291715106"
+    },
+    "safety_ci": {
+      "run_id": 41122404180,
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41122404180"
+    },
+    "independent_a5": {
+      "verdict": "PASS",
+      "findings": [],
+      "scope": "substantive exact-head review plus workflow-only immutable-action delta review"
+    }
+  },
+  "boundaries": {
+    "permanent_database_write": false,
+    "product_table_write": false,
+    "remote_sql": false,
+    "source_download": false,
+    "legal_admission": false,
+    "merge": false,
+    "deploy": false,
+    "a6": false
+  },
+  "queue": {
+    "current": "PR #262 remains draft and unmerged; offline technical implementation verified",
+    "next": "Separate remote apply only after saved source-byte/hash verification and explicitly permitted scoped staging access",
+    "owner_gates": [
+      "merge",
+      "remote staging apply",
+      "deploy",
+      "legal admission"
+    ]
+  },
+  "task_board_write": "not attempted: no blind retry of previously denied/oversized TASK_BOARD mutation; queue recorded in evidence and CURRENT_STATE under the active lease"
+}
