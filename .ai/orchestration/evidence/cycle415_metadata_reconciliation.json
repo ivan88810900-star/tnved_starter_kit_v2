@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "cycle": 415,
+  "recorded_at": "2026-10-30T20:59:00Z",
+  "scope": "metadata-only reconciliation after completed cycle 414",
+  "lease": {
+    "generation": 415,
+    "holder": "/root/a0-metadata-reconcile-20261030",
+    "verified_blob_sha": "d97bc237549a68915eb5a3ec586924984b545bb6"
+  },
+  "candidate": {
+    "pr": 263,
+    "head_sha": "b26f938f236d707ac2ff2d875d5ffc9f94fbb58b",
+    "code_changed": false
+  },
+  "verified_evidence": {
+    "dedicated": {
+      "run_id": 41126423402,
+      "conclusion": "success",
+      "dependency_free_tests": 13,
+      "pytest_tests": 78,
+      "postgresql_job_id": 124306017834,
+      "postgresql_conclusion": "success"
+    },
+    "safety": {
+      "run_id": 41126423443,
+      "conclusion": "success"
+    },
+    "a5": {
+      "verdict": "PASS",
+      "blockers": []
+    }
+  },
+  "updates": [
+    {
+      "target": "PR #263 body",
+      "result": "updated",
+      "note": "removed stale 12-tests and CI/A5-pending statements; recorded exact-head evidence and owner gate"
+    },
+    {
+      "target": ".ai/PROJECT_HANDOFF.md",
+      "result": "updated",
+      "commit_sha": "fe2abd2bbcfd7c2451deb3ca47dfc865ed28bc18"
+    },
+    {
+      "target": ".ai/CURRENT_STATE.md",
+      "result": "updated",
+      "commit_sha": "29cdfc646b17ae9cbe44ec0db7dce02c59996211"
+    },
+    {
+      "target": "issue #257 coordination queue",
+      "result": "updated",
+      "comment_id": 6533338689
+    }
+  ],
+  "blocked": [
+    {
+      "target": ".ai/TASK_BOARD.json",
+      "current_revision": 926,
+      "attempted_in_cycle_415": false,
+      "reason": "Prior revision-927 CAS received explicit `user rejected MCP tool call`; current cycle did not retry, bypass, or use another tool. A fresh explicit approval accepted by that write boundary is required for this exact target."
+    }
+  ],
+  "next_step": {
+    "status": "OWNER_APPROVAL_REQUIRED",
+    "scope": "separate scoped retained-original read/byte verification and reviewed plan apply to persistent tariff_staging in caller-owned transaction",
+    "executed": false
+  },
+  "prohibited_actions_performed": false,
+  "exclusions": [
+    "code changes",
+    "private retained-original reads",
+    "remote SQL",
+    "persistent staging population",
+    "merge",
+    "deploy",
+    "enforcement",
+    "A6"
+  ]
+}
