@@ -28,6 +28,7 @@ def _psql(
     path: Path | None = None,
     succeeds: bool = True,
     database: str = DATABASE,
+    rollback: bool = False,
 ):
     command = [
         "sudo",
@@ -42,16 +43,39 @@ def _psql(
         "--dbname",
         database,
     ]
+    script = None
     if path is not None:
-        command.extend(["--single-transaction", "--file", str(path)])
+        script = path.read_text(encoding="utf-8")
+        boundary = "ROLLBACK" if rollback else "COMMIT"
+        script = f"BEGIN;\n{script}\n{boundary};\n"
     else:
         command.extend(["--command", sql or ""])
-    completed = subprocess.run(command, text=True, capture_output=True, check=False)
+    completed = subprocess.run(
+        command,
+        input=script,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    diagnostics = (
+        f"command return code: {completed.returncode}\n"
+        f"stdout:\n{completed.stdout}\n"
+        f"stderr:\n{completed.stderr}"
+    )
     if succeeds and completed.returncode != 0:
-        raise AssertionError(completed.stderr)
+        raise AssertionError(diagnostics)
     if not succeeds and completed.returncode == 0:
-        raise AssertionError("PostgreSQL command unexpectedly succeeded")
+        raise AssertionError("PostgreSQL command unexpectedly succeeded\n" + diagnostics)
     return completed
+
+
+def _assert_error(completed: subprocess.CompletedProcess[str], expected: str) -> None:
+    if expected not in completed.stderr:
+        raise AssertionError(
+            f"expected PostgreSQL error {expected!r}\n"
+            f"stdout:\n{completed.stdout}\n"
+            f"stderr:\n{completed.stderr}"
+        )
 
 
 def _hex_json(value) -> str:
@@ -145,7 +169,7 @@ def main() -> int:
         wrong_database = _psql(
             path=apply_path, succeeds=False, database="wrong_database"
         )
-        assert "offline plan targets tariff_staging only" in wrong_database.stderr
+        _assert_error(wrong_database, "offline plan targets tariff_staging only")
         assert _psql(
             sql="SELECT to_regclass('tariff_ingest.ett_normalization_results')",
             database="wrong_database",
@@ -165,7 +189,7 @@ def main() -> int:
             "FROM tariff_ingest.ingest_runs LIMIT 1"
         )
         duplicate_run = _psql(path=apply_path, succeeds=False)
-        assert "exactly one raw ingest run" in duplicate_run.stderr
+        _assert_error(duplicate_run, "exactly one raw ingest run")
         assert _scalar(
             "SELECT to_regclass('tariff_ingest.ett_normalization_results')"
         ) == ""
@@ -181,7 +205,7 @@ def main() -> int:
             "SET source_url='https://example.invalid/corrupt'"
         )
         bad_source = _psql(path=apply_path, succeeds=False)
-        assert "source_objects package mismatch" in bad_source.stderr
+        _assert_error(bad_source, "source_objects package mismatch")
         assert _scalar(
             "SELECT to_regclass('tariff_ingest.ett_normalization_results')"
         ) == ""
@@ -196,7 +220,7 @@ def main() -> int:
             "SET description='corrupt' WHERE ordinal=1"
         )
         bad_raw = _psql(path=apply_path, succeeds=False)
-        assert "ett_collected_rows package mismatch" in bad_raw.stderr
+        _assert_error(bad_raw, "ett_collected_rows package mismatch")
         assert _scalar(
             "SELECT to_regclass('tariff_ingest.ett_normalization_results')"
         ) == ""
@@ -235,12 +259,21 @@ def main() -> int:
         locked_apply = root / "apply-locked.sql"
         locked_apply.write_text("SET lock_timeout='200ms';\n" + apply_sql, encoding="utf-8")
         lock_failure = _psql(path=locked_apply, succeeds=False)
-        assert "lock timeout" in lock_failure.stderr
+        _assert_error(lock_failure, "lock timeout")
         assert _scalar(
             "SELECT to_regclass('tariff_ingest.ett_normalization_results')"
         ) == ""
         holder_stdout, holder_stderr = holder.communicate(timeout=10)
         assert holder.returncode == 0, holder_stdout + holder_stderr
+
+        _psql(path=apply_path, rollback=True)
+        assert _scalar(
+            "SELECT to_regclass('tariff_ingest.ett_normalization_results')"
+        ) == ""
+        assert _scalar(
+            "SELECT count(*) FROM information_schema.tables "
+            "WHERE table_schema='tariff_ingest'"
+        ) == "7"
 
         _psql(path=apply_path)
         assert _scalar(
@@ -280,7 +313,7 @@ def main() -> int:
         )
         conflict_fingerprint = _scalar(fingerprint_sql)
         failed = _psql(path=apply_path, succeeds=False)
-        assert "conflicting existing normalization version" in failed.stderr
+        _assert_error(failed, "conflicting existing normalization version")
         assert _scalar(fingerprint_sql) == conflict_fingerprint
         first = plan["rows"][0]
         escaped = first["original_duty_text"].replace("'", "''")
@@ -326,7 +359,7 @@ def main() -> int:
         trigger_sql_path = root / "apply-v3.sql"
         trigger_sql_path.write_text(_render_sql(next_next_plan), encoding="utf-8")
         trigger_failure = _psql(path=trigger_sql_path, succeeds=False)
-        assert "unsupported triggers or RLS" in trigger_failure.stderr
+        _assert_error(trigger_failure, "unsupported triggers or RLS")
         assert _scalar(
             "SELECT count(*) FROM tariff_ingest.ett_normalization_results"
         ) == "172"
@@ -339,7 +372,7 @@ def main() -> int:
             sql="ALTER TABLE tariff_ingest.ett_normalization_results ENABLE ROW LEVEL SECURITY"
         )
         rls_failure = _psql(path=apply_path, succeeds=False)
-        assert "unsupported triggers or RLS" in rls_failure.stderr
+        _assert_error(rls_failure, "unsupported triggers or RLS")
         _psql(
             sql="ALTER TABLE tariff_ingest.ett_normalization_results DISABLE ROW LEVEL SECURITY"
         )
@@ -356,7 +389,9 @@ def main() -> int:
             "verified boolean, admitted boolean, result_sha256 text)"
         )
         schema_failure = _psql(path=apply_path, succeeds=False)
-        assert "conflicting ett_normalization_results column contract" in schema_failure.stderr
+        _assert_error(
+            schema_failure, "conflicting ett_normalization_results column contract"
+        )
         assert _scalar(
             "SELECT count(*) FROM information_schema.tables "
             "WHERE table_schema='tariff_ingest'"
