@@ -313,6 +313,13 @@ BEGIN
     IF current_database() <> 'tariff_staging' THEN
         RAISE EXCEPTION 'offline plan targets tariff_staging only';
     END IF;
+    LOCK TABLE tariff_ingest.source_objects,
+               tariff_ingest.ingest_runs,
+               tariff_ingest.ett_collected_rows IN SHARE MODE;
+    IF (SELECT count(*) FROM tariff_ingest.ingest_runs r
+        WHERE r.source_id = expected_source->>'source_id') <> 1 THEN
+        RAISE EXCEPTION 'staged ETT source must have exactly one raw ingest run';
+    END IF;
     IF NOT EXISTS (
         SELECT 1 FROM tariff_ingest.source_objects s
         WHERE s.source_id = expected_source->>'source_id'
