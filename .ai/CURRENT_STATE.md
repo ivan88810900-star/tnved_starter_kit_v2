@@ -1,3 +1,13 @@
+# Cycle 414 checkpoint — ETT dependency-free offline plan runner ready (2026-10-30 20:52 UTC)
+
+- Draft PR #263 exact head `b26f938f236d707ac2ff2d875d5ffc9f94fbb58b`, stacked on the unmerged PR #262 branch; no merge was performed.
+- Runner accepts only an explicit local package and validates retained byte/manifest/extraction digests, full source identity, deterministic RAW run, canonical row SHA, ordinal and provenance before output. It emits deterministic `plan.json` plus reviewable `apply.sql`; it has no network, ambient DATABASE_URL, connection, or transaction boundary.
+- Generated SQL is one atomic DO: database/source/run/RAW checks precede DDL, exactly one RAW run is required, source/run/RAW remain SHARE-locked through insert, schema/triggers/RLS/conflicts fail closed, and post-insert exact rows/count/hash/legal flags are checked. Same-version replay is mutation-free; a new parser version appends history.
+- Synthetic pilot remains 86 total / 81 parsed / 5 ambiguous, digest `a8505e8754342f082ce0d1018ba691a64b079e7130facaddf9dbfd51dc27c2f3`; all legal status is UNVERIFIED, verified/admitted are 0, and qualified `5 63C)` is not calculation-ready.
+- Exact-head CI: ETT run 41126423402 success (dependency-free 13 tests; pinned suite 78 passed; disposable PostgreSQL job 124306017834 success including caller rollback, concurrency lock, replay/history/conflict/tamper/trigger/RLS/schema). Safety run 41126423443 success. Independent A5 PASS, no blockers.
+- Evidence: `.ai/orchestration/evidence/cycle414_ett_offline_plan_runner.json`.
+- Next safe queue item is owner-gated and remains unexecuted: separately authorize scoped reading of retained originals, verify their bytes against the package, then run the reviewed SQL against persistent `tariff_staging` in an operator-owned transaction and reread exact digest/counts. No private read, remote SQL, merge, deploy, enforcement, or A6 occurred in cycle 414.
+
 # Cycle 292 checkpoint — PR #258 exact-head CI gap closed (2026-10-16 16:20 UTC)
 
 - Draft PR #258 is unchanged at exact head `c59af35da7dde2140d911e2003a4a52fb0611507`, tree `2fee4bb388d1b2db69b2e49ed41d9f4dacea08d9`.
