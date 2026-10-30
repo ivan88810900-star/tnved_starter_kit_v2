@@ -431,7 +431,7 @@ BEGIN
         WHERE c.conrelid = 'tariff_ingest.ett_normalization_results'::regclass
           AND c.contype = 'p'
           AND NOT c.condeferrable AND NOT c.condeferred
-          AND (SELECT array_agg(a.attname ORDER BY u.ord)
+          AND (SELECT array_agg(a.attname::text ORDER BY u.ord)
                FROM unnest(c.conkey) WITH ORDINALITY u(attnum, ord)
                JOIN pg_catalog.pg_attribute a
                  ON a.attrelid = c.conrelid AND a.attnum = u.attnum)
@@ -443,7 +443,7 @@ BEGIN
           AND c.contype = 'u'
           AND c.conname = 'uq_ett_normalization_source_ordinal_version'
           AND NOT c.condeferrable AND NOT c.condeferred
-          AND (SELECT array_agg(a.attname ORDER BY u.ord)
+          AND (SELECT array_agg(a.attname::text ORDER BY u.ord)
                FROM unnest(c.conkey) WITH ORDINALITY u(attnum, ord)
                JOIN pg_catalog.pg_attribute a
                  ON a.attrelid = c.conrelid AND a.attnum = u.attnum)
@@ -455,7 +455,7 @@ BEGIN
           AND c.contype = 'u'
           AND c.conname = 'uq_ett_normalization_result_sha256'
           AND NOT c.condeferrable AND NOT c.condeferred
-          AND (SELECT array_agg(a.attname ORDER BY u.ord)
+          AND (SELECT array_agg(a.attname::text ORDER BY u.ord)
                FROM unnest(c.conkey) WITH ORDINALITY u(attnum, ord)
                JOIN pg_catalog.pg_attribute a
                  ON a.attrelid = c.conrelid AND a.attnum = u.attnum)
@@ -469,12 +469,12 @@ BEGIN
           AND c.confdeltype = 'a' AND c.confupdtype = 'a'
           AND c.confmatchtype = 's' AND c.convalidated
           AND NOT c.condeferrable AND NOT c.condeferred
-          AND (SELECT array_agg(a.attname ORDER BY u.ord)
+          AND (SELECT array_agg(a.attname::text ORDER BY u.ord)
                FROM unnest(c.conkey) WITH ORDINALITY u(attnum, ord)
                JOIN pg_catalog.pg_attribute a
                  ON a.attrelid = c.conrelid AND a.attnum = u.attnum)
               = ARRAY['source_id', 'raw_row_sha256']
-          AND (SELECT array_agg(a.attname ORDER BY u.ord)
+          AND (SELECT array_agg(a.attname::text ORDER BY u.ord)
                FROM unnest(c.confkey) WITH ORDINALITY u(attnum, ord)
                JOIN pg_catalog.pg_attribute a
                  ON a.attrelid = c.confrelid AND a.attnum = u.attnum)
