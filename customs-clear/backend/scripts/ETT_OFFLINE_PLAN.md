@@ -23,7 +23,7 @@ whole package validates and contains exactly `plan.json` and `apply.sql`.
 
 ## Package
 
-`package.json` is canonical UTF-8 JSON with these top-level fields:
+`package.json` is UTF-8 JSON with these top-level fields:
 
 - `schema_version`: `1`.
 - `normalizer_version`: the version implemented by this checkout.
@@ -34,10 +34,11 @@ whole package validates and contains exactly `plan.json` and `apply.sql`.
   `retained_extraction`; each descriptor has a package-relative `path`, `sha256`,
   and `size_bytes`.
 
-The retained manifest is canonical JSON binding source ID/revision/byte digest
-to the retained extraction digest. The retained extraction is canonical JSON
-binding the same source ID/revision to every extracted row, including page and
-line provenance. Run `--print-package-schema` for the exact field lists.
+The retained manifest is JSON that binds source ID/revision/byte digest to the
+retained extraction digest. Its existing envelope may be preserved. The retained
+extraction may be either a row array or an object containing `rows`; every row is
+matched to RAW and page/line provenance. Raw-byte SHA-256 and size are always
+checked before JSON parsing. Run `--print-package-schema` for exact package fields.
 
 ## Output contract
 
