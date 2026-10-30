@@ -1,0 +1,67 @@
+name: ETT normalization offline
+
+on:
+  push:
+    branches:
+      - "agent/ett-staging-normalizer-*"
+    paths:
+      - ".github/workflows/ett-normalization-offline.yml"
+      - "customs-clear/backend/app/services/staging_ett_ingest.py"
+      - "customs-clear/backend/app/services/staging_ett_normalization.py"
+      - "customs-clear/backend/app/services/staging_nsi_ingest.py"
+      - "customs-clear/backend/scripts/staging_migrations/**"
+      - "customs-clear/backend/tests/test_staging_ett_ingest.py"
+      - "customs-clear/backend/tests/test_staging_ett_normalization.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ett-normalization-offline-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  normalization:
+    name: normalization
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONHASHSEED: "0"
+    steps:
+      - name: Check out exact candidate
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.7"
+          cache: pip
+          cache-dependency-path: .github/workflows/ett-normalization-offline.yml
+
+      - name: Install pinned test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check \
+            "SQLAlchemy==2.0.44" \
+            "alembic==1.17.2" \
+            "pytest==8.4.2"
+
+      - name: Compile normalization boundary
+        working-directory: customs-clear/backend
+        run: |
+          python -m py_compile \
+            app/services/staging_ett_ingest.py \
+            app/services/staging_ett_normalization.py \
+            scripts/staging_migrations/ett_normalization_results_v1.py \
+            tests/test_staging_ett_ingest.py \
+            tests/test_staging_ett_normalization.py
+
+      - name: Run raw and normalization contracts offline
+        working-directory: customs-clear/backend
+        run: |
+          python -m pytest -q \
+            tests/test_staging_ett_ingest.py \
+            tests/test_staging_ett_normalization.py
