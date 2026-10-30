@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "cycle": 414,
+  "task_id": "TARIFF-ETT-OFFLINE-PLAN-RUNNER-001",
+  "recorded_at": "2026-10-30T20:52:29Z",
+  "lease": {
+    "generation": 414,
+    "holder": "/root/a0-ett-offline-plan-20261030",
+    "verified_blob_sha": "eca5f29c84f6ee0c40cbde7d8f9ccdd8ce13a353"
+  },
+  "result": "READY_FOR_HUMAN_APPROVAL",
+  "pr": {
+    "number": 263,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/263",
+    "draft": true,
+    "branch": "agent/ett-offline-plan-runner-v1",
+    "base": "agent/ett-staging-normalizer-v1",
+    "head_sha": "b26f938f236d707ac2ff2d875d5ffc9f94fbb58b"
+  },
+  "command": "cd customs-clear/backend && python -S scripts/ett_offline_plan.py --package /explicit/local/package --output-dir /new/output/directory",
+  "input_package": {
+    "required": [
+      "package.json",
+      "source bytes",
+      "retained manifest",
+      "retained extraction"
+    ],
+    "package_fields": [
+      "schema_version",
+      "normalizer_version",
+      "source_object",
+      "ingest_run",
+      "raw_rows",
+      "artifacts"
+    ],
+    "note": "Only explicit local paths and digests; no network, DATABASE_URL, credentials, or implicit discovery."
+  },
+  "output": [
+    "plan.json",
+    "apply.sql"
+  ],
+  "invariants": [
+    "full source identity and deterministic ingest run_id",
+    "source/manifest/extraction SHA-256 and sizes",
+    "canonical raw row JSON hash and exact ordinal/provenance",
+    "exactly one raw ingest run for source",
+    "source_objects, ingest_runs, and RAW rows locked SHARE through apply",
+    "single atomic DO with preflight before DDL",
+    "caller owns transaction; generated SQL has no BEGIN/COMMIT/ROLLBACK",
+    "same-version replay has zero mutations and same digest",
+    "new parser version appends history",
+    "all legal_status UNVERIFIED; verified=0; admitted=0",
+    "ambiguous 5 63C) is not calculation-ready",
+    "unexpected triggers/RLS/schema/conflicts fail closed"
+  ],
+  "synthetic_result": {
+    "rows": 86,
+    "parsed": 81,
+    "ambiguous": 5,
+    "legal_verified": 0,
+    "admitted": 0,
+    "normalization_digest": "a8505e8754342f082ce0d1018ba691a64b079e7130facaddf9dbfd51dc27c2f3"
+  },
+  "verification": {
+    "local": [
+      {
+        "command": "python -m py_compile app/services/staging_ett_offline_plan.py tests/ett_offline_plan_postgresql_probe.py",
+        "result": "exit 0"
+      },
+      {
+        "command": "python -S -m unittest -v tests.test_ett_offline_plan_runner",
+        "result": "13 passed, exit 0"
+      }
+    ],
+    "github": [
+      {
+        "run_id": 41126423402,
+        "job_id": 124306017709,
+        "name": "runner-dependency-free",
+        "head_sha": "b26f938f236d707ac2ff2d875d5ffc9f94fbb58b",
+        "result": "success"
+      },
+      {
+        "run_id": 41126423402,
+        "job_id": 124306017540,
+        "name": "normalization",
+        "head_sha": "b26f938f236d707ac2ff2d875d5ffc9f94fbb58b",
+        "result": "78 passed in 5.35s"
+      },
+      {
+        "run_id": 41126423402,
+        "job_id": 124306017834,
+        "name": "postgresql-plan-integration",
+        "head_sha": "b26f938f236d707ac2ff2d875d5ffc9f94fbb58b",
+        "result": "success; actual disposable PostgreSQL apply/replay/rollback/conflict/history/tamper/trigger/RLS/schema/concurrency"
+      },
+      {
+        "run_id": 41126423443,
+        "name": "Tariff agent safety",
+        "head_sha": "b26f938f236d707ac2ff2d875d5ffc9f94fbb58b",
+        "result": "success"
+      }
+    ],
+    "a5": {
+      "session": "/root/a5_ett_normalizer_review",
+      "head_sha": "b26f938f236d707ac2ff2d875d5ffc9f94fbb58b",
+      "verdict": "PASS",
+      "blockers": []
+    }
+  },
+  "excluded": [
+    "private retained-original reads",
+    "remote SQL or persistent staging apply",
+    "new credentials/secrets/OAuth",
+    "merge",
+    "deploy",
+    "enforcement flags",
+    "A6"
+  ],
+  "next_step": {
+    "status": "OWNER_GATE_PENDING",
+    "action": "With separate scoped authorization, verify preserved retained bytes against this package and execute reviewed apply.sql in an explicitly caller-owned transaction against persistent tariff_staging; then reread exact rows/digest.",
+    "not_authorized_now": true
+  }
+}
