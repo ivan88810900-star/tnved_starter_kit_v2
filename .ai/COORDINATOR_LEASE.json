@@ -1,8 +1,8 @@
 {
-  "acquisition_note": "cycle410 independent exact-head A5 review and persistent-state closure for PR261",
-  "expires_at": null,
-  "generation": 411,
-  "holder": null,
+  "acquisition_note": "offline deterministic ETT normalization implementation from PR258 exact head",
+  "expires_at": "2026-10-30T20:54:28.225Z",
+  "generation": 412,
+  "holder": "/root/a0-ett-normalizer-20261030",
   "lease_repair": {},
   "owner_recovery_release": {
     "confirmed_at": "2026-10-27T19:44:12Z",
@@ -19,8 +19,6 @@
     "generation": 405,
     "holder": "/root/scheduled-cycle405-20261021T161418Z"
   },
-  "release_reason": "cycle410 PR261 independent A5 passed with no actionable findings; exact-head CI reverified; evidence, current state and PR receipt published",
-  "released_by": "/root/scheduled-cycle410-20261028T101417Z",
   "schema_version": 1,
   "serialization_repair": {
     "defect": "nested owner_recovery_release fields omitted by JSON serialization replacer",
@@ -30,7 +28,7 @@
     "repaired_at": "2026-10-27T19:46:22Z",
     "state_preserved": "released"
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-10-28T16:31:03.842365Z"
+  "state": "active",
+  "token": "93a3fdee055a34517273ee5129141528",
+  "updated_at": "2026-10-30T19:54:28.225Z"
 }
