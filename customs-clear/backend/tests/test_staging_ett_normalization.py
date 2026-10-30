@@ -518,6 +518,8 @@ def _create_conflicting_result_table(engine, defect):
     columns = []
     for column in expected.columns:
         column_type = sa.Integer if defect == "type" and column.name == "source_id" else column.type
+        if defect == "varchar_length" and column.name == "source_id":
+            column_type = sa.String(1)
         nullable = column.nullable
         if defect == "nullability" and column.name == "normalized_rate_text":
             nullable = False
@@ -540,11 +542,17 @@ def _create_conflicting_result_table(engine, defect):
             ]
         )
     if defect != "foreign_key":
+        foreign_key_options = {}
+        if defect == "foreign_key_ondelete":
+            foreign_key_options["ondelete"] = "CASCADE"
+        if defect == "foreign_key_deferrable":
+            foreign_key_options["deferrable"] = True
         constraints.append(
             sa.ForeignKeyConstraint(
                 ["source_id", "raw_row_sha256"],
                 ["ett_collected_rows.source_id", "ett_collected_rows.row_sha256"],
                 name="fk_ett_normalization_raw_row",
+                **foreign_key_options,
             )
         )
     Table("ett_normalization_results", metadata, *columns, *constraints)
@@ -552,7 +560,17 @@ def _create_conflicting_result_table(engine, defect):
 
 
 @pytest.mark.parametrize(
-    "defect", ["type", "nullability", "primary_key", "unique", "foreign_key"]
+    "defect",
+    [
+        "type",
+        "varchar_length",
+        "nullability",
+        "primary_key",
+        "unique",
+        "foreign_key",
+        "foreign_key_ondelete",
+        "foreign_key_deferrable",
+    ],
 )
 def test_migration_rejects_conflicting_existing_contract_without_mutation(
     tmp_path, defect
