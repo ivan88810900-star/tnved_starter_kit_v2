@@ -7,6 +7,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
@@ -42,7 +43,7 @@ def _psql(
         database,
     ]
     if path is not None:
-        command.extend(["--file", str(path)])
+        command.extend(["--single-transaction", "--file", str(path)])
     else:
         command.extend(["--command", sql or ""])
     completed = subprocess.run(command, text=True, capture_output=True, check=False)
@@ -140,6 +141,7 @@ def main() -> int:
         apply_path.write_text(apply_sql, encoding="utf-8")
 
         _psql(sql="CREATE DATABASE wrong_database", database="postgres")
+        _psql(path=setup, database="wrong_database")
         wrong_database = _psql(
             path=apply_path, succeeds=False, database="wrong_database"
         )
@@ -154,6 +156,39 @@ def main() -> int:
             "SELECT count(*) FROM information_schema.tables "
             "WHERE table_schema='tariff_ingest'"
         ) == "7"
+
+        _psql(
+            sql="INSERT INTO tariff_ingest.ingest_runs "
+            "SELECT 'ett:" + "f" * 64 + "', source_id, scope, parser_version, "
+            "status, raw_count, unique_count, normalized_count, rejected_count, "
+            "resume_cursor, started_at, completed_at, updated_at "
+            "FROM tariff_ingest.ingest_runs LIMIT 1"
+        )
+        duplicate_run = _psql(path=apply_path, succeeds=False)
+        assert "exactly one raw ingest run" in duplicate_run.stderr
+        assert _scalar(
+            "SELECT to_regclass('tariff_ingest.ett_normalization_results')"
+        ) == ""
+        _psql(
+            sql="DELETE FROM tariff_ingest.ingest_runs WHERE run_id='ett:"
+            + "f" * 64
+            + "'"
+        )
+
+        original_url = plan["source_object"]["source_url"].replace("'", "''")
+        _psql(
+            sql="UPDATE tariff_ingest.source_objects "
+            "SET source_url='https://example.invalid/corrupt'"
+        )
+        bad_source = _psql(path=apply_path, succeeds=False)
+        assert "source_objects package mismatch" in bad_source.stderr
+        assert _scalar(
+            "SELECT to_regclass('tariff_ingest.ett_normalization_results')"
+        ) == ""
+        _psql(
+            sql="UPDATE tariff_ingest.source_objects "
+            f"SET source_url='{original_url}'"
+        )
 
         original_description = plan["raw_rows"][0]["description"].replace("'", "''")
         _psql(
@@ -170,6 +205,43 @@ def main() -> int:
             f"SET description='{original_description}' WHERE ordinal=1"
         )
 
+        holder_command = [
+            "sudo",
+            "-u",
+            "postgres",
+            "psql",
+            "-X",
+            "--set",
+            "ON_ERROR_STOP=1",
+            "--dbname",
+            DATABASE,
+            "--command",
+            "BEGIN; LOCK TABLE tariff_ingest.ett_collected_rows "
+            "IN ROW EXCLUSIVE MODE; SELECT pg_sleep(3); COMMIT;",
+        ]
+        holder = subprocess.Popen(
+            holder_command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        for _ in range(30):
+            if _scalar(
+                "SELECT count(*) FROM pg_locks "
+                "WHERE relation='tariff_ingest.ett_collected_rows'::regclass "
+                "AND mode='RowExclusiveLock' AND granted"
+            ) == "1":
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError("concurrent writer lock was not observed")
+        locked_apply = root / "apply-locked.sql"
+        locked_apply.write_text("SET lock_timeout='200ms';\n" + apply_sql, encoding="utf-8")
+        lock_failure = _psql(path=locked_apply, succeeds=False)
+        assert "lock timeout" in lock_failure.stderr
+        assert _scalar(
+            "SELECT to_regclass('tariff_ingest.ett_normalization_results')"
+        ) == ""
+        holder_stdout, holder_stderr = holder.communicate(timeout=10)
+        assert holder.returncode == 0, holder_stdout + holder_stderr
+
         _psql(path=apply_path)
         assert _scalar(
             "SELECT count(*) FROM tariff_ingest.ett_normalization_results"
@@ -178,6 +250,20 @@ def main() -> int:
             "SELECT count(*) FROM information_schema.tables "
             "WHERE table_schema='tariff_ingest'"
         ) == "8"
+        assert _scalar(
+            "SELECT count(*) FILTER (WHERE syntax_status='PARSED'), "
+            "count(*) FILTER (WHERE is_ambiguous), "
+            "count(*) FILTER (WHERE legal_status<>'UNVERIFIED'), "
+            "count(*) FILTER (WHERE verified), count(*) FILTER (WHERE admitted) "
+            "FROM tariff_ingest.ett_normalization_results"
+        ) == "81|5|0|0|0"
+        stored_rows = json.loads(
+            _scalar(
+                "SELECT jsonb_agg(to_jsonb(r) ORDER BY ordinal)::text "
+                "FROM tariff_ingest.ett_normalization_results r"
+            )
+        )
+        assert sha256_json(stored_rows) == plan["normalization_digest"]
         fingerprint_sql = (
             "SELECT md5(string_agg(xmin::text || ':' || result_sha256, ',' "
             "ORDER BY ordinal)) FROM tariff_ingest.ett_normalization_results "
