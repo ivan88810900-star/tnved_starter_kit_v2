@@ -225,10 +225,20 @@ def test_exact_replay_is_zero_mutation_same_digest_and_new_version_keeps_history
         assert session.scalar(select(func.count()).select_from(results)) == 172
 
 
+def _corrupt_raw_hash_only(source, run, rows):
+    rows[0]["row_sha256"] = "0" * 64
+
+
+def _corrupt_raw_and_provenance_hash(source, run, rows):
+    rows[0]["row_sha256"] = "0" * 64
+    run["scope"]["row_provenance"][0]["row_sha256"] = "0" * 64
+
+
 @pytest.mark.parametrize(
     "mutation,error",
     [
-        (lambda source, run, rows: rows[0].update(row_sha256="0" * 64), "row provenance identity mismatch"),
+        (_corrupt_raw_hash_only, "row provenance identity mismatch"),
+        (_corrupt_raw_and_provenance_hash, "canonical raw row SHA mismatch"),
         (lambda source, run, rows: run["scope"].pop("row_provenance"), "row_provenance"),
         (lambda source, run, rows: rows[1].update(ordinal=1), "raw ordinals"),
         (lambda source, run, rows: rows.pop(1), "counts"),
