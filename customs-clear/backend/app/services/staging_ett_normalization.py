@@ -386,6 +386,45 @@ def _assert_existing(actual: Mapping[str, Any], expected: Mapping[str, Any]) -> 
             raise StagingIngestError(f"conflicting existing normalization result.{name}")
 
 
+def _read_normalization_plan(
+    session: Session,
+    *,
+    source_id: str,
+    parser_version: str,
+    schema: str | None,
+) -> EttNormalizationPlan:
+    metadata = MetaData()
+    tables = _raw_tables(metadata, schema=schema)
+    with session.no_autoflush:
+        source = session.execute(
+            select(tables["source_objects"]).where(
+                tables["source_objects"].c.source_id == source_id
+            )
+        ).mappings().one_or_none()
+        if source is None:
+            raise StagingIngestError("staged ETT source does not exist")
+        runs = session.execute(
+            select(tables["ingest_runs"]).where(
+                tables["ingest_runs"].c.source_id == source_id
+            )
+        ).mappings().all()
+        if len(runs) != 1:
+            raise StagingIngestError(
+                "staged ETT source must have exactly one raw ingest run"
+            )
+        raw_rows = session.execute(
+            select(tables["ett_collected_rows"])
+            .where(tables["ett_collected_rows"].c.source_id == source_id)
+            .order_by(tables["ett_collected_rows"].c.ordinal)
+        ).mappings().all()
+        return build_ett_normalization_plan(
+            source=source,
+            ingest_run=runs[0],
+            raw_rows=raw_rows,
+            parser_version=parser_version,
+        )
+
+
 def normalize_staged_ett(
     session: Session,
     *,
@@ -401,39 +440,23 @@ def normalize_staged_ett(
     migrations or mutate an otherwise raw-only staging database.
     """
 
-    metadata = MetaData()
-    tables = _raw_tables(metadata, schema=schema)
-    source = session.execute(
-        select(tables["source_objects"]).where(tables["source_objects"].c.source_id == source_id)
-    ).mappings().one_or_none()
-    if source is None:
-        raise StagingIngestError("staged ETT source does not exist")
-    runs = session.execute(
-        select(tables["ingest_runs"]).where(tables["ingest_runs"].c.source_id == source_id)
-    ).mappings().all()
-    if len(runs) != 1:
-        raise StagingIngestError("staged ETT source must have exactly one raw ingest run")
-    raw_rows = session.execute(
-        select(tables["ett_collected_rows"])
-        .where(tables["ett_collected_rows"].c.source_id == source_id)
-        .order_by(tables["ett_collected_rows"].c.ordinal)
-    ).mappings().all()
-    plan = build_ett_normalization_plan(
-        source=source,
-        ingest_run=runs[0],
-        raw_rows=raw_rows,
+    plan = _read_normalization_plan(
+        session,
+        source_id=source_id,
         parser_version=parser_version,
+        schema=schema,
     )
     if dry_run:
         return EttNormalizationResult(plan, True, False, 0)
 
     results = ett_normalization_table(MetaData(), schema=schema)
-    existing = session.execute(
-        select(results).where(
-            (results.c.source_id == source_id)
-            & (results.c.parser_version == parser_version)
-        )
-    ).mappings().all()
+    with session.no_autoflush:
+        existing = session.execute(
+            select(results).where(
+                (results.c.source_id == source_id)
+                & (results.c.parser_version == parser_version)
+            )
+        ).mappings().all()
     if existing:
         if len(existing) != plan.raw_count:
             raise StagingIngestError("normalization result version is incomplete or extra")
