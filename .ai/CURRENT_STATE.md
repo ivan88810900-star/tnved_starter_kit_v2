@@ -704,3 +704,14 @@ legacy (сверх structural). Контур по-прежнему **не под
 - PR #261 remains draft. No A6 dispatch/provider call, merge, deploy, production/staging write, permission/secret change or feature-flag change occurred.
 - Evidence: `.ai/orchestration/evidence/cycle411_pr261_metadata_reconcile.json`.
 - Next: keep PR #261 draft. Merge to `main` remains an owner gate requiring a separate explicit decision.
+
+
+## Cycle 412: offline ETT staging normalizer verified (2026-10-30T20:24:58Z)
+
+- Draft PR #262: `agent/ett-staging-normalizer-v1` at exact HEAD `1f8b84132e7448b167db90173b8d1ab24d5caf3d`, based on PR #258 HEAD `c2d4a51a52246dbe436d3073a42143aae63f90c5`.
+- Technical-only result: deterministic syntactic normalization, separate caller-bound staging migration, immutable parser-version history, fail-closed provenance/source identity/run validation, and no legal admission.
+- Synthetic contract: 86/86 accounted; 81 parsed; 5 ambiguous `5 63С)`; all `UNVERIFIED`, verified=0, admitted=0.
+- Exact-head evidence: ETT normalization offline run 41122404491 / job 124291715106 SUCCESS, 65 passed in 1.59s; Tariff agent safety run 41122404180 SUCCESS; independent A5 PASS with no findings.
+- No permanent DB write, product-table write, source download, remote SQL, merge, deploy, enforcement, or A6 occurred.
+- Queue: PR #262 remains draft. The next separate step is remote staging apply only after saved-source byte/hash verification and explicitly permitted scoped access; merge and remote apply remain owner-gated.
+- Receipt: `.ai/orchestration/evidence/cycle412_ett_staging_normalizer_offline.json`.
