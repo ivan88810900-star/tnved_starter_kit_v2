@@ -198,12 +198,22 @@ class OfflinePlanRunnerTests(unittest.TestCase):
         ambiguous = [row for row in plan["rows"] if row["is_ambiguous"]]
         self.assertEqual(len(ambiguous), 5)
         self.assertTrue(all(row["normalized_rate_text"] is None for row in ambiguous))
-        self.assertIn("CREATE TABLE IF NOT EXISTS tariff_ingest.ett_normalization_results", sql)
+        self.assertIn("CREATE TABLE tariff_ingest.ett_normalization_results", sql)
         self.assertIn("conflicting existing normalization version", sql)
         self.assertIn("same-version exact replay mutates zero rows", plan["invariants"])
         self.assertNotIn("HsRate", sql)
         self.assertNotIn("DATABASE_URL", sql)
-        self.assertEqual(sql.count("CREATE TABLE IF NOT EXISTS"), 1)
+        self.assertEqual(
+            sql.count("CREATE TABLE tariff_ingest.ett_normalization_results"), 1
+        )
+        self.assertLess(sql.index("current_database()"), sql.index("source_objects s"))
+        self.assertLess(
+            sql.index("ett_collected_rows package mismatch"),
+            sql.index("CREATE TABLE tariff_ingest.ett_normalization_results"),
+        )
+        self.assertIn("GET DIAGNOSTICS inserted_count = ROW_COUNT", sql)
+        self.assertIn("normalization post-insert verification failed", sql)
+        self.assertIn("unsupported triggers or RLS", sql)
         self.assertEqual(
             sql.count("INSERT INTO tariff_ingest.ett_normalization_results"), 1
         )
@@ -258,8 +268,49 @@ class OfflinePlanRunnerTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         schema = json.loads(completed.stdout)
-        self.assertIn("retained_manifest_fields", schema)
+        self.assertIn("retained_manifest_required_bindings", schema)
         self.assertIn("retained_extraction_row_fields", schema)
+
+    def test_retained_json_formatting_and_existing_envelopes_are_preserved(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            package_dir = root / "package"
+            package = _build_package(package_dir)
+            extraction_path = package_dir / "extraction.json"
+            extraction = json.loads(extraction_path.read_text(encoding="utf-8"))
+            extraction_bytes = json.dumps(
+                extraction["rows"], ensure_ascii=False, indent=2
+            ).encode("utf-8")
+            extraction_path.write_bytes(extraction_bytes)
+            extraction_sha = hashlib.sha256(extraction_bytes).hexdigest()
+            package["artifacts"]["retained_extraction"].update(
+                sha256=extraction_sha, size_bytes=len(extraction_bytes)
+            )
+            manifest = {
+                "existing": {
+                    "source": {
+                        "id": SOURCE_ID,
+                        "revision": SOURCE_REVISION,
+                        "sha256": package["source_object"]["sha256"],
+                        "size": package["source_object"]["size_bytes"],
+                    },
+                    "extraction": {
+                        "sha256": extraction_sha,
+                        "size": len(extraction_bytes),
+                    },
+                }
+            }
+            manifest_bytes = json.dumps(
+                manifest, ensure_ascii=False, indent=2
+            ).encode("utf-8")
+            (package_dir / "manifest.json").write_bytes(manifest_bytes)
+            package["artifacts"]["retained_manifest"].update(
+                sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+                size_bytes=len(manifest_bytes),
+            )
+            _rewrite_package(package_dir, package)
+            plan, _ = build_offline_artifacts(package_dir)
+            self.assertEqual(plan["expected_counts"]["raw"], 86)
 
     def test_output_directory_is_atomic_and_must_be_new(self):
         with tempfile.TemporaryDirectory() as temporary:
