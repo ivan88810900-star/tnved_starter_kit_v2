@@ -179,7 +179,12 @@ def _raw_tables(metadata: MetaData, *, schema: str | None) -> dict[str, Table]:
             "source_objects",
             metadata,
             Column("source_id", Text, primary_key=True),
+            Column("source_url", Text, nullable=False),
             Column("source_revision", Text, nullable=False),
+            Column("object_bucket", Text, nullable=False),
+            Column("object_key", Text, nullable=False),
+            Column("sha256", Text, nullable=False),
+            Column("size_bytes", Integer, nullable=False),
             schema=schema,
             extend_existing=True,
         ),
@@ -189,6 +194,7 @@ def _raw_tables(metadata: MetaData, *, schema: str | None) -> dict[str, Table]:
             Column("run_id", Text, primary_key=True),
             Column("source_id", Text, nullable=False),
             Column("scope", JSON, nullable=False),
+            Column("parser_version", Text, nullable=False),
             Column("status", Text, nullable=False),
             Column("raw_count", Integer, nullable=False),
             Column("unique_count", Integer, nullable=False),
@@ -302,14 +308,74 @@ def build_ett_normalization_plan(
     if not isinstance(scope, Mapping):
         raise StagingIngestError("ingest run scope is missing")
     identity = scope.get("source_identity")
-    if not isinstance(identity, Mapping) or identity.get("source_revision") != source_revision:
-        raise StagingIngestError("scope source revision mismatch")
+    if not isinstance(identity, Mapping):
+        raise StagingIngestError("complete scope source_identity is required")
+    run_parser_version = _required_string(
+        ingest_run.get("parser_version"), "raw ingest parser_version"
+    )
+    source_sha256 = _required_string(source.get("sha256"), "source sha256")
+    if _SHA256_RE.fullmatch(source_sha256) is None:
+        raise StagingIngestError("source sha256 is malformed")
+    source_size = _positive_int(source.get("size_bytes"), "source size_bytes")
+    source_url = _required_string(source.get("source_url"), "source_url")
+    object_bucket = _required_string(source.get("object_bucket"), "object_bucket")
+    object_key = _required_string(source.get("object_key"), "object_key")
+    source_scope = {
+        key: value
+        for key, value in scope.items()
+        if key not in {"source_identity", "stage_counts", "row_provenance"}
+    }
+    expected_identity = {
+        "source_id": source_id,
+        "source_sha256": source_sha256,
+        "source_size_bytes": source_size,
+        "source_url": source_url,
+        "source_revision": source_revision,
+        "object_bucket": object_bucket,
+        "object_key": object_key,
+        "scope": source_scope,
+        "parser_version": run_parser_version,
+    }
+    if set(identity) != set(expected_identity) or any(
+        identity.get(key) != value for key, value in expected_identity.items()
+    ):
+        raise StagingIngestError("scope source_identity does not match source_objects")
+    if scope.get("stage_counts") != {
+        "normalized": 0,
+        "verified": 0,
+        "admitted": 0,
+    }:
+        raise StagingIngestError("raw ingest stage_counts are not zero")
+    expected_run_id = f"ett:{_sha256_text(expected_identity)}"
+    if ingest_run.get("run_id") != expected_run_id:
+        raise StagingIngestError("deterministic raw ingest run_id mismatch")
     provenance_rows = scope.get("row_provenance")
     if not isinstance(provenance_rows, list) or len(provenance_rows) != len(raw_rows):
         raise StagingIngestError("complete row_provenance is required")
 
-    ordered_raw = sorted(raw_rows, key=lambda item: item.get("ordinal", 0))
-    ordered_provenance = sorted(provenance_rows, key=lambda item: item.get("ordinal", 0) if isinstance(item, Mapping) else 0)
+    raw_input_ordinals = [
+        _positive_int(item.get("ordinal"), "raw ordinal") for item in raw_rows
+    ]
+    provenance_input_ordinals = [
+        _positive_int(
+            item.get("ordinal") if isinstance(item, Mapping) else None,
+            "provenance ordinal",
+        )
+        for item in provenance_rows
+    ]
+    ordered_raw = [
+        item
+        for _, item in sorted(
+            zip(raw_input_ordinals, raw_rows), key=lambda pair: pair[0]
+        )
+    ]
+    ordered_provenance = [
+        item
+        for _, item in sorted(
+            zip(provenance_input_ordinals, provenance_rows),
+            key=lambda pair: pair[0],
+        )
+    ]
     expected_ordinals = list(range(1, len(raw_rows) + 1))
     raw_ordinals = [item.get("ordinal") for item in ordered_raw]
     provenance_ordinals = [item.get("ordinal") if isinstance(item, Mapping) else None for item in ordered_provenance]
