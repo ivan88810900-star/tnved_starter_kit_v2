@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import os
+import sys
 from copy import deepcopy
 from datetime import datetime, timezone
 
@@ -496,8 +497,78 @@ def _load_migration():
     spec = importlib.util.spec_from_file_location("ett_normalization_migration", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
-    spec.loader.exec_module(module)
+    sys.modules[spec.name] = module
+    try:
+        spec.loader.exec_module(module)
+    except BaseException:
+        sys.modules.pop(spec.name, None)
+        raise
     return module
+
+
+def _create_conflicting_result_table(engine, defect):
+    metadata = MetaData()
+    Table(
+        "ett_collected_rows",
+        metadata,
+        sa.Column("source_id", sa.Text, primary_key=True),
+        sa.Column("row_sha256", sa.Text, primary_key=True),
+    )
+    expected = ett_normalization_table(MetaData(), schema=None)
+    columns = []
+    for column in expected.columns:
+        column_type = sa.Integer if defect == "type" and column.name == "source_id" else column.type
+        nullable = column.nullable
+        if defect == "nullability" and column.name == "normalized_rate_text":
+            nullable = False
+        columns.append(sa.Column(column.name, column_type, nullable=nullable))
+    constraints = []
+    if defect != "primary_key":
+        constraints.append(sa.PrimaryKeyConstraint("source_id", "raw_row_sha256", "parser_version"))
+    if defect != "unique":
+        constraints.extend(
+            [
+                sa.UniqueConstraint(
+                    "source_id",
+                    "ordinal",
+                    "parser_version",
+                    name="uq_ett_normalization_source_ordinal_version",
+                ),
+                sa.UniqueConstraint(
+                    "result_sha256", name="uq_ett_normalization_result_sha256"
+                ),
+            ]
+        )
+    if defect != "foreign_key":
+        constraints.append(
+            sa.ForeignKeyConstraint(
+                ["source_id", "raw_row_sha256"],
+                ["ett_collected_rows.source_id", "ett_collected_rows.row_sha256"],
+                name="fk_ett_normalization_raw_row",
+            )
+        )
+    Table("ett_normalization_results", metadata, *columns, *constraints)
+    metadata.create_all(engine)
+
+
+@pytest.mark.parametrize(
+    "defect", ["type", "nullability", "primary_key", "unique", "foreign_key"]
+)
+def test_migration_rejects_conflicting_existing_contract_without_mutation(
+    tmp_path, defect
+):
+    migration = _load_migration()
+    engine = create_engine(f"sqlite:///{tmp_path / f'conflict-{defect}.sqlite'}")
+    _create_conflicting_result_table(engine, defect)
+    before = set(inspect(engine).get_table_names())
+    with engine.begin() as connection:
+        with pytest.raises(RuntimeError, match="conflicting existing"):
+            migration.apply(connection, schema=None)
+        assert set(inspect(connection).get_table_names()) == before
+        with pytest.raises(RuntimeError, match="refusing to drop conflicting"):
+            migration.revert(connection, schema=None)
+        assert set(inspect(connection).get_table_names()) == before
+    engine.dispose()
 
 
 def test_migration_adds_one_table_and_preserves_existing_seven(tmp_path):
@@ -510,16 +581,34 @@ def test_migration_adds_one_table_and_preserves_existing_seven(tmp_path):
     metadata.create_all(engine)
     before = set(inspect(engine).get_table_names())
     assert len(before) == 7
-    first = migration.apply(engine, schema=None)
-    assert first.created is True
-    after = set(inspect(engine).get_table_names())
-    assert before <= after
-    assert after - before == {"ett_normalization_results"}
-    replay = migration.apply(engine, schema=None)
-    assert replay.created is False
-    reverted = migration.revert(engine, schema=None)
-    assert reverted.created is True
+    commit_events = []
+    with engine.begin() as connection:
+        event.listen(connection, "commit", lambda _connection: commit_events.append(True))
+        first = migration.apply(connection, schema=None)
+        assert first.created is True
+        after = set(inspect(connection).get_table_names())
+        assert before <= after
+        assert after - before == {"ett_normalization_results"}
+        replay = migration.apply(connection, schema=None)
+        assert replay.created is False
+        reverted = migration.revert(connection, schema=None)
+        assert reverted.created is True
+        assert connection.in_transaction()
+        assert commit_events == []
     assert set(inspect(engine).get_table_names()) == before
+    engine.dispose()
+
+
+def test_migration_requires_connection_with_active_caller_transaction(tmp_path):
+    migration = _load_migration()
+    engine = create_engine(f"sqlite:///{tmp_path / 'transaction-contract.sqlite'}")
+    with pytest.raises(TypeError, match="Connection, not an Engine"):
+        migration.apply(engine, schema=None)
+    with engine.connect() as connection:
+        assert not connection.in_transaction()
+        with pytest.raises(RuntimeError, match="active caller-owned transaction"):
+            migration.apply(connection, schema=None)
+    assert "ett_normalization_results" not in inspect(engine).get_table_names()
     engine.dispose()
 
 
