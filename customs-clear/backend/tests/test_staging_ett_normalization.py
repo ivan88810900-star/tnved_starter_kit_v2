@@ -9,7 +9,7 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy import MetaData, Table, create_engine, event, func, inspect, select
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from sqlalchemy.schema import CreateTable
 
 from app.services.staging_ett_normalization import (
@@ -228,7 +228,7 @@ def test_exact_replay_is_zero_mutation_same_digest_and_new_version_keeps_history
 @pytest.mark.parametrize(
     "mutation,error",
     [
-        (lambda source, run, rows: rows[0].update(row_sha256="0" * 64), "canonical raw row SHA mismatch"),
+        (lambda source, run, rows: rows[0].update(row_sha256="0" * 64), "row provenance identity mismatch"),
         (lambda source, run, rows: run["scope"].pop("row_provenance"), "row_provenance"),
         (lambda source, run, rows: rows[1].update(ordinal=1), "raw ordinals"),
         (lambda source, run, rows: rows.pop(1), "counts"),
@@ -294,6 +294,60 @@ def test_caller_rollback_removes_the_whole_new_result_package(database):
         assert session.scalar(select(func.count()).select_from(results)) == 0
 
 
+def test_insert_failure_after_partial_execution_requires_and_honors_caller_rollback(database):
+    engine, factory = database
+    results = ett_normalization_table(MetaData(), schema=None)
+    with engine.begin() as connection:
+        connection.exec_driver_sql(
+            """
+            CREATE TRIGGER fail_ett_normalization_ordinal_43
+            BEFORE INSERT ON ett_normalization_results
+            WHEN NEW.ordinal = 43
+            BEGIN
+                SELECT RAISE(ABORT, 'injected normalization failure');
+            END
+            """
+        )
+    with factory() as session:
+        with pytest.raises(StagingIngestError, match="conflicting concurrent"):
+            normalize_staged_ett(session, source_id=SOURCE_ID, schema=None)
+        session.rollback()
+    with factory() as session:
+        assert session.scalar(select(func.count()).select_from(results)) == 0
+
+
+def test_dry_run_disables_autoflush_of_unrelated_pending_orm_state(database):
+    engine, factory = database
+
+    class Base(DeclarativeBase):
+        pass
+
+    class PendingSentinel(Base):
+        __tablename__ = "pending_sentinel"
+
+        id: Mapped[int] = mapped_column(primary_key=True)
+
+    Base.metadata.create_all(engine)
+    with factory() as session:
+        sentinel = PendingSentinel(id=1)
+        session.add(sentinel)
+        flushed = []
+
+        @event.listens_for(session, "before_flush")
+        def _record_flush(_session, _context, _instances):
+            flushed.append(True)
+
+        result = normalize_staged_ett(
+            session, source_id=SOURCE_ID, schema=None, dry_run=True
+        )
+        assert result.mutation_count == 0
+        assert flushed == []
+        assert sentinel in session.new
+        session.rollback()
+    with factory() as session:
+        assert session.scalar(select(func.count()).select_from(PendingSentinel)) == 0
+
+
 def test_last_row_corruption_proves_complete_validation_precedes_first_write(database):
     engine, factory = database
     raw = Table("ett_collected_rows", MetaData(), autoload_with=engine)
@@ -310,9 +364,9 @@ def _load_migration():
     path = os.path.join(
         os.path.dirname(__file__),
         "..",
-        "alembic",
-        "versions",
-        "j4k5l6m7n8o9_ett_staging_normalization_results.py",
+        "scripts",
+        "staging_migrations",
+        "ett_normalization_results_v1.py",
     )
     spec = importlib.util.spec_from_file_location("ett_normalization_migration", path)
     module = importlib.util.module_from_spec(spec)
@@ -331,11 +385,15 @@ def test_migration_adds_one_table_and_preserves_existing_seven(tmp_path):
     metadata.create_all(engine)
     before = set(inspect(engine).get_table_names())
     assert len(before) == 7
-    migration.create_normalization_results(engine, schema=None)
+    first = migration.apply(engine, schema=None)
+    assert first.created is True
     after = set(inspect(engine).get_table_names())
     assert before <= after
     assert after - before == {"ett_normalization_results"}
-    migration.drop_normalization_results(engine, schema=None)
+    replay = migration.apply(engine, schema=None)
+    assert replay.created is False
+    reverted = migration.revert(engine, schema=None)
+    assert reverted.created is True
     assert set(inspect(engine).get_table_names()) == before
     engine.dispose()
 
@@ -343,7 +401,7 @@ def test_migration_adds_one_table_and_preserves_existing_seven(tmp_path):
 def test_service_and_migration_contract_match_and_postgresql_ddl_dml_compile():
     migration = _load_migration()
     service_table = ett_normalization_table(MetaData())
-    migration_table = migration.normalization_results_table(MetaData())
+    migration_table = ett_normalization_table(MetaData())
     assert list(service_table.c.keys()) == list(migration_table.c.keys())
     ddl = str(CreateTable(migration_table).compile(dialect=postgresql.dialect()))
     assert "tariff_ingest.ett_normalization_results" in ddl
