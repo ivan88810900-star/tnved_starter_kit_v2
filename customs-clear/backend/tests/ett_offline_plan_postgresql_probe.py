@@ -5,8 +5,13 @@ from __future__ import annotations
 import copy
 import json
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
 
 from app.services.staging_ett_normalization_core import sha256_json
 from app.services.staging_ett_offline_plan import _render_sql, build_offline_artifacts
