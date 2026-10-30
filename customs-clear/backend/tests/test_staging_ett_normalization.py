@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import os
 from copy import deepcopy
+from datetime import datetime, timezone
 
 import pytest
 import sqlalchemy as sa
@@ -12,6 +13,12 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from sqlalchemy.schema import CreateTable
 
+from app.services.staging_ett_ingest import (
+    ETT_PARSER_VERSION as RAW_ETT_PARSER_VERSION,
+    EttCollectedRow,
+    ett_staging_tables,
+    ingest_ett_rows,
+)
 from app.services.staging_ett_normalization import (
     COLLECTED_UNVERIFIED,
     ETT_NORMALIZER_VERSION,
@@ -24,100 +31,127 @@ from app.services.staging_ett_normalization import (
     ett_normalization_table,
     normalize_staged_ett,
 )
-from app.services.staging_nsi_ingest import StagingIngestError
+from app.services.staging_nsi_ingest import SourceObject, StagingIngestError
 
 
 SOURCE_ID = "eec-ett:group01:2022-04-25"
 SOURCE_REVISION = "2022-04-25-group01"
+SOURCE_BYTES = b"synthetic immutable ETT group01 bytes"
 
 
-def _package():
-    source = {"source_id": SOURCE_ID, "source_revision": SOURCE_REVISION}
-    rows = []
-    provenance = []
+def _source_object() -> SourceObject:
+    return SourceObject(
+        source_id=SOURCE_ID,
+        authority="EEC",
+        dataset="EEC-ETT",
+        source_url="https://eec.eaeunion.org/upload/ett/group01.pdf",
+        source_revision=SOURCE_REVISION,
+        object_bucket="official-originals",
+        object_key="ett/2022-04-25/group01/original.pdf",
+        sha256=hashlib.sha256(SOURCE_BYTES).hexdigest(),
+        size_bytes=len(SOURCE_BYTES),
+        media_type="application/pdf",
+        captured_at=datetime(2026, 10, 30, tzinfo=timezone.utc),
+    )
+
+
+def _collected_rows() -> list[EttCollectedRow]:
+    result = []
     duties = ["0"] * 30 + ["5"] * 51 + ["5 63С)"] * 5
     for ordinal, duty in enumerate(duties, start=1):
         hs_code = f"{ordinal:010d}"
         description = f"Товар №{ordinal} — тест"
         supplementary_unit = "кг" if ordinal % 2 else ""
-        raw_line = f"{hs_code}\t{description}\t{supplementary_unit}\t{duty}"
+        result.append(
+            EttCollectedRow(
+                ordinal=ordinal,
+                hs_code=hs_code,
+                description=description,
+                supplementary_unit=supplementary_unit,
+                duty_text=duty,
+                page_number=1 + (ordinal - 1) // 20,
+                line_number=ordinal,
+                raw_line=(
+                    f"{hs_code}\t{description}\t{supplementary_unit}\t{duty}"
+                ),
+            )
+        )
+    return result
+
+
+def _package():
+    source_object = _source_object()
+    source = {
+        "source_id": source_object.source_id,
+        "source_url": source_object.source_url,
+        "source_revision": source_object.source_revision,
+        "object_bucket": source_object.object_bucket,
+        "object_key": source_object.object_key,
+        "sha256": source_object.sha256,
+        "size_bytes": source_object.size_bytes,
+    }
+    rows = []
+    provenance = []
+    for row in _collected_rows():
         payload = {
-            "hs_code": hs_code,
-            "description": description,
-            "supplementary_unit": supplementary_unit,
-            "duty_text": duty,
-            "page_number": 1 + (ordinal - 1) // 20,
-            "line_number": ordinal,
-            "raw_line": raw_line,
+            "hs_code": row.hs_code,
+            "description": row.description,
+            "supplementary_unit": row.supplementary_unit,
+            "duty_text": row.duty_text,
+            "page_number": row.page_number,
+            "line_number": row.line_number,
+            "raw_line": row.raw_line,
         }
         row_sha = _sha256_text(payload)
         rows.append(
             {
                 "source_id": SOURCE_ID,
                 "row_sha256": row_sha,
-                "ordinal": ordinal,
-                "hs_code": hs_code,
-                "description": description,
-                "supplementary_unit": supplementary_unit,
-                "duty_text": duty,
-                "raw_line": raw_line,
+                "ordinal": row.ordinal,
+                "hs_code": row.hs_code,
+                "description": row.description,
+                "supplementary_unit": row.supplementary_unit,
+                "duty_text": row.duty_text,
+                "raw_line": row.raw_line,
                 "status": COLLECTED_UNVERIFIED,
             }
         )
         provenance.append(
             {
-                "ordinal": ordinal,
-                "hs_code": hs_code,
+                "ordinal": row.ordinal,
+                "hs_code": row.hs_code,
                 "row_sha256": row_sha,
                 "page_number": payload["page_number"],
                 "line_number": payload["line_number"],
             }
         )
+    source_scope = {"group": "01"}
+    identity = {
+        "source_id": source_object.source_id,
+        "source_sha256": source_object.sha256,
+        "source_size_bytes": source_object.size_bytes,
+        "source_url": source_object.source_url,
+        "source_revision": source_object.source_revision,
+        "object_bucket": source_object.object_bucket,
+        "object_key": source_object.object_key,
+        "scope": source_scope,
+        "parser_version": RAW_ETT_PARSER_VERSION,
+    }
     run = {
-        "run_id": "raw-run",
+        "run_id": f"ett:{_sha256_text(identity)}",
         "source_id": SOURCE_ID,
         "scope": {
-            "source_identity": {"source_revision": SOURCE_REVISION},
+            **source_scope,
+            "source_identity": identity,
+            "stage_counts": {"normalized": 0, "verified": 0, "admitted": 0},
             "row_provenance": provenance,
         },
+        "parser_version": RAW_ETT_PARSER_VERSION,
         "status": COLLECTED_UNVERIFIED,
         "raw_count": 86,
         "unique_count": 86,
     }
     return source, run, rows
-
-
-def _raw_tables(metadata: MetaData):
-    sources = Table(
-        "source_objects",
-        metadata,
-        sa.Column("source_id", sa.Text, primary_key=True),
-        sa.Column("source_revision", sa.Text, nullable=False),
-    )
-    runs = Table(
-        "ingest_runs",
-        metadata,
-        sa.Column("run_id", sa.Text, primary_key=True),
-        sa.Column("source_id", sa.Text, nullable=False),
-        sa.Column("scope", sa.JSON, nullable=False),
-        sa.Column("status", sa.Text, nullable=False),
-        sa.Column("raw_count", sa.Integer, nullable=False),
-        sa.Column("unique_count", sa.Integer, nullable=False),
-    )
-    rows = Table(
-        "ett_collected_rows",
-        metadata,
-        sa.Column("source_id", sa.Text, primary_key=True),
-        sa.Column("row_sha256", sa.Text, primary_key=True),
-        sa.Column("ordinal", sa.Integer, nullable=False),
-        sa.Column("hs_code", sa.Text, nullable=False),
-        sa.Column("description", sa.Text, nullable=False),
-        sa.Column("supplementary_unit", sa.Text, nullable=False),
-        sa.Column("duty_text", sa.Text, nullable=False),
-        sa.Column("raw_line", sa.Text, nullable=False),
-        sa.Column("status", sa.Text, nullable=False),
-    )
-    return sources, runs, rows
 
 
 @pytest.fixture()
@@ -131,15 +165,20 @@ def database(tmp_path):
         cursor.close()
 
     metadata = MetaData()
-    sources, runs, rows = _raw_tables(metadata)
+    ett_staging_tables(metadata, schema=None)
     ett_normalization_table(metadata, schema=None)
     metadata.create_all(engine)
-    source, run, package_rows = _package()
-    with engine.begin() as connection:
-        connection.execute(sources.insert(), [source])
-        connection.execute(runs.insert(), [run])
-        connection.execute(rows.insert(), package_rows)
     factory = sessionmaker(bind=engine, expire_on_commit=False)
+    with factory() as session, session.begin():
+        ingest_ett_rows(
+            session,
+            source=_source_object(),
+            source_bytes=SOURCE_BYTES,
+            rows=_collected_rows(),
+            scope={"group": "01"},
+            schema=None,
+            now=datetime(2026, 10, 30, tzinfo=timezone.utc),
+        )
     try:
         yield engine, factory
     finally:
@@ -250,6 +289,82 @@ def test_corruption_conflicts_missing_provenance_duplicates_and_gaps_fail_before
     mutation(source, run, rows)
     with pytest.raises(StagingIngestError, match=error):
         build_ett_normalization_plan(source=source, ingest_run=run, raw_rows=rows)
+
+
+def test_boolean_ordinals_are_not_accepted_as_integers():
+    source, run, rows = _package()
+    rows[0]["ordinal"] = True
+    run["scope"]["row_provenance"][0]["ordinal"] = True
+    with pytest.raises(StagingIngestError, match="raw ordinal"):
+        build_ett_normalization_plan(source=source, ingest_run=run, raw_rows=rows)
+
+
+def test_real_raw_ingest_fixture_rejects_boolean_provenance_before_write(database):
+    engine, factory = database
+    raw_tables = ett_staging_tables(MetaData(), schema=None)
+    results = ett_normalization_table(MetaData(), schema=None)
+    with engine.begin() as connection:
+        run = connection.execute(select(raw_tables["ingest_runs"])).mappings().one()
+        scope = deepcopy(run["scope"])
+        scope["row_provenance"][0]["ordinal"] = True
+        connection.execute(
+            raw_tables["ingest_runs"].update().values(scope=scope)
+        )
+    with factory() as session:
+        with pytest.raises(StagingIngestError, match="provenance ordinal"):
+            normalize_staged_ett(
+                session, source_id=SOURCE_ID, schema=None, dry_run=True
+            )
+        assert session.scalar(select(func.count()).select_from(results)) == 0
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("source_id", "different-source"),
+        ("source_sha256", "0" * 64),
+        ("source_url", "https://eec.eaeunion.org/upload/ett/other.pdf"),
+        ("object_key", "ett/other/original.pdf"),
+    ],
+)
+def test_full_stored_identity_must_match_source_objects_even_with_rehashed_run_id(
+    database, field, value
+):
+    engine, factory = database
+    raw_tables = ett_staging_tables(MetaData(), schema=None)
+    results = ett_normalization_table(MetaData(), schema=None)
+    with engine.begin() as connection:
+        run = connection.execute(select(raw_tables["ingest_runs"])).mappings().one()
+        scope = deepcopy(run["scope"])
+        scope["source_identity"][field] = value
+        new_run_id = f"ett:{_sha256_text(scope['source_identity'])}"
+        connection.execute(
+            raw_tables["ingest_runs"]
+            .update()
+            .values(run_id=new_run_id, scope=scope)
+        )
+    with factory() as session:
+        with pytest.raises(StagingIngestError, match="source_identity"):
+            normalize_staged_ett(
+                session, source_id=SOURCE_ID, schema=None, dry_run=True
+            )
+        assert session.scalar(select(func.count()).select_from(results)) == 0
+
+
+def test_deterministic_raw_run_id_is_recomputed_before_write(database):
+    engine, factory = database
+    raw_tables = ett_staging_tables(MetaData(), schema=None)
+    results = ett_normalization_table(MetaData(), schema=None)
+    with engine.begin() as connection:
+        connection.execute(
+            raw_tables["ingest_runs"].update().values(run_id=f"ett:{'0' * 64}")
+        )
+    with factory() as session:
+        with pytest.raises(StagingIngestError, match="run_id mismatch"):
+            normalize_staged_ett(
+                session, source_id=SOURCE_ID, schema=None, dry_run=True
+            )
+        assert session.scalar(select(func.count()).select_from(results)) == 0
 
 
 def test_unknown_text_is_accounted_as_ambiguous_not_silently_rejected():
@@ -389,7 +504,7 @@ def test_migration_adds_one_table_and_preserves_existing_seven(tmp_path):
     migration = _load_migration()
     engine = create_engine(f"sqlite:///{tmp_path / 'migration.sqlite'}")
     metadata = MetaData()
-    raw_sources, raw_runs, raw_rows = _raw_tables(metadata)
+    ett_staging_tables(metadata, schema=None)
     for number in range(4):
         Table(f"existing_staging_{number}", metadata, sa.Column("id", sa.Integer, primary_key=True))
     metadata.create_all(engine)
