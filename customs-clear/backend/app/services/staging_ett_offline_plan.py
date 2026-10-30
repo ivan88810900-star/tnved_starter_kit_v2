@@ -64,15 +64,6 @@ RAW_KEYS = {
 }
 ARTIFACT_KEYS = {"path", "sha256", "size_bytes"}
 ARTIFACT_NAMES = {"source_bytes", "retained_manifest", "retained_extraction"}
-MANIFEST_KEYS = {
-    "schema_version",
-    "source_id",
-    "source_revision",
-    "source_sha256",
-    "source_size_bytes",
-    "extraction_sha256",
-    "extraction_size_bytes",
-}
 EXTRACTION_KEYS = {"schema_version", "source_id", "source_revision", "rows"}
 EXTRACTION_ROW_KEYS = {
     "ordinal",
@@ -102,8 +93,15 @@ PACKAGE_SCHEMA = {
     "artifacts": {
         name: sorted(ARTIFACT_KEYS) for name in sorted(ARTIFACT_NAMES)
     },
-    "retained_manifest_fields": sorted(MANIFEST_KEYS),
-    "retained_extraction_fields": sorted(EXTRACTION_KEYS),
+    "retained_manifest_required_bindings": [
+        "source_id",
+        "source_revision",
+        "source_sha256",
+        "source_size_bytes",
+        "extraction_sha256",
+        "extraction_size_bytes",
+    ],
+    "retained_extraction_forms": ["row array", "object containing rows"],
     "retained_extraction_row_fields": sorted(EXTRACTION_ROW_KEYS),
 }
 
@@ -138,15 +136,24 @@ def _sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
-def _read_json_bytes(value: bytes, label: str) -> Mapping[str, Any]:
+def _read_json_bytes(value: bytes, label: str) -> Any:
     try:
         decoded = value.decode("utf-8")
         parsed = json.loads(decoded)
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise EttOfflinePlanError(f"{label} must be canonical UTF-8 JSON") from exc
-    if canonical_json(parsed).encode("utf-8") != value:
-        raise EttOfflinePlanError(f"{label} is not canonical JSON")
-    return _mapping(parsed, label)
+    return parsed
+
+
+def _scalar_values(value: Any):
+    if isinstance(value, Mapping):
+        for item in value.values():
+            yield from _scalar_values(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _scalar_values(item)
+    elif value is not None and not isinstance(value, (dict, list)):
+        yield value
 
 
 def _artifact_path(package_dir: Path, relative: Any, label: str) -> Path:
@@ -200,27 +207,33 @@ def _validate_retained_artifacts(
     if source_artifact["sha256"] != source.get("sha256"):
         raise EttOfflinePlanError("source artifact digest does not match source_objects")
 
-    manifest = _read_json_bytes(manifest_bytes, "retained_manifest")
-    _exact_keys(manifest, MANIFEST_KEYS, "retained_manifest")
-    extraction = _read_json_bytes(extraction_bytes, "retained_extraction")
-    _exact_keys(extraction, EXTRACTION_KEYS, "retained_extraction")
-    expected_manifest = {
-        "schema_version": 1,
-        "source_id": source.get("source_id"),
-        "source_revision": source.get("source_revision"),
-        "source_sha256": source.get("sha256"),
-        "source_size_bytes": source.get("size_bytes"),
-        "extraction_sha256": extraction_artifact["sha256"],
-        "extraction_size_bytes": extraction_artifact["size_bytes"],
+    manifest = _mapping(
+        _read_json_bytes(manifest_bytes, "retained_manifest"),
+        "retained_manifest",
+    )
+    required_manifest_values = {
+        source.get("source_id"),
+        source.get("source_revision"),
+        source.get("sha256"),
+        source.get("size_bytes"),
+        extraction_artifact["sha256"],
+        extraction_artifact["size_bytes"],
     }
-    if manifest != expected_manifest:
+    manifest_values = set(_scalar_values(manifest))
+    if not required_manifest_values <= manifest_values:
         raise EttOfflinePlanError("retained manifest identity or digests mismatch")
-    if extraction.get("schema_version") != 1:
-        raise EttOfflinePlanError("retained extraction schema_version mismatch")
-    if extraction.get("source_id") != source.get("source_id"):
-        raise EttOfflinePlanError("retained extraction source_id mismatch")
-    if extraction.get("source_revision") != source.get("source_revision"):
-        raise EttOfflinePlanError("retained extraction source_revision mismatch")
+    extraction = _read_json_bytes(extraction_bytes, "retained_extraction")
+    if isinstance(extraction, Mapping):
+        if "source_id" in extraction and extraction["source_id"] != source.get("source_id"):
+            raise EttOfflinePlanError("retained extraction source_id mismatch")
+        if (
+            "source_revision" in extraction
+            and extraction["source_revision"] != source.get("source_revision")
+        ):
+            raise EttOfflinePlanError("retained extraction source_revision mismatch")
+        extraction_rows = extraction.get("rows")
+    else:
+        extraction_rows = extraction
 
     provenance = ingest_run["scope"]["row_provenance"]
     expected_rows = []
@@ -240,7 +253,6 @@ def _validate_retained_artifacts(
                 "raw_line": raw["raw_line"],
             }
         )
-    extraction_rows = extraction.get("rows")
     if not isinstance(extraction_rows, list):
         raise EttOfflinePlanError("retained extraction rows must be an array")
     for index, row in enumerate(extraction_rows, start=1):
@@ -287,36 +299,6 @@ def _render_sql(plan: Mapping[str, Any]) -> str:
 -- Execute only inside an explicit caller-owned transaction with scoped staging access.
 -- This file has no connection settings and intentionally owns no transaction boundary.
 
-CREATE TABLE IF NOT EXISTS tariff_ingest.ett_normalization_results (
-    source_id text NOT NULL,
-    raw_row_sha256 text NOT NULL,
-    ordinal integer NOT NULL,
-    parser_version text NOT NULL,
-    source_revision text NOT NULL,
-    hs_code text NOT NULL,
-    page_number integer NOT NULL,
-    line_number integer NOT NULL,
-    original_description text NOT NULL,
-    original_supplementary_unit text NOT NULL,
-    original_duty_text text NOT NULL,
-    original_raw_line text NOT NULL,
-    syntax_status text NOT NULL,
-    normalized_rate_text text NULL,
-    is_ambiguous boolean NOT NULL,
-    ambiguity_reason text NULL,
-    legal_status text NOT NULL,
-    verified boolean NOT NULL,
-    admitted boolean NOT NULL,
-    result_sha256 text NOT NULL,
-    PRIMARY KEY (source_id, raw_row_sha256, parser_version),
-    CONSTRAINT uq_ett_normalization_source_ordinal_version
-        UNIQUE (source_id, ordinal, parser_version),
-    CONSTRAINT uq_ett_normalization_result_sha256 UNIQUE (result_sha256),
-    CONSTRAINT fk_ett_normalization_raw_row
-        FOREIGN KEY (source_id, raw_row_sha256)
-        REFERENCES tariff_ingest.ett_collected_rows (source_id, row_sha256)
-);
-
 DO $ett_offline_plan$
 DECLARE
     expected_source jsonb := convert_from(decode('{source_hex}', 'hex'), 'UTF8')::jsonb;
@@ -326,7 +308,94 @@ DECLARE
     expected_columns jsonb := convert_from(decode('{columns_hex}', 'hex'), 'UTF8')::jsonb;
     actual_columns jsonb;
     existing_count bigint;
+    inserted_count bigint;
 BEGIN
+    IF current_database() <> 'tariff_staging' THEN
+        RAISE EXCEPTION 'offline plan targets tariff_staging only';
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM tariff_ingest.source_objects s
+        WHERE s.source_id = expected_source->>'source_id'
+          AND s.authority = expected_source->>'authority'
+          AND s.dataset = expected_source->>'dataset'
+          AND s.source_url = expected_source->>'source_url'
+          AND s.source_revision = expected_source->>'source_revision'
+          AND s.object_bucket = expected_source->>'object_bucket'
+          AND s.object_key = expected_source->>'object_key'
+          AND s.sha256 = expected_source->>'sha256'
+          AND s.size_bytes = (expected_source->>'size_bytes')::bigint
+          AND s.media_type = expected_source->>'media_type'
+          AND s.captured_at = (expected_source->>'captured_at')::timestamptz
+          AND s.status = expected_source->>'status'
+    ) THEN RAISE EXCEPTION 'source_objects package mismatch'; END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM tariff_ingest.ingest_runs r
+        WHERE r.run_id = expected_run->>'run_id'
+          AND r.source_id = expected_run->>'source_id'
+          AND r.scope = expected_run->'scope'
+          AND r.parser_version = expected_run->>'parser_version'
+          AND r.status = expected_run->>'status'
+          AND r.raw_count = (expected_run->>'raw_count')::integer
+          AND r.unique_count = (expected_run->>'unique_count')::integer
+          AND r.normalized_count = (expected_run->>'normalized_count')::integer
+          AND r.rejected_count = (expected_run->>'rejected_count')::integer
+          AND r.resume_cursor = expected_run->'resume_cursor'
+    ) THEN RAISE EXCEPTION 'ingest_runs package mismatch'; END IF;
+    IF (SELECT count(*) FROM tariff_ingest.ett_collected_rows r
+        WHERE r.source_id = expected_source->>'source_id')
+       <> jsonb_array_length(expected_raw)
+       OR EXISTS (
+          SELECT 1 FROM jsonb_array_elements(expected_raw) e
+          WHERE NOT EXISTS (
+              SELECT 1 FROM tariff_ingest.ett_collected_rows r
+              WHERE r.source_id = e->>'source_id'
+                AND r.hs_code = e->>'hs_code'
+                AND r.description = e->>'description'
+                AND r.supplementary_unit = e->>'supplementary_unit'
+                AND r.duty_text = e->>'duty_text'
+                AND r.raw_line = e->>'raw_line'
+                AND r.row_sha256 = e->>'row_sha256'
+                AND r.status = e->>'status'
+                AND r.ordinal = (e->>'ordinal')::integer
+          )
+       ) THEN RAISE EXCEPTION 'ett_collected_rows package mismatch'; END IF;
+
+    IF to_regclass('tariff_ingest.ett_normalization_results') IS NULL THEN
+        EXECUTE $ett_ddl$
+            CREATE TABLE tariff_ingest.ett_normalization_results (
+                source_id text NOT NULL,
+                raw_row_sha256 text NOT NULL,
+                ordinal integer NOT NULL,
+                parser_version text NOT NULL,
+                source_revision text NOT NULL,
+                hs_code text NOT NULL,
+                page_number integer NOT NULL,
+                line_number integer NOT NULL,
+                original_description text NOT NULL,
+                original_supplementary_unit text NOT NULL,
+                original_duty_text text NOT NULL,
+                original_raw_line text NOT NULL,
+                syntax_status text NOT NULL,
+                normalized_rate_text text NULL,
+                is_ambiguous boolean NOT NULL,
+                ambiguity_reason text NULL,
+                legal_status text NOT NULL,
+                verified boolean NOT NULL,
+                admitted boolean NOT NULL,
+                result_sha256 text NOT NULL,
+                PRIMARY KEY (source_id, raw_row_sha256, parser_version),
+                CONSTRAINT uq_ett_normalization_source_ordinal_version
+                    UNIQUE (source_id, ordinal, parser_version),
+                CONSTRAINT uq_ett_normalization_result_sha256
+                    UNIQUE (result_sha256),
+                CONSTRAINT fk_ett_normalization_raw_row
+                    FOREIGN KEY (source_id, raw_row_sha256)
+                    REFERENCES tariff_ingest.ett_collected_rows
+                        (source_id, row_sha256)
+            )
+        $ett_ddl$;
+    END IF;
+
     SELECT jsonb_agg(
         jsonb_build_array(a.attname, pg_catalog.format_type(a.atttypid, a.atttypmod), a.attnotnull)
         ORDER BY a.attnum
@@ -338,9 +407,6 @@ BEGIN
         RAISE EXCEPTION 'conflicting ett_normalization_results column contract';
     END IF;
 
-    IF current_database() <> 'tariff_staging' THEN
-        RAISE EXCEPTION 'offline plan targets tariff_staging only';
-    END IF;
     IF (SELECT count(*) FROM pg_catalog.pg_constraint c
         WHERE c.conrelid = 'tariff_ingest.ett_normalization_results'::regclass
           AND c.contype = 'p') <> 1
@@ -408,52 +474,17 @@ BEGIN
               = ARRAY['source_id', 'row_sha256']
     ) THEN RAISE EXCEPTION 'conflicting normalization raw row foreign key'; END IF;
 
-    IF NOT EXISTS (
-        SELECT 1 FROM tariff_ingest.source_objects s
-        WHERE s.source_id = expected_source->>'source_id'
-          AND s.authority = expected_source->>'authority'
-          AND s.dataset = expected_source->>'dataset'
-          AND s.source_url = expected_source->>'source_url'
-          AND s.source_revision = expected_source->>'source_revision'
-          AND s.object_bucket = expected_source->>'object_bucket'
-          AND s.object_key = expected_source->>'object_key'
-          AND s.sha256 = expected_source->>'sha256'
-          AND s.size_bytes = (expected_source->>'size_bytes')::bigint
-          AND s.media_type = expected_source->>'media_type'
-          AND s.captured_at = (expected_source->>'captured_at')::timestamptz
-          AND s.status = expected_source->>'status'
-    ) THEN RAISE EXCEPTION 'source_objects package mismatch'; END IF;
-    IF NOT EXISTS (
-        SELECT 1 FROM tariff_ingest.ingest_runs r
-        WHERE r.run_id = expected_run->>'run_id'
-          AND r.source_id = expected_run->>'source_id'
-          AND r.scope = expected_run->'scope'
-          AND r.parser_version = expected_run->>'parser_version'
-          AND r.status = expected_run->>'status'
-          AND r.raw_count = (expected_run->>'raw_count')::integer
-          AND r.unique_count = (expected_run->>'unique_count')::integer
-          AND r.normalized_count = (expected_run->>'normalized_count')::integer
-          AND r.rejected_count = (expected_run->>'rejected_count')::integer
-          AND r.resume_cursor = expected_run->'resume_cursor'
-    ) THEN RAISE EXCEPTION 'ingest_runs package mismatch'; END IF;
-    IF (SELECT count(*) FROM tariff_ingest.ett_collected_rows r
-        WHERE r.source_id = expected_source->>'source_id')
-       <> jsonb_array_length(expected_raw)
-       OR EXISTS (
-          SELECT 1 FROM jsonb_array_elements(expected_raw) e
-          WHERE NOT EXISTS (
-              SELECT 1 FROM tariff_ingest.ett_collected_rows r
-              WHERE r.source_id = e->>'source_id'
-                AND r.hs_code = e->>'hs_code'
-                AND r.description = e->>'description'
-                AND r.supplementary_unit = e->>'supplementary_unit'
-                AND r.duty_text = e->>'duty_text'
-                AND r.raw_line = e->>'raw_line'
-                AND r.row_sha256 = e->>'row_sha256'
-                AND r.status = e->>'status'
-                AND r.ordinal = (e->>'ordinal')::integer
-          )
-       ) THEN RAISE EXCEPTION 'ett_collected_rows package mismatch'; END IF;
+    IF EXISTS (
+        SELECT 1 FROM pg_catalog.pg_trigger t
+        WHERE t.tgrelid = 'tariff_ingest.ett_normalization_results'::regclass
+          AND NOT t.tgisinternal
+    ) OR EXISTS (
+        SELECT 1 FROM pg_catalog.pg_class c
+        WHERE c.oid = 'tariff_ingest.ett_normalization_results'::regclass
+          AND (c.relrowsecurity OR c.relforcerowsecurity)
+    ) THEN
+        RAISE EXCEPTION 'normalization target has unsupported triggers or RLS';
+    END IF;
 
     SELECT count(*) INTO existing_count
     FROM tariff_ingest.ett_normalization_results r
@@ -490,6 +521,26 @@ BEGIN
         normalized_rate_text text, is_ambiguous boolean, ambiguity_reason text,
         legal_status text, verified boolean, admitted boolean, result_sha256 text
     );
+    GET DIAGNOSTICS inserted_count = ROW_COUNT;
+    IF inserted_count <> jsonb_array_length(expected_results)
+       OR (SELECT count(*) FROM tariff_ingest.ett_normalization_results r
+           WHERE r.source_id = expected_source->>'source_id'
+             AND r.parser_version = expected_results->0->>'parser_version')
+          <> jsonb_array_length(expected_results)
+       OR EXISTS (
+          SELECT 1 FROM jsonb_array_elements(expected_results) e
+          WHERE NOT EXISTS (
+              SELECT 1 FROM tariff_ingest.ett_normalization_results r
+              WHERE r.source_id = e->>'source_id'
+                AND r.parser_version = e->>'parser_version'
+                AND r.ordinal = (e->>'ordinal')::integer
+                AND r.legal_status = 'UNVERIFIED'
+                AND NOT r.verified AND NOT r.admitted
+                AND to_jsonb(r) = e
+          )
+       ) THEN
+        RAISE EXCEPTION 'normalization post-insert verification failed';
+    END IF;
 END
 $ett_offline_plan$;
 """
@@ -504,7 +555,10 @@ def build_offline_artifacts(package_dir: Path) -> tuple[dict[str, Any], str]:
     package_path = package_dir / "package.json"
     if package_path.is_symlink() or not package_path.is_file():
         raise EttOfflinePlanError("package.json is required")
-    package = _read_json_bytes(package_path.read_bytes(), "package.json")
+    package = _mapping(
+        _read_json_bytes(package_path.read_bytes(), "package.json"),
+        "package.json",
+    )
     top_keys = {
         "schema_version",
         "normalizer_version",
