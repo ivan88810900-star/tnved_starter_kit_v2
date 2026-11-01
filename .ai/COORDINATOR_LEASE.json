@@ -1,8 +1,8 @@
 {
   "acquisition_note": "dependency-free legacy ETT recovery envelope adapter",
-  "expires_at": "2026-11-01T19:00:00Z",
+  "expires_at": null,
   "generation": 423,
-  "holder": "/root/scheduled-cycle423-20261101T181601Z",
+  "holder": null,
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -24,8 +24,8 @@
     "verified_by_connector": true
   },
   "previous_holder_end": {
-    "generation": 422,
-    "holder": "/root/scheduled-cycle422-20261101T172041Z"
+    "generation": 423,
+    "holder": "/root/scheduled-cycle423-20261101T181601Z"
   },
   "schema_version": 1,
   "serialization_repair": {
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "active",
-  "token": "a0-cycle423-ett-legacy-recovery-20261101",
-  "updated_at": "2026-11-01T18:16:01Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-11-01T18:22:33Z"
 }
