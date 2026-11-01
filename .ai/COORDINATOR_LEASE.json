@@ -3,18 +3,47 @@
   "expires_at": "2026-11-01T16:50:27.138592Z",
   "generation": 421,
   "holder": "/root/scheduled-cycle421-20261101T162024Z",
-  "lease_repair": {},
+  "lease_repair": {
+    "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
+    "defect": "release serialization replacer omitted nested lease metadata",
+    "prior_blob_sha": "ab7382fc38b05848b29923aba3142be8b6890005",
+    "repair_generation": 413,
+    "repaired_at": "2026-10-30T20:26:32Z",
+    "state_preserved": "released",
+    "work_generation": 412
+  },
   "owner_recovery_release": {
+    "confirmed_at": "2026-10-27T19:44:12Z",
+    "decision": "release_stale_holder",
+    "evidence_ref": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/214#issuecomment-6451880898",
     "generation": 407,
-    "holder": "/root/scheduled-cycle407-20261023T161418Z"
+    "holder": "/root/scheduled-cycle407-20261023T161418Z",
+    "lease_blob_sha": "95836643430299d8c99b706ec834faee3f4d18d9",
+    "owner_login": "ivan88810900-star",
+    "source": "github_owner_receipt",
+    "verified_by_connector": true
   },
   "previous_holder_end": {
     "generation": 420,
     "holder": "/root/scheduled-cycle420-20261101T144817Z"
   },
   "schema_version": 1,
-  "serialization_repair": {},
+  "serialization_repair": {
+    "defect": "nested owner_recovery_release fields omitted by JSON serialization replacer",
+    "generation_preserved": 407,
+    "prior_blob_sha": "fff3f8e360ddfd4d9730cb394b6bb5d27a5ad2bc",
+    "prior_commit_sha": "59e59990cdcde50199f548854ce77c314842a1d9",
+    "repaired_at": "2026-10-27T19:46:22Z",
+    "state_preserved": "released"
+  },
   "state": "active",
   "token": "c49ecfe914b14ea5beb5869b9436688b",
-  "updated_at": "2026-11-01T16:20:27.138592Z"
+  "updated_at": "2026-11-01T16:20:27.138592Z",
+  "serialization_repair_421": {
+    "defect": "acquire serialization replacer omitted nested lease metadata",
+    "prior_blob_sha": "58be67104722b867b01bad024b60aab85b3bbba7",
+    "prior_commit_sha": "8c979995ad82e8278f3269b000f7e4ee820dda9d",
+    "repaired_at": "2026-11-01T16:21:10Z",
+    "state_preserved": "active"
+  }
 }
