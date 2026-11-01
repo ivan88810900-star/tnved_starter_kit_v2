@@ -206,6 +206,14 @@ def _validate_flat_manifest(
     extraction_artifact: Mapping[str, Any],
 ) -> None:
     _exact_keys(manifest, FLAT_MANIFEST_KEYS, "retained manifest flat_v1")
+    if type(manifest.get("schema_version")) is not int:
+        raise EttOfflinePlanError(
+            "retained manifest flat_v1.schema_version must be an integer"
+        )
+    for key in ("source_size_bytes", "extraction_size_bytes"):
+        _strict_positive_int(
+            manifest.get(key), f"retained manifest flat_v1.{key}"
+        )
     expected = {
         "schema_version": 1,
         "source_id": source["source_id"],
@@ -760,7 +768,10 @@ def build_offline_artifacts(package_dir: Path) -> tuple[dict[str, Any], str]:
         "artifacts",
     }
     _exact_keys(package, top_keys, "package.json")
-    if package.get("schema_version") != PACKAGE_SCHEMA_VERSION:
+    if (
+        type(package.get("schema_version")) is not int
+        or package["schema_version"] != PACKAGE_SCHEMA_VERSION
+    ):
         raise EttOfflinePlanError("package schema_version mismatch")
     if package.get("normalizer_version") != ETT_NORMALIZER_VERSION:
         raise EttOfflinePlanError("normalizer_version mismatch")
