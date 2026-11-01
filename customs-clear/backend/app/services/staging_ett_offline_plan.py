@@ -163,6 +163,12 @@ def _strict_positive_int(value: Any, label: str) -> int:
     return value
 
 
+def _strict_nonnegative_int(value: Any, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise EttOfflinePlanError(f"{label} must be a nonnegative integer")
+    return value
+
+
 def _aware_instant(value: Any, label: str) -> datetime:
     if not isinstance(value, str) or not value:
         raise EttOfflinePlanError(f"{label} must be an ISO-8601 timestamp")
@@ -266,6 +272,10 @@ def _validate_legacy_manifest(
         "verified": ingest_run["scope"]["stage_counts"]["verified"],
         "admitted": ingest_run["scope"]["stage_counts"]["admitted"],
     }
+    for key in LEGACY_ADMISSION_KEYS:
+        _strict_nonnegative_int(
+            admission.get(key), f"retained manifest legacy_v1.admission.{key}"
+        )
     if admission != expected_admission:
         _manifest_mismatch("legacy_v1.admission")
     objects = _mapping(
@@ -306,6 +316,11 @@ def _validate_legacy_manifest(
         "unique_count": ingest_run["unique_count"],
         "next_ordinal": ingest_run["resume_cursor"]["next_ordinal"],
     }
+    for key in ("raw_count", "unique_count", "next_ordinal"):
+        _strict_positive_int(
+            extraction.get(key),
+            f"retained manifest legacy_v1.objects.extraction.{key}",
+        )
     for key, value in expected_original.items():
         if original.get(key) != value:
             _manifest_mismatch(f"legacy_v1.objects.original.{key}")
