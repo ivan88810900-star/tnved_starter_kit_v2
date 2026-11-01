@@ -1,8 +1,8 @@
 {
-  "acquisition_note": "complete historical ETT source sequence reconciliation gate",
-  "expires_at": null,
-  "generation": 425,
-  "holder": null,
+  "acquisition_note": "bind mixed historical ETT parser contracts by run range",
+  "expires_at": "2026-11-01T19:30:00Z",
+  "generation": 426,
+  "holder": "/root/scheduled-cycle426-20261101T184500Z",
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-11-01T18:33:10Z"
+  "state": "active",
+  "token": "a0-cycle426-ett-mixed-parser-contracts-20261101",
+  "updated_at": "2026-11-01T18:45:00Z"
 }
