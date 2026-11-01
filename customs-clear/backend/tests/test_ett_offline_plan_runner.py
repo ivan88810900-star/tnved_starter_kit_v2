@@ -176,6 +176,60 @@ def _rewrite_package(root: Path, package: dict) -> None:
     _write_canonical(root / "package.json", package)
 
 
+def _replace_manifest(root: Path, package: dict, manifest: dict) -> None:
+    manifest_bytes = json.dumps(
+        manifest, ensure_ascii=False, indent=2
+    ).encode("utf-8")
+    (root / "manifest.json").write_bytes(manifest_bytes)
+    package["artifacts"]["retained_manifest"].update(
+        sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+        size_bytes=len(manifest_bytes),
+    )
+    _rewrite_package(root, package)
+
+
+def _legacy_manifest(package: dict) -> dict:
+    source = package["source_object"]
+    extraction = package["artifacts"]["retained_extraction"]
+    extraction_key = str(
+        Path(source["object_key"]).with_name("extraction.json")
+    )
+    return {
+        "schema_version": 1,
+        "authority": source["authority"],
+        "dataset": source["dataset"],
+        "chapter": package["ingest_run"]["scope"]["group"],
+        "source_url": source["source_url"],
+        "source_revision": source["source_revision"],
+        "captured_at": source["captured_at"],
+        "status": source["status"],
+        "admission": {
+            "classification": COLLECTED_UNVERIFIED,
+            "normalized": 0,
+            "verified": 0,
+            "admitted": 0,
+        },
+        "objects": {
+            "original": {
+                "bucket": source["object_bucket"],
+                "key": source["object_key"],
+                "media_type": source["media_type"],
+                "sha256": source["sha256"],
+                "size_bytes": source["size_bytes"],
+            },
+            "extraction": {
+                "bucket": source["object_bucket"],
+                "key": extraction_key,
+                "media_type": "application/json",
+                "sha256": extraction["sha256"],
+                "size_bytes": extraction["size_bytes"],
+                "counts": {"raw": 86, "unique": 86},
+                "cursor": {"next_ordinal": 87, "complete": True},
+            },
+        },
+    }
+
+
 class OfflinePlanRunnerTests(unittest.TestCase):
     def test_pure_86_row_plan_and_sql_contract(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -268,10 +322,11 @@ class OfflinePlanRunnerTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         schema = json.loads(completed.stdout)
-        self.assertIn("retained_manifest_required_bindings", schema)
+        self.assertIn("retained_manifest_forms", schema)
+        self.assertIn("retained_legacy_v1", schema["retained_manifest_forms"])
         self.assertIn("retained_extraction_row_fields", schema)
 
-    def test_retained_json_formatting_and_existing_envelopes_are_preserved(self):
+    def test_retained_json_formatting_and_flat_envelope_are_preserved(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             package_dir = root / "package"
@@ -287,18 +342,13 @@ class OfflinePlanRunnerTests(unittest.TestCase):
                 sha256=extraction_sha, size_bytes=len(extraction_bytes)
             )
             manifest = {
-                "existing": {
-                    "source": {
-                        "id": SOURCE_ID,
-                        "revision": SOURCE_REVISION,
-                        "sha256": package["source_object"]["sha256"],
-                        "size": package["source_object"]["size_bytes"],
-                    },
-                    "extraction": {
-                        "sha256": extraction_sha,
-                        "size": len(extraction_bytes),
-                    },
-                }
+                "schema_version": 1,
+                "source_id": SOURCE_ID,
+                "source_revision": SOURCE_REVISION,
+                "source_sha256": package["source_object"]["sha256"],
+                "source_size_bytes": package["source_object"]["size_bytes"],
+                "extraction_sha256": extraction_sha,
+                "extraction_size_bytes": len(extraction_bytes),
             }
             manifest_bytes = json.dumps(
                 manifest, ensure_ascii=False, indent=2
@@ -311,6 +361,179 @@ class OfflinePlanRunnerTests(unittest.TestCase):
             _rewrite_package(package_dir, package)
             plan, _ = build_offline_artifacts(package_dir)
             self.assertEqual(plan["expected_counts"]["raw"], 86)
+
+    def test_retained_legacy_manifest_without_source_id_is_semantically_bound(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            package_dir = Path(temporary) / "package"
+            package = _build_package(package_dir)
+            manifest = _legacy_manifest(package)
+            self.assertNotIn("source_id", manifest)
+            _replace_manifest(package_dir, package, manifest)
+            plan, _ = build_offline_artifacts(package_dir)
+        self.assertEqual(plan["expected_counts"]["raw"], 86)
+        self.assertEqual(
+            plan["retained_manifest"]["objects"]["original"]["sha256"],
+            package["source_object"]["sha256"],
+        )
+
+    def test_rejects_legacy_manifest_binding_substitutions(self):
+        mutations = (
+            (
+                "original bucket",
+                lambda manifest: manifest["objects"]["original"].__setitem__(
+                    "bucket", "wrong-bucket"
+                ),
+            ),
+            (
+                "original key",
+                lambda manifest: manifest["objects"]["original"].__setitem__(
+                    "key", "wrong/original.pdf"
+                ),
+            ),
+            (
+                "original media_type",
+                lambda manifest: manifest["objects"]["original"].__setitem__(
+                    "media_type", "application/octet-stream"
+                ),
+            ),
+            (
+                "original sha256",
+                lambda manifest: manifest["objects"]["original"].__setitem__(
+                    "sha256", "0" * 64
+                ),
+            ),
+            (
+                "original size_bytes",
+                lambda manifest: manifest["objects"]["original"].__setitem__(
+                    "size_bytes", 1
+                ),
+            ),
+            (
+                "extraction bucket",
+                lambda manifest: manifest["objects"]["extraction"].__setitem__(
+                    "bucket", "wrong-bucket"
+                ),
+            ),
+            (
+                "extraction key",
+                lambda manifest: manifest["objects"]["extraction"].__setitem__(
+                    "key", "wrong/extraction.json"
+                ),
+            ),
+            (
+                "extraction media_type",
+                lambda manifest: manifest["objects"]["extraction"].__setitem__(
+                    "media_type", "text/plain"
+                ),
+            ),
+            (
+                "extraction sha256",
+                lambda manifest: manifest["objects"]["extraction"].__setitem__(
+                    "sha256", "0" * 64
+                ),
+            ),
+            (
+                "extraction size_bytes",
+                lambda manifest: manifest["objects"]["extraction"].__setitem__(
+                    "size_bytes", 1
+                ),
+            ),
+            (
+                "source_revision",
+                lambda manifest: manifest.__setitem__(
+                    "source_revision", "wrong-revision"
+                ),
+            ),
+            (
+                "source_url",
+                lambda manifest: manifest.__setitem__(
+                    "source_url", "https://example.invalid/wrong.pdf"
+                ),
+            ),
+            (
+                "authority",
+                lambda manifest: manifest.__setitem__("authority", "wrong-authority"),
+            ),
+            (
+                "dataset",
+                lambda manifest: manifest.__setitem__("dataset", "wrong-dataset"),
+            ),
+            (
+                "captured_at",
+                lambda manifest: manifest.__setitem__(
+                    "captured_at", "2026-01-01T00:00:00+00:00"
+                ),
+            ),
+            (
+                "chapter",
+                lambda manifest: manifest.__setitem__("chapter", "02"),
+            ),
+            (
+                "status",
+                lambda manifest: manifest.__setitem__("status", "VERIFIED"),
+            ),
+        )
+        for label, mutation in mutations:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
+                package_dir = Path(temporary) / "package"
+                package = _build_package(package_dir)
+                manifest = _legacy_manifest(package)
+                mutation(manifest)
+                _replace_manifest(package_dir, package, manifest)
+                with self.assertRaisesRegex(EttOfflinePlanError, "manifest"):
+                    build_offline_artifacts(package_dir)
+
+    def test_rejects_legacy_manifest_schema_shape_and_unrelated_matches(self):
+        def wrong_schema(manifest, _package):
+            manifest["schema_version"] = 2
+
+        def wrong_objects(manifest, _package):
+            manifest["objects"] = []
+
+        def missing_required(manifest, _package):
+            del manifest["objects"]["extraction"]["media_type"]
+
+        def swapped_objects(manifest, _package):
+            manifest["objects"]["original"], manifest["objects"]["extraction"] = (
+                manifest["objects"]["extraction"],
+                manifest["objects"]["original"],
+            )
+
+        def unrelated_scalar_match(manifest, package):
+            correct = manifest["objects"]["original"]["sha256"]
+            manifest["objects"]["original"]["sha256"] = "0" * 64
+            manifest["admission"]["unrelated_source_sha256"] = correct
+            manifest["objects"]["extraction"]["counts"]["unrelated_source_id"] = (
+                package["source_object"]["source_id"]
+            )
+
+        def wrong_admission_shape(manifest, _package):
+            manifest["admission"] = []
+
+        def wrong_counts_shape(manifest, _package):
+            manifest["objects"]["extraction"]["counts"] = 86
+
+        def wrong_cursor_shape(manifest, _package):
+            manifest["objects"]["extraction"]["cursor"] = 87
+
+        for label, mutation in (
+            ("schema", wrong_schema),
+            ("objects", wrong_objects),
+            ("missing", missing_required),
+            ("swapped", swapped_objects),
+            ("unrelated", unrelated_scalar_match),
+            ("admission", wrong_admission_shape),
+            ("counts", wrong_counts_shape),
+            ("cursor", wrong_cursor_shape),
+        ):
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
+                package_dir = Path(temporary) / "package"
+                package = _build_package(package_dir)
+                manifest = _legacy_manifest(package)
+                mutation(manifest, package)
+                _replace_manifest(package_dir, package, manifest)
+                with self.assertRaisesRegex(EttOfflinePlanError, "manifest"):
+                    build_offline_artifacts(package_dir)
 
     def test_output_directory_is_atomic_and_must_be_new(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -470,4 +693,5 @@ class OfflinePlanRunnerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
