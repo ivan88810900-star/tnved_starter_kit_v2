@@ -221,7 +221,6 @@ def _legacy_manifest(package: dict) -> dict:
         "captured_at": source["captured_at"].replace("+00:00", "Z"),
         "status": source["status"],
         "admission": {
-            "classification": COLLECTED_UNVERIFIED,
             "normalized": 0,
             "verified": 0,
             "admitted": 0,
@@ -240,8 +239,9 @@ def _legacy_manifest(package: dict) -> dict:
                 "media_type": "application/json",
                 "sha256": extraction["sha256"],
                 "size_bytes": extraction["size_bytes"],
-                "counts": {"raw": 86, "unique": 86},
-                "cursor": {"next_ordinal": 87, "complete": True},
+                "raw_count": 86,
+                "unique_count": 86,
+                "next_ordinal": 87,
             },
         },
     }
@@ -391,6 +391,17 @@ class OfflinePlanRunnerTests(unittest.TestCase):
         self.assertEqual(
             plan["retained_manifest"]["objects"]["original"]["sha256"],
             package["source_object"]["sha256"],
+        )
+        self.assertEqual(
+            {
+                key: plan["retained_manifest"]["objects"]["extraction"][key]
+                for key in ("raw_count", "unique_count", "next_ordinal")
+            },
+            {"raw_count": 86, "unique_count": 86, "next_ordinal": 87},
+        )
+        self.assertEqual(
+            plan["retained_manifest"]["admission"],
+            {"normalized": 0, "verified": 0, "admitted": 0},
         )
         self.assertEqual(plan["retained_manifest"]["captured_at"][-1], "Z")
 
@@ -555,18 +566,24 @@ class OfflinePlanRunnerTests(unittest.TestCase):
             correct = manifest["objects"]["original"]["sha256"]
             manifest["objects"]["original"]["sha256"] = "0" * 64
             manifest["admission"]["unrelated_source_sha256"] = correct
-            manifest["objects"]["extraction"]["counts"]["unrelated_source_id"] = (
-                package["source_object"]["source_id"]
-            )
+            manifest["objects"]["extraction"]["unrelated_source_id"] = package[
+                "source_object"
+            ]["source_id"]
 
         def wrong_admission_shape(manifest, _package):
             manifest["admission"] = []
 
-        def wrong_counts_shape(manifest, _package):
-            manifest["objects"]["extraction"]["counts"] = 86
+        def wrong_raw_count(manifest, _package):
+            manifest["objects"]["extraction"]["raw_count"] = 85
 
-        def wrong_cursor_shape(manifest, _package):
-            manifest["objects"]["extraction"]["cursor"] = 87
+        def wrong_unique_count(manifest, _package):
+            manifest["objects"]["extraction"]["unique_count"] = 85
+
+        def wrong_next_ordinal(manifest, _package):
+            manifest["objects"]["extraction"]["next_ordinal"] = 86
+
+        def wrong_admission_count(manifest, _package):
+            manifest["admission"]["normalized"] = 1
 
         for label, mutation in (
             ("schema", wrong_schema),
@@ -575,8 +592,10 @@ class OfflinePlanRunnerTests(unittest.TestCase):
             ("swapped", swapped_objects),
             ("unrelated", unrelated_scalar_match),
             ("admission", wrong_admission_shape),
-            ("counts", wrong_counts_shape),
-            ("cursor", wrong_cursor_shape),
+            ("raw_count", wrong_raw_count),
+            ("unique_count", wrong_unique_count),
+            ("next_ordinal", wrong_next_ordinal),
+            ("admission_count", wrong_admission_count),
         ):
             with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
                 package_dir = Path(temporary) / "package"
