@@ -44,6 +44,12 @@ and size are bound to the validated extraction artifact. Values found only in
 unrelated nested fields never satisfy a binding. The retained bytes are read and
 validated in place and are not rewritten.
 
+The legacy manifest `chapter` is bound to `ingest_run.scope.chapter`; an
+invented or legacy `scope.group` value is not substituted. Its `captured_at`
+and the staged source timestamp must both be valid timezone-aware ISO-8601 values
+for the same instant, so equivalent `Z` and `+00:00` spellings are accepted
+while naive, invalid, or different instants fail closed.
+
 The retained extraction may be either a row array or an object containing
 `rows`; every row is matched to RAW and page/line provenance. Raw-byte SHA-256
 and size are always checked before JSON parsing. Run `--print-package-schema`
