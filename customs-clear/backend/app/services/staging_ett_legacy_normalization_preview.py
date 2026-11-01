@@ -102,7 +102,11 @@ def _validate_envelope_integrity(envelope: Mapping[str, Any]) -> str:
     hash_payload = {key: value for key, value in envelope.items() if key != "envelope_sha256"}
     if sha256_json(hash_payload) != envelope_sha:
         raise EttLegacyPreviewError("recovery envelope SHA mismatch")
-    if envelope.get("schema_version") != 1 or envelope.get("kind") != RECOVERY_KIND:
+    if (
+        type(envelope.get("schema_version")) is not int
+        or envelope.get("schema_version") != 1
+        or envelope.get("kind") != RECOVERY_KIND
+    ):
         raise EttLegacyPreviewError("unsupported recovery envelope contract")
     expected_parser_contracts = {
         FIRST20_PARSER_VERSION: {
@@ -127,7 +131,9 @@ def _validate_envelope_integrity(envelope: Mapping[str, Any]) -> str:
         or envelope.get("execution_performed") is not False
         or envelope.get("sql_generated") is not False
         or envelope.get("normalization_performed") is not False
+        or type(envelope.get("verified")) is not int
         or envelope.get("verified") != 0
+        or type(envelope.get("admitted")) is not int
         or envelope.get("admitted") != 0
     ):
         raise EttLegacyPreviewError("recovery evidence is incomplete or not raw-only")
@@ -216,6 +222,8 @@ def build_legacy_normalization_preview(
     if source.get("chapter") != "29":
         raise EttLegacyPreviewError("recovery source chapter mismatch")
     _sha256(source.get("sha256"), "recovery source sha256")
+    _positive_int(source.get("size_bytes"), "recovery source size_bytes")
+    page_count = _positive_int(source.get("page_count"), "recovery source page_count")
     _sha256(derived.get("source_text_sha256"), "recovery source text sha256")
 
     observed_runs = _sequence(observed.get("legacy_runs"), "observed legacy_runs")
@@ -235,6 +243,10 @@ def build_legacy_normalization_preview(
 
     rows: list[dict[str, Any]] = []
     seen_raw_hashes: set[str] = set()
+    previous_source_line = 0
+    previous_page = 0
+    previous_page_line = 0
+    page_line_offsets: dict[int, int] = {}
     for ordinal, (raw_value, provenance_value) in enumerate(
         zip(raw_rows, provenance_rows), start=1
     ):
@@ -263,16 +275,44 @@ def build_legacy_normalization_preview(
             or not hs_code.startswith("29")
         ):
             raise EttLegacyPreviewError(f"raw row {ordinal} binding mismatch")
+        provenance_ordinal = _positive_int(
+            provenance.get("ordinal"), f"provenance row {ordinal} ordinal"
+        )
         if (
-            provenance.get("ordinal") != ordinal
+            provenance_ordinal != ordinal
             or provenance.get("hs_code") != hs_code
             or provenance.get("row_sha256") != row_sha
         ):
             raise EttLegacyPreviewError(f"provenance row {ordinal} identity mismatch")
-        for key in ("source_line_number", "page_number", "line_number"):
-            _positive_int(provenance.get(key), f"provenance row {ordinal} {key}")
-        if ordinal > 1 and provenance["source_line_number"] <= rows[-1]["provenance"]["source_line_number"]:
+        source_line = _positive_int(
+            provenance.get("source_line_number"),
+            f"provenance row {ordinal} source_line_number",
+        )
+        page_number = _positive_int(
+            provenance.get("page_number"), f"provenance row {ordinal} page_number"
+        )
+        page_line = _positive_int(
+            provenance.get("line_number"), f"provenance row {ordinal} line_number"
+        )
+        if page_number > page_count:
+            raise EttLegacyPreviewError("provenance page exceeds recovery source page_count")
+        if source_line <= previous_source_line:
             raise EttLegacyPreviewError("provenance source-line order is not strict")
+        if page_number < previous_page:
+            raise EttLegacyPreviewError("provenance page order is not monotonic")
+        if page_number == previous_page and page_line <= previous_page_line:
+            raise EttLegacyPreviewError("provenance page-line order is not strict")
+        page_offset = source_line - page_line
+        if page_number in page_line_offsets:
+            if page_line_offsets[page_number] != page_offset:
+                raise EttLegacyPreviewError(
+                    "provenance page/source line mapping is incoherent"
+                )
+        else:
+            page_line_offsets[page_number] = page_offset
+        previous_source_line = source_line
+        previous_page = page_number
+        previous_page_line = page_line
         for key in ("description", "supplementary_unit", "duty_text"):
             if not isinstance(raw.get(key), str):
                 raise EttLegacyPreviewError(f"raw row {ordinal} {key} must be a string")
