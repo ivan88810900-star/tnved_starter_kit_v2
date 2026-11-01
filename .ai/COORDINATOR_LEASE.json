@@ -1,8 +1,8 @@
 {
   "acquisition_note": "repair legacy ETT recovery page, order, and parser bindings",
-  "expires_at": "2026-11-01T19:08:52Z",
+  "expires_at": null,
   "generation": 424,
-  "holder": "/root/scheduled-cycle424-20261101T182352Z",
+  "holder": null,
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -24,8 +24,8 @@
     "verified_by_connector": true
   },
   "previous_holder_end": {
-    "generation": 423,
-    "holder": "/root/scheduled-cycle423-20261101T181601Z"
+    "generation": 424,
+    "holder": "/root/scheduled-cycle424-20261101T182352Z"
   },
   "schema_version": 1,
   "serialization_repair": {
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "active",
-  "token": "a0-cycle424-ett-legacy-recovery-fix-20261101",
-  "updated_at": "2026-11-01T18:23:52Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-11-01T18:27:29Z"
 }
