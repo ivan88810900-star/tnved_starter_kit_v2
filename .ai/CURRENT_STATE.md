@@ -1,3 +1,13 @@
+# Cycle 421 checkpoint — PR #265 strict JSON numeric aliases rejected (2026-11-01 16:24 UTC)
+
+- Restored GitHub truth before work: protected `main` remains `e526dfbdb5a31b01bf6f743da0288b88f916de0c`; draft PR #265 was the newest main-based candidate and had no review threads or submitted GitHub reviews.
+- Confirmed defect `TARIFF-ETT-STRICT-JSON-NUMERIC-TYPES-001`: package and flat-v1 manifest validation used Python equality, allowing JSON `true` to alias schema version `1` and equal float sizes to alias strict integers.
+- Draft PR #265 advanced from `baefb62ea0d4bd19f488d76819a281082c03d36b` to exact head `2e5c17a9a43be8ab8f39ad0305f79237ca498603`. The two-file follow-up delta is +42/-1 and rejects noncanonical package/manifest numeric types with focused regressions.
+- Exact-head workflow run `41325956126` succeeded: dependency-free job `124905837574` ran 20 tests (PASS); disposable PostgreSQL job `124905837490` passed first apply/replay/conflict/history/schema.
+- The earlier independent A5 PASS remains bound only to `baefb62ea0d4bd19f488d76819a281082c03d36b` and is explicitly invalidated for readiness by the new commit. Current status is `CI_PASSED_A5_PENDING`; PR #265 remains draft.
+- Evidence: `.ai/orchestration/evidence/cycle421_pr265_strict_json_types.json`. The one-line 1.1 MB `TASK_BOARD.json` was not rewritten because the available connector cannot safely materialize its complete CAS payload; no false board/readiness update was claimed.
+- No merge, retained/private object read, persistent SQL, deploy, enforcement, A6/provider call, permission/secret change, force push or branch deletion occurred.
+
 # Cycle 415 metadata checkpoint — PR #263 evidence and owner gate reconciled (2026-10-30 20:58 UTC)
 
 - Metadata-only cycle: no code, candidate SHA, private object, database, SQL, merge/deploy, enforcement or A6 action changed.
