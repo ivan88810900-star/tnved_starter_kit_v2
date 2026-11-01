@@ -97,7 +97,13 @@ def _build_package(root: Path) -> dict:
             }
         )
         extraction_rows.append({"ordinal": ordinal, **hash_payload})
-    base_scope = {"dataset": "EEC-ETT", "group": "01"}
+    base_scope = {
+        "chapter": "01",
+        "task_id": "synthetic-retained-group01",
+        "manifest": {"schema_version": 1, "kind": "retained"},
+        "extraction": {"schema_version": 1, "rows": 86},
+        "readback_verified": True,
+    }
     identity = {
         "source_id": SOURCE_ID,
         "source_sha256": source_sha,
@@ -188,6 +194,17 @@ def _replace_manifest(root: Path, package: dict, manifest: dict) -> None:
     _rewrite_package(root, package)
 
 
+def _rebind_scope_identity(package: dict) -> None:
+    scope = package["ingest_run"]["scope"]
+    identity = scope["source_identity"]
+    identity["scope"] = {
+        key: value
+        for key, value in scope.items()
+        if key not in {"source_identity", "stage_counts", "row_provenance"}
+    }
+    package["ingest_run"]["run_id"] = f"ett:{sha256_json(identity)}"
+
+
 def _legacy_manifest(package: dict) -> dict:
     source = package["source_object"]
     extraction = package["artifacts"]["retained_extraction"]
@@ -198,10 +215,10 @@ def _legacy_manifest(package: dict) -> dict:
         "schema_version": 1,
         "authority": source["authority"],
         "dataset": source["dataset"],
-        "chapter": package["ingest_run"]["scope"]["group"],
+        "chapter": package["ingest_run"]["scope"]["chapter"],
         "source_url": source["source_url"],
         "source_revision": source["source_revision"],
-        "captured_at": source["captured_at"],
+        "captured_at": source["captured_at"].replace("+00:00", "Z"),
         "status": source["status"],
         "admission": {
             "classification": COLLECTED_UNVERIFIED,
@@ -375,6 +392,7 @@ class OfflinePlanRunnerTests(unittest.TestCase):
             plan["retained_manifest"]["objects"]["original"]["sha256"],
             package["source_object"]["sha256"],
         )
+        self.assertEqual(plan["retained_manifest"]["captured_at"][-1], "Z")
 
     def test_rejects_legacy_manifest_binding_substitutions(self):
         mutations = (
@@ -461,7 +479,7 @@ class OfflinePlanRunnerTests(unittest.TestCase):
             (
                 "captured_at",
                 lambda manifest: manifest.__setitem__(
-                    "captured_at", "2026-01-01T00:00:00+00:00"
+                    "captured_at", "2026-01-01T00:00:01Z"
                 ),
             ),
             (
@@ -481,6 +499,40 @@ class OfflinePlanRunnerTests(unittest.TestCase):
                 mutation(manifest)
                 _replace_manifest(package_dir, package, manifest)
                 with self.assertRaisesRegex(EttOfflinePlanError, "manifest"):
+                    build_offline_artifacts(package_dir)
+
+    def test_rejects_invalid_or_naive_legacy_manifest_timestamps(self):
+        for value, message in (
+            ("not-a-timestamp", "valid ISO-8601"),
+            ("2026-10-30T00:00:00", "include a timezone"),
+        ):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as temporary:
+                package_dir = Path(temporary) / "package"
+                package = _build_package(package_dir)
+                manifest = _legacy_manifest(package)
+                manifest["captured_at"] = value
+                _replace_manifest(package_dir, package, manifest)
+                with self.assertRaisesRegex(EttOfflinePlanError, message):
+                    build_offline_artifacts(package_dir)
+
+    def test_missing_or_legacy_group_scope_fails_without_key_error(self):
+        for label, mutation in (
+            ("missing", lambda scope: scope.pop("chapter")),
+            (
+                "group",
+                lambda scope: scope.__setitem__("group", scope.pop("chapter")),
+            ),
+        ):
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
+                package_dir = Path(temporary) / "package"
+                package = _build_package(package_dir)
+                manifest = _legacy_manifest(package)
+                mutation(package["ingest_run"]["scope"])
+                _rebind_scope_identity(package)
+                _replace_manifest(package_dir, package, manifest)
+                with self.assertRaisesRegex(
+                    EttOfflinePlanError, "scope.chapter.*group is not a substitute"
+                ):
                     build_offline_artifacts(package_dir)
 
     def test_rejects_legacy_manifest_schema_shape_and_unrelated_matches(self):
