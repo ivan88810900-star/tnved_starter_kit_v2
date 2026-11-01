@@ -252,6 +252,23 @@ class EttLegacyRecoveryTests(unittest.TestCase):
         ):
             _build(fixture)
 
+    def test_extra_parsed_source_row_without_raw_counterpart_fails_closed(self) -> None:
+        fixture = _fixture()
+        extra = _historical_line(
+            "2999999999", "extra parsed source row", "unit extra", "5"
+        )
+        fixture["source_text_bytes"] = (
+            extra + "\n" + fixture["source_text_bytes"].decode()
+        ).encode()
+        text_sha = hashlib.sha256(fixture["source_text_bytes"]).hexdigest()
+        fixture["legacy_runs"][1]["scope"]["source_text_sha256"] = text_sha
+        fixture["legacy_runs"][2]["scope"]["source_text_sha256"] = text_sha
+        with self.assertRaisesRegex(
+            EttLegacyRecoveryError,
+            r"exact complete sequence count mismatch: expected=533, parsed=534, raw=533",
+        ):
+            _build(fixture)
+
     def test_unbound_parsed_field_substitutions_fail_closed(self) -> None:
         corruptions = (
             ("description", "different description"),
