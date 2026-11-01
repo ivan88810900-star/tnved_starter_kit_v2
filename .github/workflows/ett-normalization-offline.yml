@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "agent/ett-offline-tool-main-v1"
+      - "agent/ett-legacy-recovery-v1"
     paths:
       - ".github/workflows/ett-normalization-offline.yml"
       - "customs-clear/backend/app/services/staging_ett_normalization_core.py"
@@ -17,6 +18,7 @@ on:
   pull_request:
     branches:
       - main
+      - "agent/ett-chapter-boundary-v1"
     paths:
       - ".github/workflows/ett-normalization-offline.yml"
       - "customs-clear/backend/app/services/staging_ett_normalization_core.py"
