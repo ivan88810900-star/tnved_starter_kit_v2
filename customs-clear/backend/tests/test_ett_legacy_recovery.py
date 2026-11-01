@@ -191,6 +191,27 @@ class EttLegacyRecoveryTests(unittest.TestCase):
                 ):
                     _build(fixture)
 
+    def test_different_partition_or_chapter_fails_closed(self) -> None:
+        fixture = _fixture()
+        fixture["legacy_runs"][0]["scope"]["bounded_rows"] = 21
+        fixture["legacy_runs"][0]["raw_count"] = 21
+        fixture["legacy_runs"][0]["unique_count"] = 21
+        fixture["legacy_runs"][0]["resume_cursor"]["last_ordinal"] = 21
+        fixture["legacy_runs"][1]["scope"]["start_ordinal"] = 22
+        fixture["legacy_runs"][1]["raw_count"] = 199
+        fixture["legacy_runs"][1]["unique_count"] = 199
+        with self.assertRaisesRegex(EttLegacyRecoveryError, "fixed recovery ranges"):
+            _build(fixture)
+
+        fixture = _fixture()
+        fixture["source"]["chapter"] = "01"
+        for run in fixture["legacy_runs"][:2]:
+            run["scope"]["chapter"] = "01"
+        for ordinal, row in enumerate(fixture["raw_rows"], start=1):
+            row["hs_code"] = f"01{ordinal:08d}"
+        with self.assertRaisesRegex(EttLegacyRecoveryError, "limited to chapter 29"):
+            _build(fixture)
+
     def test_corrupt_hash_and_identity_conflicts_fail_closed(self) -> None:
         fixture = _fixture()
         fixture["raw_rows"][0]["row_sha256"] = "0" * 64
