@@ -1,8 +1,8 @@
 {
   "acquisition_note": "bind mixed historical ETT parser contracts by run range",
-  "expires_at": "2026-11-01T19:30:00Z",
+  "expires_at": null,
   "generation": 426,
-  "holder": "/root/scheduled-cycle426-20261101T184500Z",
+  "holder": null,
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -24,8 +24,8 @@
     "verified_by_connector": true
   },
   "previous_holder_end": {
-    "generation": 425,
-    "holder": "/root/scheduled-cycle425-20261101T183046Z"
+    "generation": 426,
+    "holder": "/root/scheduled-cycle426-20261101T184500Z"
   },
   "schema_version": 1,
   "serialization_repair": {
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "active",
-  "token": "a0-cycle426-ett-mixed-parser-contracts-20261101",
-  "updated_at": "2026-11-01T18:45:00Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-11-01T18:47:51Z"
 }
