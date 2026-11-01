@@ -797,15 +797,46 @@ def build_offline_artifacts(package_dir: Path) -> tuple[dict[str, Any], str]:
             )
     if not isinstance(ingest_run.get("resume_cursor"), Mapping):
         raise EttOfflinePlanError("ingest_run.resume_cursor must be an object")
+    resume_cursor = ingest_run["resume_cursor"]
+    _exact_keys(
+        resume_cursor,
+        {"next_ordinal", "raw_count", "complete"},
+        "ingest_run.resume_cursor",
+    )
+    _strict_positive_int(
+        resume_cursor.get("next_ordinal"), "ingest_run.resume_cursor.next_ordinal"
+    )
+    _strict_positive_int(
+        resume_cursor.get("raw_count"), "ingest_run.resume_cursor.raw_count"
+    )
+    if type(resume_cursor.get("complete")) is not bool:
+        raise EttOfflinePlanError(
+            "ingest_run.resume_cursor.complete must be a boolean"
+        )
     expected_cursor = {
         "next_ordinal": ingest_run["raw_count"] + 1,
         "raw_count": ingest_run["raw_count"],
         "complete": True,
     }
-    if ingest_run["resume_cursor"] != expected_cursor:
+    if resume_cursor != expected_cursor:
         raise EttOfflinePlanError("ingest_run.resume_cursor mismatch")
     if ingest_run.get("normalized_count") != 0 or ingest_run.get("rejected_count") != 0:
         raise EttOfflinePlanError("ingest run must precede normalization")
+    scope = _mapping(ingest_run.get("scope"), "ingest_run.scope")
+    stage_counts = _mapping(
+        scope.get("stage_counts"), "ingest_run.scope.stage_counts"
+    )
+    _exact_keys(
+        stage_counts,
+        {"normalized", "verified", "admitted"},
+        "ingest_run.scope.stage_counts",
+    )
+    for key in ("normalized", "verified", "admitted"):
+        _strict_nonnegative_int(
+            stage_counts.get(key), f"ingest_run.scope.stage_counts.{key}"
+        )
+    if stage_counts != {"normalized": 0, "verified": 0, "admitted": 0}:
+        raise EttOfflinePlanError("ingest_run.scope.stage_counts are not zero")
     raw_rows_value = package.get("raw_rows")
     if not isinstance(raw_rows_value, list):
         raise EttOfflinePlanError("raw_rows must be an array")
