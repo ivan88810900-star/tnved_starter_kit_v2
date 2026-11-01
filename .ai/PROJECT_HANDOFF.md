@@ -2349,3 +2349,15 @@ CI #255: [offline-safety PASS, run 37771953943](https://github.com/ivan88810900-
 - No database transaction followed because the retained bytes and registered SHA-256 could not be independently verified. Raw/normalized/rejected/ambiguous deltas are all zero; no replay or result/export bundle exists.
 - GitHub receipt: [issue #257 comment 6315316900](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6315316900). Evidence: `.ai/orchestration/evidence/cycle404_group01_private_source_download_blocker.json`.
 - Next: obtain platform-recognized trusted owner approval specifically for the exact private group01 download, then resume at byte/hash verification. Do not use another tool, account, executor or source as a workaround.
+
+## Cycle 428 — offline legacy normalization preview CLI (2026-11-01 UTC)
+
+- Task `TARIFF-ETT-LEGACY-PREVIEW-CLI-20261101`; executor `/root/scheduled-cycle428-20261101T221422Z`; lease generation 428.
+- Fresh live state: main `ea633c769863bd55f5d11e4a807ba459f711a4a2`; PR #268 exact head `ec51b53d0d266ff146870fc5c17b944023e97264`, exact-head ETT CI success, no review threads.
+- Draft PR #269 is published at exact head `526ec532c1aaa8bfa7cf15f51775a8ee2dac9a15`, base/merge-base `ec51b53d0d266ff146870fc5c17b944023e97264`, with four changed files, behind zero and mergeable.
+- The new dependency-free CLI consumes only explicitly supplied local recovery JSON, original bytes and page-aware source-text bytes. It rejects duplicate JSON keys/non-finite numbers, revalidates exact evidence through the reviewed preview module, and atomically creates a canonical preview without replacing existing output.
+- Verification: push ETT run `41356868114` success; runner job `124998696232` 48 tests in 2.656s, OK; disposable PostgreSQL job `124998696418` PASS; pull-request ETT run `41356981729` success; Tariff safety run `41356868092` success.
+- No retained private bytes or actual legacy package were accessed. No SQL, DB/network access, staging/production write, merge, deploy, legal admission, permission/secret change or A6/provider action occurred.
+- Evidence: `.ai/orchestration/evidence/cycle428_ett_legacy_preview_cli.json`. TASK_BOARD was not changed; the previously rejected revision-927 target was not retried.
+- Next: fresh independent exact-head review of PR #269, then exact-head CI after any correction. Persistent staging apply and protected merge remain separate owner gates.
+
