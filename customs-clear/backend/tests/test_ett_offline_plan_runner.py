@@ -379,6 +379,36 @@ class OfflinePlanRunnerTests(unittest.TestCase):
             plan, _ = build_offline_artifacts(package_dir)
             self.assertEqual(plan["expected_counts"]["raw"], 86)
 
+    def test_rejects_noncanonical_package_and_flat_manifest_numeric_types(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            package_dir = Path(temporary) / "package"
+            package = _build_package(package_dir)
+            package["schema_version"] = True
+            _rewrite_package(package_dir, package)
+            with self.assertRaisesRegex(
+                EttOfflinePlanError, "package schema_version mismatch"
+            ):
+                build_offline_artifacts(package_dir)
+
+        for label, key, value in (
+            ("schema bool", "schema_version", True),
+            ("source size float", "source_size_bytes", float(len(SOURCE_BYTES))),
+            ("extraction size float", "extraction_size_bytes", None),
+        ):
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
+                package_dir = Path(temporary) / "package"
+                package = _build_package(package_dir)
+                manifest_path = package_dir / "manifest.json"
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                manifest[key] = (
+                    float(manifest["extraction_size_bytes"])
+                    if value is None
+                    else value
+                )
+                _replace_manifest(package_dir, package, manifest)
+                with self.assertRaisesRegex(EttOfflinePlanError, "flat_v1"):
+                    build_offline_artifacts(package_dir)
+
     def test_retained_legacy_manifest_without_source_id_is_semantically_bound(self):
         with tempfile.TemporaryDirectory() as temporary:
             package_dir = Path(temporary) / "package"
