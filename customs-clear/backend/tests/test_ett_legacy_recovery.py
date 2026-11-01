@@ -254,6 +254,35 @@ class EttLegacyRecoveryTests(unittest.TestCase):
         with self.assertRaisesRegex(EttLegacyRecoveryError, "not complete"):
             _build(fixture)
 
+    def test_bool_and_float_ordinals_and_cursors_fail_closed(self) -> None:
+        corruptions = (
+            ("row ordinal bool", lambda fixture: fixture["raw_rows"][0].update(ordinal=True)),
+            (
+                "last ordinal float",
+                lambda fixture: fixture["legacy_runs"][0]["resume_cursor"].update(
+                    last_ordinal=20.0
+                ),
+            ),
+            (
+                "next ordinal float",
+                lambda fixture: fixture["legacy_runs"][1]["resume_cursor"].update(
+                    next_ordinal=221.0
+                ),
+            ),
+            (
+                "cursor count float",
+                lambda fixture: fixture["legacy_runs"][0]["resume_cursor"].update(
+                    raw_count=20.0
+                ),
+            ),
+        )
+        for label, corrupt in corruptions:
+            with self.subTest(label=label):
+                fixture = _fixture()
+                corrupt(fixture)
+                with self.assertRaisesRegex(EttLegacyRecoveryError, "positive integer"):
+                    _build(fixture)
+
     def test_inputs_are_not_mutated(self) -> None:
         fixture = _fixture()
         before = copy.deepcopy(fixture)
