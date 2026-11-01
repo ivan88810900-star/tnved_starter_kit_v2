@@ -19,6 +19,7 @@ EXPECTED_RUN_RANGES = (
     (21, 220, 200),
     (221, 533, 313),
 )
+EXPECTED_RAW_COUNT = 533
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _CHAPTER_RE = re.compile(r"^[0-9]{2}$")
@@ -323,8 +324,11 @@ def _derive_page_provenance(
             }
         )
 
-    if len(parsed_rows) != len(rows):
-        raise EttLegacyRecoveryError("historical parser row count mismatch")
+    if len(parsed_rows) != EXPECTED_RAW_COUNT or len(rows) != EXPECTED_RAW_COUNT:
+        raise EttLegacyRecoveryError(
+            "historical parser exact complete sequence count mismatch: "
+            f"expected={EXPECTED_RAW_COUNT}, parsed={len(parsed_rows)}, raw={len(rows)}"
+        )
 
     provenance: list[dict[str, Any]] = []
     bound_fields = (
@@ -336,7 +340,13 @@ def _derive_page_provenance(
         "raw_line",
         "row_sha256",
     )
+    previous_source_line = 0
     for row, parsed in zip(rows, parsed_rows):
+        if parsed["source_line_number"] <= previous_source_line:
+            raise EttLegacyRecoveryError(
+                "historical parser global source line sequence is not strict"
+            )
+        previous_source_line = parsed["source_line_number"]
         mismatched = [name for name in bound_fields if row[name] != parsed[name]]
         if mismatched:
             raise EttLegacyRecoveryError(
