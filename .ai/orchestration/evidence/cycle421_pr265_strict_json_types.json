@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "cycle": 421,
+  "recorded_at": "2026-11-01T16:24:00Z",
+  "lease": {
+    "generation": 421,
+    "holder": "/root/scheduled-cycle421-20261101T162024Z"
+  },
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+  "pr": {
+    "number": 265,
+    "branch": "agent/ett-offline-tool-main-v1",
+    "previous_head": "baefb62ea0d4bd19f488d76819a281082c03d36b",
+    "head_sha": "2e5c17a9a43be8ab8f39ad0305f79237ca498603",
+    "draft": true,
+    "mergeable": true,
+    "changed_files": 7
+  },
+  "defect": {
+    "id": "TARIFF-ETT-STRICT-JSON-NUMERIC-TYPES-001",
+    "status": "fixed",
+    "summary": "package and flat-v1 manifest accepted noncanonical JSON bool/float aliases through Python numeric equality",
+    "files": [
+      "customs-clear/backend/app/services/staging_ett_offline_plan.py",
+      "customs-clear/backend/tests/test_ett_offline_plan_runner.py"
+    ],
+    "delta": {
+      "additions": 42,
+      "deletions": 1
+    }
+  },
+  "ci": {
+    "run_id": 41325956126,
+    "status": "success",
+    "dependency_free": {
+      "job_id": 124905837574,
+      "tests": 20,
+      "result": "PASS"
+    },
+    "postgresql": {
+      "job_id": 124905837490,
+      "result": "first apply/replay/conflict/history/schema PASS"
+    }
+  },
+  "qa": {
+    "previous_a5_head": "baefb62ea0d4bd19f488d76819a281082c03d36b",
+    "current_head_independent_a5": "PENDING",
+    "readiness": "CI_PASSED_A5_PENDING"
+  },
+  "boundaries": {
+    "merge_performed": false,
+    "private_original_read": false,
+    "persistent_sql": false,
+    "deploy": false,
+    "enforcement": false,
+    "a6_invoked": false
+  }
+}
