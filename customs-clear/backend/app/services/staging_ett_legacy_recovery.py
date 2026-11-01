@@ -5,13 +5,13 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from collections import defaultdict
 from typing import Any, Mapping, Sequence
 
 
 SCHEMA_VERSION = 1
 KIND = "ETT_LEGACY_RECOVERY_ENVELOPE_V1"
 LEGACY_PARSER_VERSION = "ett-pdftotext-layout-raw-v1"
+LEGACY_PARSER_COMMIT = "0320a7d268b33413c48dffc963cde6b0ec051ab1"
 ROW_STATUS = "COLLECTED_UNVERIFIED"
 RECOVERY_CHAPTER = "29"
 EXPECTED_RUN_RANGES = (
@@ -23,6 +23,11 @@ EXPECTED_RUN_RANGES = (
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _CHAPTER_RE = re.compile(r"^[0-9]{2}$")
 _HS_CODE_RE = re.compile(r"^[0-9]{10}$")
+_LEGACY_CODE_SHAPED_RE = re.compile(
+    r"^[ \t]*(?P<g1>[0-9]{4})[ \t]+(?P<g2>[0-9]{2})[ \t]+"
+    r"(?P<g3>[0-9]{3})[ \t]+(?P<g4>[0-9])(?P<tail>.*)$"
+)
+_LEGACY_COLUMN_SEPARATOR_RE = re.compile(r"[ \t]{2,}")
 
 SOURCE_KEYS = {"source_id", "sha256", "size_bytes", "page_count", "chapter"}
 RUN_KEYS = {
@@ -262,37 +267,90 @@ def _derive_page_provenance(
         pages.pop()
     if len(pages) != page_count:
         raise EttLegacyRecoveryError("page-aware source page count mismatch")
-    flattened = [line for page in pages for line in page.splitlines()]
-    if flattened != text.splitlines():
-        raise EttLegacyRecoveryError("page-aware source line boundary mismatch")
 
-    positions: dict[str, list[dict[str, int]]] = defaultdict(list)
-    source_line_number = 0
-    for page_number, page in enumerate(pages, start=1):
-        for page_line_number, raw_line in enumerate(page.splitlines(), start=1):
-            source_line_number += 1
-            positions[raw_line].append(
-                {
-                    "source_line_number": source_line_number,
-                    "page_number": page_number,
-                    "line_number": page_line_number,
-                }
+    logical_lines = text.splitlines()
+    chunks = text.splitlines(keepends=True)
+    chunk_lines = [chunk.splitlines()[0] for chunk in chunks]
+    if chunk_lines != logical_lines:
+        raise EttLegacyRecoveryError("source splitlines reconstruction mismatch")
+
+    line_locations: list[dict[str, int]] = []
+    page_number = 1
+    page_line_number = 1
+    for chunk in chunks:
+        line_locations.append(
+            {
+                "source_line_number": len(line_locations) + 1,
+                "page_number": page_number,
+                "line_number": page_line_number,
+            }
+        )
+        form_feeds = chunk.count("\f")
+        if form_feeds:
+            page_number += form_feeds
+            page_line_number = 1
+        else:
+            page_line_number += 1
+
+    parsed_rows: list[dict[str, Any]] = []
+    for source_line_number, raw_line in enumerate(logical_lines, start=1):
+        match = _LEGACY_CODE_SHAPED_RE.match(raw_line)
+        if match is None:
+            continue
+        tail = match.group("tail")
+        if not tail or not tail[0].isspace():
+            raise EttLegacyRecoveryError(
+                f"historical parser line {source_line_number} has no column separator"
             )
+        columns = _LEGACY_COLUMN_SEPARATOR_RE.split(tail.strip(" \t"))
+        if len(columns) != 3 or any(not column for column in columns):
+            raise EttLegacyRecoveryError(
+                f"historical parser line {source_line_number} has ambiguous columns"
+            )
+        description, supplementary_unit, duty_text = columns
+        parsed_rows.append(
+            {
+                "ordinal": len(parsed_rows) + 1,
+                "hs_code": "".join(
+                    match.group(name) for name in ("g1", "g2", "g3", "g4")
+                ),
+                "description": description,
+                "supplementary_unit": supplementary_unit,
+                "duty_text": duty_text,
+                "raw_line": raw_line,
+                "row_sha256": _sha256_bytes(raw_line.encode("utf-8")),
+                **line_locations[source_line_number - 1],
+            }
+        )
+
+    if len(parsed_rows) != len(rows):
+        raise EttLegacyRecoveryError("historical parser row count mismatch")
 
     provenance: list[dict[str, Any]] = []
-    for row in rows:
-        matches = positions.get(row["raw_line"], [])
-        if len(matches) != 1:
+    bound_fields = (
+        "ordinal",
+        "hs_code",
+        "description",
+        "supplementary_unit",
+        "duty_text",
+        "raw_line",
+        "row_sha256",
+    )
+    for row, parsed in zip(rows, parsed_rows):
+        mismatched = [name for name in bound_fields if row[name] != parsed[name]]
+        if mismatched:
             raise EttLegacyRecoveryError(
-                f"page-aware mapping for ordinal {row['ordinal']} is "
-                "missing or ambiguous"
+                f"raw row {row['ordinal']} does not match historical parser "
+                f"sequence/fields: {','.join(mismatched)}"
             )
         provenance.append(
             {
                 "ordinal": row["ordinal"],
                 "hs_code": row["hs_code"],
                 "row_sha256": row["row_sha256"],
-                **matches[0],
+                "source_line_number": parsed["source_line_number"],
+                "page_number": parsed["page_number"],
+                "line_number": parsed["line_number"],
             }
         )
     return _sha256_bytes(source_text_bytes), provenance
@@ -391,6 +449,7 @@ def build_legacy_recovery_envelope(
     envelope: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "kind": KIND,
+        "legacy_parser_commit": LEGACY_PARSER_COMMIT,
         "status": status,
         "missing_evidence": sorted(set(missing_evidence)),
         "execution_performed": False,
