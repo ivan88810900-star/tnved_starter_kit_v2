@@ -1,8 +1,8 @@
 {
-  "acquisition_note": "dependency-free offline ETT export/plan runner from PR262 exact head",
-  "expires_at": null,
-  "generation": 419,
-  "holder": null,
+  "acquisition_note": "clean standalone offline ETT tool draft PR from exact main e526dfb",
+  "expires_at": "2026-11-01T15:30:00Z",
+  "generation": 420,
+  "holder": "/root/scheduled-cycle420-20261101T144817Z",
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -24,8 +24,8 @@
     "verified_by_connector": true
   },
   "previous_holder_end": {
-    "generation": 405,
-    "holder": "/root/scheduled-cycle405-20261021T161418Z"
+    "generation": 419,
+    "holder": "/root/scheduled-cycle419-20261101T141417Z"
   },
   "schema_version": 1,
   "serialization_repair": {
@@ -36,7 +36,7 @@
     "repaired_at": "2026-10-27T19:46:22Z",
     "state_preserved": "released"
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-11-01T14:36:26.437429Z"
+  "state": "active",
+  "token": "a0-cycle420-clean-offline-pr-20261101",
+  "updated_at": "2026-11-01T14:49:00Z"
 }
