@@ -24,12 +24,13 @@ def _run(
     scope: dict,
     raw_count: int,
     cursor: dict,
+    parser_version: str = "ett-pdftotext-layout-raw-v1",
 ) -> dict:
     return {
         "run_id": run_id,
         "source_id": SOURCE_ID,
         "scope": scope,
-        "parser_version": "ett-pdftotext-layout-raw-v1",
+        "parser_version": parser_version,
         "status": "COLLECTED_UNVERIFIED",
         "raw_count": raw_count,
         "unique_count": raw_count,
@@ -83,6 +84,7 @@ def _fixture() -> dict:
             },
             raw_count=20,
             cursor={"last_ordinal": 20, "last_hs_code": rows[19]["hs_code"]},
+            parser_version="pdftotext-layout+line-v1",
         ),
         _run(
             "synthetic-cycle-two",
@@ -144,6 +146,14 @@ class EttLegacyRecoveryTests(unittest.TestCase):
         )
         self.assertEqual(envelope["observed"]["legacy_runs"], fixture["legacy_runs"])
         self.assertEqual(envelope["observed"]["raw_rows"], fixture["raw_rows"])
+        self.assertEqual(
+            [run["parser_version"] for run in envelope["observed"]["legacy_runs"]],
+            [
+                "pdftotext-layout+line-v1",
+                "ett-pdftotext-layout-raw-v1",
+                "ett-pdftotext-layout-raw-v1",
+            ],
+        )
         self.assertEqual(envelope["derived"]["raw_count"], 533)
         self.assertEqual(
             [
@@ -307,6 +317,21 @@ class EttLegacyRecoveryTests(unittest.TestCase):
         fixture = _fixture()
         fixture["legacy_runs"][2]["resume_cursor"]["complete"] = False
         with self.assertRaisesRegex(EttLegacyRecoveryError, "not complete"):
+            _build(fixture)
+
+    def test_parser_versions_are_bound_to_exact_historical_ranges(self) -> None:
+        fixture = _fixture()
+        fixture["legacy_runs"][0]["parser_version"] = "unknown-parser-v1"
+        with self.assertRaisesRegex(
+            EttLegacyRecoveryError, "parser_version mismatch for range 1-20"
+        ):
+            _build(fixture)
+
+        fixture = _fixture()
+        fixture["legacy_runs"][1]["parser_version"] = "pdftotext-layout+line-v1"
+        with self.assertRaisesRegex(
+            EttLegacyRecoveryError, "parser_version mismatch for range 21-220"
+        ):
             _build(fixture)
 
     def test_bool_and_float_ordinals_and_cursors_fail_closed(self) -> None:
