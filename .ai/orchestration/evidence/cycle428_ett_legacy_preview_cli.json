@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "cycle": 428,
+  "task_id": "TARIFF-ETT-LEGACY-PREVIEW-CLI-20261101",
+  "executor": "/root/scheduled-cycle428-20261101T221422Z",
+  "started_at": "2026-11-01T22:14:22Z",
+  "completed_at": "2026-11-01T22:25:43Z",
+  "lease": {
+    "generation": 428,
+    "holder": "/root/scheduled-cycle428-20261101T221422Z"
+  },
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+  "result": {
+    "status": "DRAFT_PUBLISHED_EXACT_HEAD_CI_PASS",
+    "pull_request": 269,
+    "base_branch": "agent/ett-legacy-normalization-preview-v1",
+    "base_sha": "ec51b53d0d266ff146870fc5c17b944023e97264",
+    "head_branch": "agent/ett-legacy-normalization-preview-cli-v1",
+    "head_sha": "526ec532c1aaa8bfa7cf15f51775a8ee2dac9a15",
+    "mergeable": true,
+    "changed_files": [
+      ".github/workflows/ett-normalization-offline.yml",
+      "customs-clear/backend/scripts/ETT_OFFLINE_PLAN.md",
+      "customs-clear/backend/scripts/ett_legacy_normalization_preview.py",
+      "customs-clear/backend/tests/test_ett_legacy_normalization_preview_cli.py"
+    ],
+    "additions": 270,
+    "deletions": 1
+  },
+  "verification": {
+    "dependency_free_tests": {
+      "status": "PASS",
+      "count": 48,
+      "duration_seconds": 2.656,
+      "job_id": 124998696232
+    },
+    "postgresql_plan_probe": {
+      "status": "PASS",
+      "job_id": 124998696418
+    },
+    "push_workflow": {
+      "status": "SUCCESS",
+      "run_id": 41356868114
+    },
+    "pull_request_workflow": {
+      "status": "SUCCESS",
+      "run_id": 41356981729
+    },
+    "tariff_agent_safety": {
+      "status": "SUCCESS",
+      "run_id": 41356868092
+    },
+    "review_threads": 0,
+    "github_reviews": 0
+  },
+  "boundaries": {
+    "retained_private_bytes_accessed": false,
+    "actual_legacy_package_executed": false,
+    "sql_generated": false,
+    "database_accessed": false,
+    "provider_called": false,
+    "a6_dispatched": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "production_write": false,
+    "staging_write": false,
+    "permissions_or_secrets_changed": false,
+    "tests_weakened": false
+  },
+  "next_safe_step": "Fresh independent exact-head review of PR #269, then correct any findings and re-run exact-head CI. Keep draft; persistent staging apply and protected merge remain separate owner gates."
+}
