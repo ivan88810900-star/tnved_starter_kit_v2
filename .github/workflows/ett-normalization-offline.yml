@@ -8,9 +8,11 @@ on:
       - ".github/workflows/ett-normalization-offline.yml"
       - "customs-clear/backend/app/services/staging_ett_normalization_core.py"
       - "customs-clear/backend/app/services/staging_ett_offline_plan.py"
+      - "customs-clear/backend/app/services/staging_ett_legacy_recovery.py"
       - "customs-clear/backend/scripts/ett_offline_plan.py"
       - "customs-clear/backend/scripts/ETT_OFFLINE_PLAN.md"
       - "customs-clear/backend/tests/test_ett_offline_plan_runner.py"
+      - "customs-clear/backend/tests/test_ett_legacy_recovery.py"
       - "customs-clear/backend/tests/ett_offline_plan_postgresql_probe.py"
   pull_request:
     branches:
@@ -19,9 +21,11 @@ on:
       - ".github/workflows/ett-normalization-offline.yml"
       - "customs-clear/backend/app/services/staging_ett_normalization_core.py"
       - "customs-clear/backend/app/services/staging_ett_offline_plan.py"
+      - "customs-clear/backend/app/services/staging_ett_legacy_recovery.py"
       - "customs-clear/backend/scripts/ett_offline_plan.py"
       - "customs-clear/backend/scripts/ETT_OFFLINE_PLAN.md"
       - "customs-clear/backend/tests/test_ett_offline_plan_runner.py"
+      - "customs-clear/backend/tests/test_ett_legacy_recovery.py"
       - "customs-clear/backend/tests/ett_offline_plan_postgresql_probe.py"
 permissions:
   contents: read
@@ -51,7 +55,10 @@ jobs:
 
       - name: Run offline runner without site packages
         working-directory: customs-clear/backend
-        run: python -S -m unittest -v tests.test_ett_offline_plan_runner
+        run: |
+          python -S -m unittest -v \
+            tests.test_ett_offline_plan_runner \
+            tests.test_ett_legacy_recovery
 
   postgresql-plan-integration:
     name: postgresql-plan-integration
