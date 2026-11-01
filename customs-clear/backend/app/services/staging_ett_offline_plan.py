@@ -97,8 +97,13 @@ LEGACY_MANIFEST_KEYS = {
     "status",
 }
 LEGACY_OBJECT_KEYS = {"original", "extraction"}
+LEGACY_ADMISSION_KEYS = {"admitted", "normalized", "verified"}
 LEGACY_ORIGINAL_KEYS = {"bucket", "key", "media_type", "sha256", "size_bytes"}
-LEGACY_EXTRACTION_KEYS = LEGACY_ORIGINAL_KEYS | {"counts", "cursor"}
+LEGACY_EXTRACTION_KEYS = LEGACY_ORIGINAL_KEYS | {
+    "next_ordinal",
+    "raw_count",
+    "unique_count",
+}
 
 PACKAGE_SCHEMA = {
     "schema_version": PACKAGE_SCHEMA_VERSION,
@@ -121,6 +126,7 @@ PACKAGE_SCHEMA = {
         "flat_v1": sorted(FLAT_MANIFEST_KEYS),
         "retained_legacy_v1": {
             "top_level": sorted(LEGACY_MANIFEST_KEYS),
+            "admission": sorted(LEGACY_ADMISSION_KEYS),
             "objects": sorted(LEGACY_OBJECT_KEYS),
             "original": sorted(LEGACY_ORIGINAL_KEYS),
             "extraction": sorted(LEGACY_EXTRACTION_KEYS),
@@ -249,10 +255,19 @@ def _validate_legacy_manifest(
     )
     if manifest_instant != source_instant:
         _manifest_mismatch("legacy_v1.captured_at")
-    if not isinstance(manifest.get("admission"), Mapping):
-        raise EttOfflinePlanError(
-            "retained manifest legacy_v1.admission must be an object"
-        )
+    admission = _mapping(
+        manifest.get("admission"), "retained manifest legacy_v1.admission"
+    )
+    _exact_keys(
+        admission, LEGACY_ADMISSION_KEYS, "retained manifest legacy_v1.admission"
+    )
+    expected_admission = {
+        "normalized": ingest_run["scope"]["stage_counts"]["normalized"],
+        "verified": ingest_run["scope"]["stage_counts"]["verified"],
+        "admitted": ingest_run["scope"]["stage_counts"]["admitted"],
+    }
+    if admission != expected_admission:
+        _manifest_mismatch("legacy_v1.admission")
     objects = _mapping(
         manifest.get("objects"), "retained manifest legacy_v1.objects"
     )
@@ -287,6 +302,9 @@ def _validate_legacy_manifest(
         "media_type": "application/json",
         "sha256": extraction_artifact["sha256"],
         "size_bytes": extraction_artifact["size_bytes"],
+        "raw_count": ingest_run["raw_count"],
+        "unique_count": ingest_run["unique_count"],
+        "next_ordinal": ingest_run["resume_cursor"]["next_ordinal"],
     }
     for key, value in expected_original.items():
         if original.get(key) != value:
@@ -294,12 +312,6 @@ def _validate_legacy_manifest(
     for key, value in expected_extraction.items():
         if extraction.get(key) != value:
             _manifest_mismatch(f"legacy_v1.objects.extraction.{key}")
-    for key in ("counts", "cursor"):
-        if not isinstance(extraction.get(key), Mapping):
-            raise EttOfflinePlanError(
-                f"retained manifest legacy_v1.objects.extraction.{key} "
-                "must be an object"
-            )
 
 
 def _validate_manifest_bindings(
