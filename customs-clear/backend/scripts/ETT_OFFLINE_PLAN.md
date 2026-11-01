@@ -50,6 +50,12 @@ and the staged source timestamp must both be valid timezone-aware ISO-8601 value
 for the same instant, so equivalent `Z` and `+00:00` spellings are accepted
 while naive, invalid, or different instants fail closed.
 
+The legacy `admission` object has exactly `normalized`, `verified`, and
+`admitted`, bound to the zero-valued staged run counters. Its extraction object
+has exactly `raw_count`, `unique_count`, and `next_ordinal` alongside the
+object identity fields; these values are bound to the validated run counts and
+resume cursor. The runner does not rename or rewrite retained keys.
+
 The retained extraction may be either a row array or an object containing
 `rows`; every row is matched to RAW and page/line provenance. Raw-byte SHA-256
 and size are always checked before JSON parsing. Run `--print-package-schema`
