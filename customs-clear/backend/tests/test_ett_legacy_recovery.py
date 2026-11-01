@@ -13,6 +13,11 @@ from app.services.staging_ett_legacy_recovery import (
 SOURCE_ID = "synthetic-eec-ett-chapter29"
 
 
+def _historical_line(hs_code: str, description: str, unit: str, duty: str) -> str:
+    grouped = f"{hs_code[:4]} {hs_code[4:6]} {hs_code[6:9]} {hs_code[9]}"
+    return f"{grouped}   {description}            {unit}            {duty}"
+
+
 def _run(
     run_id: str,
     *,
@@ -41,8 +46,11 @@ def _fixture() -> dict:
     for ordinal in range(1, 534):
         hs_code = f"29{ordinal:08d}"
         duty = "5 with note" if ordinal % 50 == 0 else "5"
-        raw_line = (
-            f"{hs_code}\tdescription {ordinal}\tunit {ordinal}\t{duty}"
+        raw_line = _historical_line(
+            hs_code,
+            f"description {ordinal}",
+            f"unit {ordinal}",
+            duty,
         )
         lines.append(raw_line)
         rows.append(
@@ -63,7 +71,7 @@ def _fixture() -> dict:
         "\n".join(lines[200:400]),
         "\n".join(lines[400:]),
     ]
-    source_text_bytes = "\f".join(pages).encode()
+    source_text_bytes = "\n\f".join(pages).encode()
     text_sha = hashlib.sha256(source_text_bytes).hexdigest()
     runs = [
         _run(
@@ -130,6 +138,10 @@ class EttLegacyRecoveryTests(unittest.TestCase):
         self.assertNotIn("sql", envelope)
         self.assertEqual(envelope["verified"], 0)
         self.assertEqual(envelope["admitted"], 0)
+        self.assertEqual(
+            envelope["legacy_parser_commit"],
+            "0320a7d268b33413c48dffc963cde6b0ec051ab1",
+        )
         self.assertEqual(envelope["observed"]["legacy_runs"], fixture["legacy_runs"])
         self.assertEqual(envelope["observed"]["raw_rows"], fixture["raw_rows"])
         self.assertEqual(envelope["derived"]["raw_count"], 533)
@@ -149,7 +161,7 @@ class EttLegacyRecoveryTests(unittest.TestCase):
             },
             {
                 "ordinal": 201,
-                "source_line_number": 201,
+                "source_line_number": 202,
                 "page_number": 2,
                 "line_number": 1,
             },
@@ -230,18 +242,44 @@ class EttLegacyRecoveryTests(unittest.TestCase):
         with self.assertRaisesRegex(EttLegacyRecoveryError, "source_id mismatch"):
             _build(fixture)
 
-    def test_ambiguous_page_mapping_fails_closed(self) -> None:
+    def test_source_row_reordering_fails_closed(self) -> None:
         fixture = _fixture()
-        text = fixture["source_text_bytes"].decode()
-        first_line = fixture["raw_rows"][0]["raw_line"]
-        fixture["source_text_bytes"] = (first_line + "\n" + text).encode()
-        text_sha = hashlib.sha256(fixture["source_text_bytes"]).hexdigest()
-        fixture["legacy_runs"][1]["scope"]["source_text_sha256"] = text_sha
-        fixture["legacy_runs"][2]["scope"]["source_text_sha256"] = text_sha
+        fixture["raw_rows"][:2] = reversed(fixture["raw_rows"][:2])
+        fixture["raw_rows"][0]["ordinal"] = 1
+        fixture["raw_rows"][1]["ordinal"] = 2
         with self.assertRaisesRegex(
-            EttLegacyRecoveryError, "missing or ambiguous"
+            EttLegacyRecoveryError, "historical parser sequence/fields"
         ):
             _build(fixture)
+
+    def test_unbound_parsed_field_substitutions_fail_closed(self) -> None:
+        corruptions = (
+            ("description", "different description"),
+            ("duty_text", "99"),
+            ("hs_code", "2999999999"),
+        )
+        for field, replacement in corruptions:
+            with self.subTest(field=field):
+                fixture = _fixture()
+                fixture["raw_rows"][0][field] = replacement
+                with self.assertRaisesRegex(
+                    EttLegacyRecoveryError, "historical parser sequence/fields"
+                ):
+                    _build(fixture)
+
+    def test_historical_format_and_page_separator_blank_are_faithful(self) -> None:
+        fixture = _fixture()
+        first = fixture["raw_rows"][0]["raw_line"]
+        self.assertRegex(first, r"^2900 00 000 1 {3}description 1 {12}unit 1 {12}5$")
+        self.assertIn("\n\f", fixture["source_text_bytes"].decode())
+        envelope = _build(fixture)
+        self.assertEqual(
+            {
+                key: envelope["derived"]["provenance"][400][key]
+                for key in ("source_line_number", "page_number", "line_number")
+            },
+            {"source_line_number": 403, "page_number": 3, "line_number": 1},
+        )
 
     def test_cursor_and_completion_conflicts_fail_closed(self) -> None:
         fixture = _fixture()
