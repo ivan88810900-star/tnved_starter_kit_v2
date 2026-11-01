@@ -585,6 +585,21 @@ class OfflinePlanRunnerTests(unittest.TestCase):
         def wrong_admission_count(manifest, _package):
             manifest["admission"]["normalized"] = 1
 
+        def bool_admission_count(manifest, _package):
+            manifest["admission"]["normalized"] = False
+
+        def float_admission_count(manifest, _package):
+            manifest["admission"]["normalized"] = 0.0
+
+        def float_raw_count(manifest, _package):
+            manifest["objects"]["extraction"]["raw_count"] = 86.0
+
+        def float_unique_count(manifest, _package):
+            manifest["objects"]["extraction"]["unique_count"] = 86.0
+
+        def float_next_ordinal(manifest, _package):
+            manifest["objects"]["extraction"]["next_ordinal"] = 87.0
+
         for label, mutation in (
             ("schema", wrong_schema),
             ("objects", wrong_objects),
@@ -596,6 +611,11 @@ class OfflinePlanRunnerTests(unittest.TestCase):
             ("unique_count", wrong_unique_count),
             ("next_ordinal", wrong_next_ordinal),
             ("admission_count", wrong_admission_count),
+            ("bool_admission_count", bool_admission_count),
+            ("float_admission_count", float_admission_count),
+            ("float_raw_count", float_raw_count),
+            ("float_unique_count", float_unique_count),
+            ("float_next_ordinal", float_next_ordinal),
         ):
             with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
                 package_dir = Path(temporary) / "package"
