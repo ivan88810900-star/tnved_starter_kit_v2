@@ -7,7 +7,7 @@ import json
 import os
 import shutil
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
 
@@ -157,6 +157,20 @@ def _strict_positive_int(value: Any, label: str) -> int:
     return value
 
 
+def _aware_instant(value: Any, label: str) -> datetime:
+    if not isinstance(value, str) or not value:
+        raise EttOfflinePlanError(f"{label} must be an ISO-8601 timestamp")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise EttOfflinePlanError(
+            f"{label} must be a valid ISO-8601 timestamp"
+        ) from exc
+    if parsed.utcoffset() is None:
+        raise EttOfflinePlanError(f"{label} must include a timezone")
+    return parsed.astimezone(timezone.utc)
+
+
 def _sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
@@ -208,18 +222,33 @@ def _validate_legacy_manifest(
     extraction_artifact: Mapping[str, Any],
 ) -> None:
     _exact_keys(manifest, LEGACY_MANIFEST_KEYS, "retained manifest legacy_v1")
+    scope = _mapping(ingest_run.get("scope"), "ingest_run.scope")
+    chapter = scope.get("chapter")
+    if not isinstance(chapter, str) or not chapter:
+        raise EttOfflinePlanError(
+            "ingest_run.scope.chapter must be a nonempty string; "
+            "scope.group is not a substitute"
+        )
     for key, value in {
         "schema_version": 1,
         "authority": source["authority"],
         "dataset": source["dataset"],
         "source_url": source["source_url"],
         "source_revision": source["source_revision"],
-        "captured_at": source["captured_at"],
         "status": source["status"],
-        "chapter": ingest_run["scope"]["group"],
+        "chapter": chapter,
     }.items():
         if manifest.get(key) != value:
             _manifest_mismatch(f"legacy_v1.{key}")
+    manifest_instant = _aware_instant(
+        manifest.get("captured_at"),
+        "retained manifest legacy_v1.captured_at",
+    )
+    source_instant = _aware_instant(
+        source.get("captured_at"), "source_object.captured_at"
+    )
+    if manifest_instant != source_instant:
+        _manifest_mismatch("legacy_v1.captured_at")
     if not isinstance(manifest.get("admission"), Mapping):
         raise EttOfflinePlanError(
             "retained manifest legacy_v1.admission must be an object"
