@@ -743,3 +743,15 @@ legacy (сверх structural). Контур по-прежнему **не под
 - No permanent DB write, product-table write, source download, remote SQL, merge, deploy, enforcement, or A6 occurred.
 - Queue: PR #262 remains draft. The next separate step is remote staging apply only after saved-source byte/hash verification and explicitly permitted scoped access; merge and remote apply remain owner-gated.
 - Receipt: `.ai/orchestration/evidence/cycle412_ett_staging_normalizer_offline.json`.
+
+## Cycle 428 checkpoint — offline legacy preview CLI (2026-11-01)
+
+- GitHub was reread before action: main is `ea633c769863bd55f5d11e4a807ba459f711a4a2`; active ETT draft PRs #266/#267/#268 are mergeable with successful exact-head CI and no review threads.
+- Draft PR #269 was published on `agent/ett-legacy-normalization-preview-cli-v1` at exact head `526ec532c1aaa8bfa7cf15f51775a8ee2dac9a15`, stacked on PR #268 exact head `ec51b53d0d266ff146870fc5c17b944023e97264`. The exact diff is four files and the branch is behind by zero commits.
+- The dependency-free CLI requires the exact recovery envelope, original bytes and page-aware source-text bytes; rejects duplicate JSON keys, non-finite numbers, evidence drift and existing output paths; and publishes canonical JSON by exclusive atomic hard-link.
+- All output remains technical `UNVERIFIED`: `verified=0`, `admitted=0`. The command generates no SQL and performs no database, network, source-download, migration or apply action.
+- Exact-head push workflow `41356868114` passed: runner job `124998696232` ran 48 tests in 2.656s, and disposable PostgreSQL job `124998696418` passed. Pull-request workflow `41356981729` and Tariff safety run `41356868092` also passed.
+- No retained private object or actual 533-row package was accessed. No merge, deploy, database write, legal admission, permission/secret change or A6/provider call occurred.
+- Evidence: `.ai/orchestration/evidence/cycle428_ett_legacy_preview_cli.json`. TASK_BOARD remains unchanged because the prior revision-927 target was explicitly rejected and was not retried.
+- Next: obtain a fresh independent exact-head review of PR #269, correct any findings, and rerun exact-head CI. Keep the PR draft; persistent staging apply and protected merge remain separate owner gates.
+
