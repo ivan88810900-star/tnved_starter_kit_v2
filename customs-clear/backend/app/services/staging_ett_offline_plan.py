@@ -8,7 +8,7 @@ import os
 import shutil
 import tempfile
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
 
 from .staging_ett_normalization_core import (
@@ -75,6 +75,30 @@ EXTRACTION_ROW_KEYS = {
     "line_number",
     "raw_line",
 }
+FLAT_MANIFEST_KEYS = {
+    "schema_version",
+    "source_id",
+    "source_revision",
+    "source_sha256",
+    "source_size_bytes",
+    "extraction_sha256",
+    "extraction_size_bytes",
+}
+LEGACY_MANIFEST_KEYS = {
+    "admission",
+    "authority",
+    "captured_at",
+    "chapter",
+    "dataset",
+    "objects",
+    "schema_version",
+    "source_revision",
+    "source_url",
+    "status",
+}
+LEGACY_OBJECT_KEYS = {"original", "extraction"}
+LEGACY_ORIGINAL_KEYS = {"bucket", "key", "media_type", "sha256", "size_bytes"}
+LEGACY_EXTRACTION_KEYS = LEGACY_ORIGINAL_KEYS | {"counts", "cursor"}
 
 PACKAGE_SCHEMA = {
     "schema_version": PACKAGE_SCHEMA_VERSION,
@@ -93,14 +117,15 @@ PACKAGE_SCHEMA = {
     "artifacts": {
         name: sorted(ARTIFACT_KEYS) for name in sorted(ARTIFACT_NAMES)
     },
-    "retained_manifest_required_bindings": [
-        "source_id",
-        "source_revision",
-        "source_sha256",
-        "source_size_bytes",
-        "extraction_sha256",
-        "extraction_size_bytes",
-    ],
+    "retained_manifest_forms": {
+        "flat_v1": sorted(FLAT_MANIFEST_KEYS),
+        "retained_legacy_v1": {
+            "top_level": sorted(LEGACY_MANIFEST_KEYS),
+            "objects": sorted(LEGACY_OBJECT_KEYS),
+            "original": sorted(LEGACY_ORIGINAL_KEYS),
+            "extraction": sorted(LEGACY_EXTRACTION_KEYS),
+        },
+    },
     "retained_extraction_forms": ["row array", "object containing rows"],
     "retained_extraction_row_fields": sorted(EXTRACTION_ROW_KEYS),
 }
@@ -145,15 +170,127 @@ def _read_json_bytes(value: bytes, label: str) -> Any:
     return parsed
 
 
-def _scalar_values(value: Any):
-    if isinstance(value, Mapping):
-        for item in value.values():
-            yield from _scalar_values(item)
-    elif isinstance(value, list):
-        for item in value:
-            yield from _scalar_values(item)
-    elif value is not None and not isinstance(value, (dict, list)):
-        yield value
+def _manifest_mismatch(label: str) -> None:
+    raise EttOfflinePlanError(f"retained manifest {label} mismatch")
+
+
+def _validate_flat_manifest(
+    manifest: Mapping[str, Any],
+    source: Mapping[str, Any],
+    extraction_artifact: Mapping[str, Any],
+) -> None:
+    _exact_keys(manifest, FLAT_MANIFEST_KEYS, "retained manifest flat_v1")
+    expected = {
+        "schema_version": 1,
+        "source_id": source["source_id"],
+        "source_revision": source["source_revision"],
+        "source_sha256": source["sha256"],
+        "source_size_bytes": source["size_bytes"],
+        "extraction_sha256": extraction_artifact["sha256"],
+        "extraction_size_bytes": extraction_artifact["size_bytes"],
+    }
+    for key, value in expected.items():
+        if manifest.get(key) != value:
+            _manifest_mismatch(f"flat_v1.{key}")
+
+
+def _legacy_extraction_key(source_key: str) -> str:
+    path = PurePosixPath(source_key)
+    if path.name in {"", ".", ".."}:
+        _manifest_mismatch("objects.original.key")
+    return str(path.with_name("extraction.json"))
+
+
+def _validate_legacy_manifest(
+    manifest: Mapping[str, Any],
+    source: Mapping[str, Any],
+    ingest_run: Mapping[str, Any],
+    extraction_artifact: Mapping[str, Any],
+) -> None:
+    _exact_keys(manifest, LEGACY_MANIFEST_KEYS, "retained manifest legacy_v1")
+    for key, value in {
+        "schema_version": 1,
+        "authority": source["authority"],
+        "dataset": source["dataset"],
+        "source_url": source["source_url"],
+        "source_revision": source["source_revision"],
+        "captured_at": source["captured_at"],
+        "status": source["status"],
+        "chapter": ingest_run["scope"]["group"],
+    }.items():
+        if manifest.get(key) != value:
+            _manifest_mismatch(f"legacy_v1.{key}")
+    if not isinstance(manifest.get("admission"), Mapping):
+        raise EttOfflinePlanError(
+            "retained manifest legacy_v1.admission must be an object"
+        )
+    objects = _mapping(
+        manifest.get("objects"), "retained manifest legacy_v1.objects"
+    )
+    _exact_keys(objects, LEGACY_OBJECT_KEYS, "retained manifest legacy_v1.objects")
+    original = _mapping(
+        objects.get("original"), "retained manifest legacy_v1.objects.original"
+    )
+    _exact_keys(
+        original,
+        LEGACY_ORIGINAL_KEYS,
+        "retained manifest legacy_v1.objects.original",
+    )
+    extraction = _mapping(
+        objects.get("extraction"),
+        "retained manifest legacy_v1.objects.extraction",
+    )
+    _exact_keys(
+        extraction,
+        LEGACY_EXTRACTION_KEYS,
+        "retained manifest legacy_v1.objects.extraction",
+    )
+    expected_original = {
+        "bucket": source["object_bucket"],
+        "key": source["object_key"],
+        "media_type": source["media_type"],
+        "sha256": source["sha256"],
+        "size_bytes": source["size_bytes"],
+    }
+    expected_extraction = {
+        "bucket": source["object_bucket"],
+        "key": _legacy_extraction_key(source["object_key"]),
+        "media_type": "application/json",
+        "sha256": extraction_artifact["sha256"],
+        "size_bytes": extraction_artifact["size_bytes"],
+    }
+    for key, value in expected_original.items():
+        if original.get(key) != value:
+            _manifest_mismatch(f"legacy_v1.objects.original.{key}")
+    for key, value in expected_extraction.items():
+        if extraction.get(key) != value:
+            _manifest_mismatch(f"legacy_v1.objects.extraction.{key}")
+    for key in ("counts", "cursor"):
+        if not isinstance(extraction.get(key), Mapping):
+            raise EttOfflinePlanError(
+                f"retained manifest legacy_v1.objects.extraction.{key} "
+                "must be an object"
+            )
+
+
+def _validate_manifest_bindings(
+    manifest: Mapping[str, Any],
+    source: Mapping[str, Any],
+    ingest_run: Mapping[str, Any],
+    extraction_artifact: Mapping[str, Any],
+) -> None:
+    keys = set(manifest)
+    if keys == FLAT_MANIFEST_KEYS:
+        _validate_flat_manifest(manifest, source, extraction_artifact)
+        return
+    if keys == LEGACY_MANIFEST_KEYS:
+        _validate_legacy_manifest(
+            manifest, source, ingest_run, extraction_artifact
+        )
+        return
+    raise EttOfflinePlanError(
+        "retained manifest fields mismatch for supported schema_version=1 forms"
+    )
 
 
 def _artifact_path(package_dir: Path, relative: Any, label: str) -> Path:
@@ -211,17 +348,9 @@ def _validate_retained_artifacts(
         _read_json_bytes(manifest_bytes, "retained_manifest"),
         "retained_manifest",
     )
-    required_manifest_values = {
-        source.get("source_id"),
-        source.get("source_revision"),
-        source.get("sha256"),
-        source.get("size_bytes"),
-        extraction_artifact["sha256"],
-        extraction_artifact["size_bytes"],
-    }
-    manifest_values = set(_scalar_values(manifest))
-    if not required_manifest_values <= manifest_values:
-        raise EttOfflinePlanError("retained manifest identity or digests mismatch")
+    _validate_manifest_bindings(
+        manifest, source, ingest_run, extraction_artifact
+    )
     extraction = _read_json_bytes(extraction_bytes, "retained_extraction")
     if isinstance(extraction, Mapping):
         if "source_id" in extraction and extraction["source_id"] != source.get("source_id"):
@@ -715,4 +844,5 @@ def write_offline_artifacts(package_dir: Path, output_dir: Path) -> dict[str, An
         shutil.rmtree(temporary, ignore_errors=True)
         raise
     return plan
+
 
