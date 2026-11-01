@@ -13,6 +13,12 @@ SCHEMA_VERSION = 1
 KIND = "ETT_LEGACY_RECOVERY_ENVELOPE_V1"
 LEGACY_PARSER_VERSION = "ett-pdftotext-layout-raw-v1"
 ROW_STATUS = "COLLECTED_UNVERIFIED"
+RECOVERY_CHAPTER = "29"
+EXPECTED_RUN_RANGES = (
+    (1, 20, 20),
+    (21, 220, 200),
+    (221, 533, 313),
+)
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _CHAPTER_RE = re.compile(r"^[0-9]{2}$")
@@ -300,6 +306,8 @@ def build_legacy_recovery_envelope(
     chapter = _required_string(source.get("chapter"), "source.chapter")
     if _CHAPTER_RE.fullmatch(chapter) is None:
         raise EttLegacyRecoveryError("source.chapter must be exact ASCII digits")
+    if chapter != RECOVERY_CHAPTER:
+        raise EttLegacyRecoveryError("legacy recovery contract is limited to chapter 29")
     if not isinstance(legacy_runs, Sequence) or isinstance(legacy_runs, (str, bytes)):
         raise EttLegacyRecoveryError("legacy_runs must be a sequence")
     if not legacy_runs:
@@ -326,6 +334,12 @@ def build_legacy_recovery_envelope(
         if item["start_ordinal"] != expected_start:
             raise EttLegacyRecoveryError("legacy run ranges contain a gap or overlap")
         expected_start = item["end_ordinal"] + 1
+    actual_ranges = tuple(
+        (item["start_ordinal"], item["end_ordinal"], item["raw_count"])
+        for item in ranges
+    )
+    if actual_ranges != EXPECTED_RUN_RANGES:
+        raise EttLegacyRecoveryError("legacy run bundle does not match fixed recovery ranges")
 
     rows = _validate_rows(raw_rows, source_id=source_id, chapter=chapter)
     if expected_start != len(rows) + 1:
