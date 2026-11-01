@@ -15,10 +15,11 @@ COLLECTED_UNVERIFIED = "COLLECTED_UNVERIFIED"
 LEGAL_STATUS_UNVERIFIED = "UNVERIFIED"
 SYNTAX_PARSED = "PARSED"
 SYNTAX_AMBIGUOUS = "AMBIGUOUS"
-MAX_ETT_ROWS = 86
+MAX_ETT_ROWS = 533
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _HS_CODE_RE = re.compile(r"^[0-9]{10}$")
+_CHAPTER_RE = re.compile(r"^[0-9]{2}$")
 _VERSION_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 _PLAIN_RATE_RE = re.compile(r"^(?:0|[1-9][0-9]*)(?:[.,][0-9]+)?(?:[ \t]*%)?$")
 
@@ -175,6 +176,12 @@ def build_ett_normalization_plan(
     scope = ingest_run.get("scope")
     if not isinstance(scope, Mapping):
         raise EttNormalizationError("ingest run scope is missing")
+    chapter = scope.get("chapter")
+    if not isinstance(chapter, str) or _CHAPTER_RE.fullmatch(chapter) is None:
+        raise EttNormalizationError(
+            "ingest run scope.chapter must be an exact ASCII two-digit string; "
+            "scope.group is not a substitute"
+        )
     identity = scope.get("source_identity")
     if not isinstance(identity, Mapping):
         raise EttNormalizationError("complete scope source_identity is required")
@@ -263,7 +270,6 @@ def build_ett_normalization_plan(
 
     normalized: list[NormalizedEttRow] = []
     seen_hashes: set[str] = set()
-    seen_codes: set[str] = set()
     for ordinal, (raw, provenance) in enumerate(
         zip(ordered_raw, ordered_provenance), start=1
     ):
@@ -275,6 +281,10 @@ def build_ett_normalization_plan(
         if _HS_CODE_RE.fullmatch(hs_code) is None:
             raise EttNormalizationError(
                 "hs_code must be an exact ASCII 10-digit string"
+            )
+        if not hs_code.startswith(chapter):
+            raise EttNormalizationError(
+                "hs_code chapter prefix does not match ingest run scope.chapter"
             )
         for name in (
             "description",
@@ -290,10 +300,9 @@ def build_ett_normalization_plan(
         row_sha = _required_string(raw.get("row_sha256"), "row_sha256")
         if _SHA256_RE.fullmatch(row_sha) is None:
             raise EttNormalizationError("row_sha256 is malformed")
-        if row_sha in seen_hashes or hs_code in seen_codes:
-            raise EttNormalizationError("duplicate raw row hash or hs_code")
+        if row_sha in seen_hashes:
+            raise EttNormalizationError("duplicate raw row hash")
         seen_hashes.add(row_sha)
-        seen_codes.add(hs_code)
         if not isinstance(provenance, Mapping):
             raise EttNormalizationError("row provenance entry must be a mapping")
         page_number = _positive_int(provenance.get("page_number"), "page_number")
