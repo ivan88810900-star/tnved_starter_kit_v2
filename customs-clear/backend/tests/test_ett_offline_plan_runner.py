@@ -546,6 +546,54 @@ class OfflinePlanRunnerTests(unittest.TestCase):
                 ):
                     build_offline_artifacts(package_dir)
 
+    def test_rejects_noncanonical_upstream_counter_types(self):
+        mutations = (
+            (
+                "stage bool",
+                lambda package: package["ingest_run"]["scope"]["stage_counts"].__setitem__(
+                    "normalized", False
+                ),
+                "stage_counts.normalized",
+            ),
+            (
+                "stage float",
+                lambda package: package["ingest_run"]["scope"]["stage_counts"].__setitem__(
+                    "verified", 0.0
+                ),
+                "stage_counts.verified",
+            ),
+            (
+                "cursor next float",
+                lambda package: package["ingest_run"]["resume_cursor"].__setitem__(
+                    "next_ordinal", 87.0
+                ),
+                "resume_cursor.next_ordinal",
+            ),
+            (
+                "cursor raw float",
+                lambda package: package["ingest_run"]["resume_cursor"].__setitem__(
+                    "raw_count", 86.0
+                ),
+                "resume_cursor.raw_count",
+            ),
+            (
+                "cursor complete integer",
+                lambda package: package["ingest_run"]["resume_cursor"].__setitem__(
+                    "complete", 1
+                ),
+                "resume_cursor.complete",
+            ),
+        )
+        for label, mutation, message in mutations:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
+                package_dir = Path(temporary) / "package"
+                package = _build_package(package_dir)
+                manifest = _legacy_manifest(package)
+                mutation(package)
+                _replace_manifest(package_dir, package, manifest)
+                with self.assertRaisesRegex(EttOfflinePlanError, message):
+                    build_offline_artifacts(package_dir)
+
     def test_rejects_legacy_manifest_schema_shape_and_unrelated_matches(self):
         def wrong_schema(manifest, _package):
             manifest["schema_version"] = 2
