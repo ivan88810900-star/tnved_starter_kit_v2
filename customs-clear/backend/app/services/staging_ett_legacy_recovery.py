@@ -161,7 +161,10 @@ def _run_range(
         end = _positive_int(
             scope.get("bounded_rows"), f"legacy run {run_id} bounded_rows"
         )
-        if cursor.get("last_ordinal") != end:
+        last_ordinal = _positive_int(
+            cursor.get("last_ordinal"), f"legacy run {run_id} cursor.last_ordinal"
+        )
+        if last_ordinal != end:
             raise EttLegacyRecoveryError(f"legacy run {run_id} cursor mismatch")
     else:
         start = _positive_int(
@@ -170,12 +173,19 @@ def _run_range(
         end = _positive_int(
             scope.get("end_ordinal"), f"legacy run {run_id} end_ordinal"
         )
-        if cursor.get("next_ordinal") != end + 1:
+        next_ordinal = _positive_int(
+            cursor.get("next_ordinal"), f"legacy run {run_id} cursor.next_ordinal"
+        )
+        if next_ordinal != end + 1:
             raise EttLegacyRecoveryError(f"legacy run {run_id} cursor mismatch")
     if end < start or end - start + 1 != raw_count:
         raise EttLegacyRecoveryError(f"legacy run {run_id} range/count mismatch")
-    if "raw_count" in cursor and cursor["raw_count"] != raw_count:
-        raise EttLegacyRecoveryError(f"legacy run {run_id} cursor count mismatch")
+    if "raw_count" in cursor:
+        cursor_count = _positive_int(
+            cursor["raw_count"], f"legacy run {run_id} cursor.raw_count"
+        )
+        if cursor_count != raw_count:
+            raise EttLegacyRecoveryError(f"legacy run {run_id} cursor count mismatch")
     if "complete" in cursor and type(cursor["complete"]) is not bool:
         raise EttLegacyRecoveryError(f"legacy run {run_id} cursor.complete invalid")
 
@@ -208,7 +218,8 @@ def _validate_rows(
     for ordinal, value in enumerate(raw_rows, start=1):
         row = _mapping(value, f"raw row {ordinal}")
         _exact_keys(row, RAW_KEYS, f"raw row {ordinal}")
-        if row.get("ordinal") != ordinal:
+        row_ordinal = _positive_int(row.get("ordinal"), f"raw row {ordinal} ordinal")
+        if row_ordinal != ordinal:
             raise EttLegacyRecoveryError("raw ordinals must be contiguous from 1")
         if row.get("source_id") != source_id:
             raise EttLegacyRecoveryError(f"raw row {ordinal} source_id mismatch")
