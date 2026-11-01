@@ -34,11 +34,32 @@ whole package validates and contains exactly `plan.json` and `apply.sql`.
   `retained_extraction`; each descriptor has a package-relative `path`, `sha256`,
   and `size_bytes`.
 
-The retained manifest is JSON that binds source ID/revision/byte digest to the
-retained extraction digest. Its existing envelope may be preserved. The retained
-extraction may be either a row array or an object containing `rows`; every row is
-matched to RAW and page/line provenance. Raw-byte SHA-256 and size are always
-checked before JSON parsing. Run `--print-package-schema` for exact package fields.
+The retained manifest must use one of two explicit schema-version-1 forms. The
+flat form binds source ID/revision and source/extraction byte digests directly.
+The retained legacy form has no scalar source ID; instead its source URL,
+revision, authority, dataset, capture/status metadata, chapter, and exact
+`objects.original` fields are bound to the already validated source/run
+identity. Its `objects.extraction` bucket, sibling key, JSON media type, digest,
+and size are bound to the validated extraction artifact. Values found only in
+unrelated nested fields never satisfy a binding. The retained bytes are read and
+validated in place and are not rewritten.
+
+The legacy manifest `chapter` is bound to `ingest_run.scope.chapter`; an
+invented or legacy `scope.group` value is not substituted. Its `captured_at`
+and the staged source timestamp must both be valid timezone-aware ISO-8601 values
+for the same instant, so equivalent `Z` and `+00:00` spellings are accepted
+while naive, invalid, or different instants fail closed.
+
+The legacy `admission` object has exactly `normalized`, `verified`, and
+`admitted`, bound to the zero-valued staged run counters. Its extraction object
+has exactly `raw_count`, `unique_count`, and `next_ordinal` alongside the
+object identity fields; these values are bound to the validated run counts and
+resume cursor. The runner does not rename or rewrite retained keys.
+
+The retained extraction may be either a row array or an object containing
+`rows`; every row is matched to RAW and page/line provenance. Raw-byte SHA-256
+and size are always checked before JSON parsing. Run `--print-package-schema`
+for exact package fields.
 
 ## Output contract
 
@@ -57,4 +78,5 @@ normalization digest, SQL digest, plan digest, and invariants. `apply.sql`:
 The operator must execute the reviewed SQL inside one explicitly owned,
 authorized transaction. Generation is not execution. All results remain
 technical `UNVERIFIED` data with `verified=false` and `admitted=false`.
+
 

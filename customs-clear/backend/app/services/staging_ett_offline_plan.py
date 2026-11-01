@@ -7,8 +7,8 @@ import json
 import os
 import shutil
 import tempfile
-from datetime import datetime
-from pathlib import Path
+from datetime import datetime, timezone
+from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
 
 from .staging_ett_normalization_core import (
@@ -75,6 +75,35 @@ EXTRACTION_ROW_KEYS = {
     "line_number",
     "raw_line",
 }
+FLAT_MANIFEST_KEYS = {
+    "schema_version",
+    "source_id",
+    "source_revision",
+    "source_sha256",
+    "source_size_bytes",
+    "extraction_sha256",
+    "extraction_size_bytes",
+}
+LEGACY_MANIFEST_KEYS = {
+    "admission",
+    "authority",
+    "captured_at",
+    "chapter",
+    "dataset",
+    "objects",
+    "schema_version",
+    "source_revision",
+    "source_url",
+    "status",
+}
+LEGACY_OBJECT_KEYS = {"original", "extraction"}
+LEGACY_ADMISSION_KEYS = {"admitted", "normalized", "verified"}
+LEGACY_ORIGINAL_KEYS = {"bucket", "key", "media_type", "sha256", "size_bytes"}
+LEGACY_EXTRACTION_KEYS = LEGACY_ORIGINAL_KEYS | {
+    "next_ordinal",
+    "raw_count",
+    "unique_count",
+}
 
 PACKAGE_SCHEMA = {
     "schema_version": PACKAGE_SCHEMA_VERSION,
@@ -93,14 +122,16 @@ PACKAGE_SCHEMA = {
     "artifacts": {
         name: sorted(ARTIFACT_KEYS) for name in sorted(ARTIFACT_NAMES)
     },
-    "retained_manifest_required_bindings": [
-        "source_id",
-        "source_revision",
-        "source_sha256",
-        "source_size_bytes",
-        "extraction_sha256",
-        "extraction_size_bytes",
-    ],
+    "retained_manifest_forms": {
+        "flat_v1": sorted(FLAT_MANIFEST_KEYS),
+        "retained_legacy_v1": {
+            "top_level": sorted(LEGACY_MANIFEST_KEYS),
+            "admission": sorted(LEGACY_ADMISSION_KEYS),
+            "objects": sorted(LEGACY_OBJECT_KEYS),
+            "original": sorted(LEGACY_ORIGINAL_KEYS),
+            "extraction": sorted(LEGACY_EXTRACTION_KEYS),
+        },
+    },
     "retained_extraction_forms": ["row array", "object containing rows"],
     "retained_extraction_row_fields": sorted(EXTRACTION_ROW_KEYS),
 }
@@ -132,6 +163,26 @@ def _strict_positive_int(value: Any, label: str) -> int:
     return value
 
 
+def _strict_nonnegative_int(value: Any, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise EttOfflinePlanError(f"{label} must be a nonnegative integer")
+    return value
+
+
+def _aware_instant(value: Any, label: str) -> datetime:
+    if not isinstance(value, str) or not value:
+        raise EttOfflinePlanError(f"{label} must be an ISO-8601 timestamp")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise EttOfflinePlanError(
+            f"{label} must be a valid ISO-8601 timestamp"
+        ) from exc
+    if parsed.utcoffset() is None:
+        raise EttOfflinePlanError(f"{label} must include a timezone")
+    return parsed.astimezone(timezone.utc)
+
+
 def _sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
@@ -145,15 +196,157 @@ def _read_json_bytes(value: bytes, label: str) -> Any:
     return parsed
 
 
-def _scalar_values(value: Any):
-    if isinstance(value, Mapping):
-        for item in value.values():
-            yield from _scalar_values(item)
-    elif isinstance(value, list):
-        for item in value:
-            yield from _scalar_values(item)
-    elif value is not None and not isinstance(value, (dict, list)):
-        yield value
+def _manifest_mismatch(label: str) -> None:
+    raise EttOfflinePlanError(f"retained manifest {label} mismatch")
+
+
+def _validate_flat_manifest(
+    manifest: Mapping[str, Any],
+    source: Mapping[str, Any],
+    extraction_artifact: Mapping[str, Any],
+) -> None:
+    _exact_keys(manifest, FLAT_MANIFEST_KEYS, "retained manifest flat_v1")
+    expected = {
+        "schema_version": 1,
+        "source_id": source["source_id"],
+        "source_revision": source["source_revision"],
+        "source_sha256": source["sha256"],
+        "source_size_bytes": source["size_bytes"],
+        "extraction_sha256": extraction_artifact["sha256"],
+        "extraction_size_bytes": extraction_artifact["size_bytes"],
+    }
+    for key, value in expected.items():
+        if manifest.get(key) != value:
+            _manifest_mismatch(f"flat_v1.{key}")
+
+
+def _legacy_extraction_key(source_key: str) -> str:
+    path = PurePosixPath(source_key)
+    if path.name in {"", ".", ".."}:
+        _manifest_mismatch("objects.original.key")
+    return str(path.with_name("extraction.json"))
+
+
+def _validate_legacy_manifest(
+    manifest: Mapping[str, Any],
+    source: Mapping[str, Any],
+    ingest_run: Mapping[str, Any],
+    extraction_artifact: Mapping[str, Any],
+) -> None:
+    _exact_keys(manifest, LEGACY_MANIFEST_KEYS, "retained manifest legacy_v1")
+    scope = _mapping(ingest_run.get("scope"), "ingest_run.scope")
+    chapter = scope.get("chapter")
+    if not isinstance(chapter, str) or not chapter:
+        raise EttOfflinePlanError(
+            "ingest_run.scope.chapter must be a nonempty string; "
+            "scope.group is not a substitute"
+        )
+    for key, value in {
+        "schema_version": 1,
+        "authority": source["authority"],
+        "dataset": source["dataset"],
+        "source_url": source["source_url"],
+        "source_revision": source["source_revision"],
+        "status": source["status"],
+        "chapter": chapter,
+    }.items():
+        if manifest.get(key) != value:
+            _manifest_mismatch(f"legacy_v1.{key}")
+    manifest_instant = _aware_instant(
+        manifest.get("captured_at"),
+        "retained manifest legacy_v1.captured_at",
+    )
+    source_instant = _aware_instant(
+        source.get("captured_at"), "source_object.captured_at"
+    )
+    if manifest_instant != source_instant:
+        _manifest_mismatch("legacy_v1.captured_at")
+    admission = _mapping(
+        manifest.get("admission"), "retained manifest legacy_v1.admission"
+    )
+    _exact_keys(
+        admission, LEGACY_ADMISSION_KEYS, "retained manifest legacy_v1.admission"
+    )
+    expected_admission = {
+        "normalized": ingest_run["scope"]["stage_counts"]["normalized"],
+        "verified": ingest_run["scope"]["stage_counts"]["verified"],
+        "admitted": ingest_run["scope"]["stage_counts"]["admitted"],
+    }
+    for key in LEGACY_ADMISSION_KEYS:
+        _strict_nonnegative_int(
+            admission.get(key), f"retained manifest legacy_v1.admission.{key}"
+        )
+    if admission != expected_admission:
+        _manifest_mismatch("legacy_v1.admission")
+    objects = _mapping(
+        manifest.get("objects"), "retained manifest legacy_v1.objects"
+    )
+    _exact_keys(objects, LEGACY_OBJECT_KEYS, "retained manifest legacy_v1.objects")
+    original = _mapping(
+        objects.get("original"), "retained manifest legacy_v1.objects.original"
+    )
+    _exact_keys(
+        original,
+        LEGACY_ORIGINAL_KEYS,
+        "retained manifest legacy_v1.objects.original",
+    )
+    extraction = _mapping(
+        objects.get("extraction"),
+        "retained manifest legacy_v1.objects.extraction",
+    )
+    _exact_keys(
+        extraction,
+        LEGACY_EXTRACTION_KEYS,
+        "retained manifest legacy_v1.objects.extraction",
+    )
+    expected_original = {
+        "bucket": source["object_bucket"],
+        "key": source["object_key"],
+        "media_type": source["media_type"],
+        "sha256": source["sha256"],
+        "size_bytes": source["size_bytes"],
+    }
+    expected_extraction = {
+        "bucket": source["object_bucket"],
+        "key": _legacy_extraction_key(source["object_key"]),
+        "media_type": "application/json",
+        "sha256": extraction_artifact["sha256"],
+        "size_bytes": extraction_artifact["size_bytes"],
+        "raw_count": ingest_run["raw_count"],
+        "unique_count": ingest_run["unique_count"],
+        "next_ordinal": ingest_run["resume_cursor"]["next_ordinal"],
+    }
+    for key in ("raw_count", "unique_count", "next_ordinal"):
+        _strict_positive_int(
+            extraction.get(key),
+            f"retained manifest legacy_v1.objects.extraction.{key}",
+        )
+    for key, value in expected_original.items():
+        if original.get(key) != value:
+            _manifest_mismatch(f"legacy_v1.objects.original.{key}")
+    for key, value in expected_extraction.items():
+        if extraction.get(key) != value:
+            _manifest_mismatch(f"legacy_v1.objects.extraction.{key}")
+
+
+def _validate_manifest_bindings(
+    manifest: Mapping[str, Any],
+    source: Mapping[str, Any],
+    ingest_run: Mapping[str, Any],
+    extraction_artifact: Mapping[str, Any],
+) -> None:
+    keys = set(manifest)
+    if keys == FLAT_MANIFEST_KEYS:
+        _validate_flat_manifest(manifest, source, extraction_artifact)
+        return
+    if keys == LEGACY_MANIFEST_KEYS:
+        _validate_legacy_manifest(
+            manifest, source, ingest_run, extraction_artifact
+        )
+        return
+    raise EttOfflinePlanError(
+        "retained manifest fields mismatch for supported schema_version=1 forms"
+    )
 
 
 def _artifact_path(package_dir: Path, relative: Any, label: str) -> Path:
@@ -211,17 +404,9 @@ def _validate_retained_artifacts(
         _read_json_bytes(manifest_bytes, "retained_manifest"),
         "retained_manifest",
     )
-    required_manifest_values = {
-        source.get("source_id"),
-        source.get("source_revision"),
-        source.get("sha256"),
-        source.get("size_bytes"),
-        extraction_artifact["sha256"],
-        extraction_artifact["size_bytes"],
-    }
-    manifest_values = set(_scalar_values(manifest))
-    if not required_manifest_values <= manifest_values:
-        raise EttOfflinePlanError("retained manifest identity or digests mismatch")
+    _validate_manifest_bindings(
+        manifest, source, ingest_run, extraction_artifact
+    )
     extraction = _read_json_bytes(extraction_bytes, "retained_extraction")
     if isinstance(extraction, Mapping):
         if "source_id" in extraction and extraction["source_id"] != source.get("source_id"):
@@ -612,15 +797,46 @@ def build_offline_artifacts(package_dir: Path) -> tuple[dict[str, Any], str]:
             )
     if not isinstance(ingest_run.get("resume_cursor"), Mapping):
         raise EttOfflinePlanError("ingest_run.resume_cursor must be an object")
+    resume_cursor = ingest_run["resume_cursor"]
+    _exact_keys(
+        resume_cursor,
+        {"next_ordinal", "raw_count", "complete"},
+        "ingest_run.resume_cursor",
+    )
+    _strict_positive_int(
+        resume_cursor.get("next_ordinal"), "ingest_run.resume_cursor.next_ordinal"
+    )
+    _strict_positive_int(
+        resume_cursor.get("raw_count"), "ingest_run.resume_cursor.raw_count"
+    )
+    if type(resume_cursor.get("complete")) is not bool:
+        raise EttOfflinePlanError(
+            "ingest_run.resume_cursor.complete must be a boolean"
+        )
     expected_cursor = {
         "next_ordinal": ingest_run["raw_count"] + 1,
         "raw_count": ingest_run["raw_count"],
         "complete": True,
     }
-    if ingest_run["resume_cursor"] != expected_cursor:
+    if resume_cursor != expected_cursor:
         raise EttOfflinePlanError("ingest_run.resume_cursor mismatch")
     if ingest_run.get("normalized_count") != 0 or ingest_run.get("rejected_count") != 0:
         raise EttOfflinePlanError("ingest run must precede normalization")
+    scope = _mapping(ingest_run.get("scope"), "ingest_run.scope")
+    stage_counts = _mapping(
+        scope.get("stage_counts"), "ingest_run.scope.stage_counts"
+    )
+    _exact_keys(
+        stage_counts,
+        {"normalized", "verified", "admitted"},
+        "ingest_run.scope.stage_counts",
+    )
+    for key in ("normalized", "verified", "admitted"):
+        _strict_nonnegative_int(
+            stage_counts.get(key), f"ingest_run.scope.stage_counts.{key}"
+        )
+    if stage_counts != {"normalized": 0, "verified": 0, "admitted": 0}:
+        raise EttOfflinePlanError("ingest_run.scope.stage_counts are not zero")
     raw_rows_value = package.get("raw_rows")
     if not isinstance(raw_rows_value, list):
         raise EttOfflinePlanError("raw_rows must be an array")
@@ -715,4 +931,5 @@ def write_offline_artifacts(package_dir: Path, output_dir: Path) -> dict[str, An
         shutil.rmtree(temporary, ignore_errors=True)
         raise
     return plan
+
 
