@@ -23,8 +23,6 @@ on:
       - "customs-clear/backend/scripts/ETT_OFFLINE_PLAN.md"
       - "customs-clear/backend/tests/test_ett_offline_plan_runner.py"
       - "customs-clear/backend/tests/ett_offline_plan_postgresql_probe.py"
-  workflow_dispatch:
-
 permissions:
   contents: read
 
