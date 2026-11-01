@@ -10,8 +10,12 @@ from typing import Any, Mapping, Sequence
 
 SCHEMA_VERSION = 1
 KIND = "ETT_LEGACY_RECOVERY_ENVELOPE_V1"
-LEGACY_PARSER_VERSION = "ett-pdftotext-layout-raw-v1"
+FIRST20_PARSER_VERSION = "pdftotext-layout+line-v1"
+RESUMABLE_PARSER_VERSION = "ett-pdftotext-layout-raw-v1"
 LEGACY_PARSER_COMMIT = "0320a7d268b33413c48dffc963cde6b0ec051ab1"
+FIRST20_PARSER_EVIDENCE = (
+    ".ai/orchestration/evidence/cycle285_first_persistent_staging_ingest.json"
+)
 ROW_STATUS = "COLLECTED_UNVERIFIED"
 RECOVERY_CHAPTER = "29"
 EXPECTED_RUN_RANGES = (
@@ -20,6 +24,11 @@ EXPECTED_RUN_RANGES = (
     (221, 533, 313),
 )
 EXPECTED_RAW_COUNT = 533
+EXPECTED_PARSER_BY_RANGE = {
+    (1, 20): FIRST20_PARSER_VERSION,
+    (21, 220): RESUMABLE_PARSER_VERSION,
+    (221, 533): RESUMABLE_PARSER_VERSION,
+}
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _CHAPTER_RE = re.compile(r"^[0-9]{2}$")
@@ -132,8 +141,9 @@ def _run_range(
     run_id = _required_string(run.get("run_id"), "legacy run_id")
     if run.get("source_id") != source_id:
         raise EttLegacyRecoveryError(f"legacy run {run_id} source_id mismatch")
-    if run.get("parser_version") != LEGACY_PARSER_VERSION:
-        raise EttLegacyRecoveryError(f"legacy run {run_id} parser_version mismatch")
+    parser_version = _required_string(
+        run.get("parser_version"), f"legacy run {run_id} parser_version"
+    )
     if run.get("status") != ROW_STATUS:
         raise EttLegacyRecoveryError(f"legacy run {run_id} status mismatch")
     raw_count = _positive_int(run.get("raw_count"), f"legacy run {run_id} raw_count")
@@ -205,6 +215,7 @@ def _run_range(
         "start_ordinal": start,
         "end_ordinal": end,
         "raw_count": raw_count,
+        "parser_version": parser_version,
         "chapter_observed": observed_chapter is not None,
     }, text_digest
 
@@ -419,6 +430,15 @@ def build_legacy_recovery_envelope(
     )
     if actual_ranges != EXPECTED_RUN_RANGES:
         raise EttLegacyRecoveryError("legacy run bundle does not match fixed recovery ranges")
+    for item in ranges:
+        start = item["start_ordinal"]
+        end = item["end_ordinal"]
+        expected_parser = EXPECTED_PARSER_BY_RANGE[(start, end)]
+        if item["parser_version"] != expected_parser:
+            raise EttLegacyRecoveryError(
+                f"legacy run {item['run_id']} parser_version mismatch "
+                f"for range {start}-{end}"
+            )
 
     rows = _validate_rows(raw_rows, source_id=source_id, chapter=chapter)
     if expected_start != len(rows) + 1:
@@ -460,6 +480,18 @@ def build_legacy_recovery_envelope(
         "schema_version": SCHEMA_VERSION,
         "kind": KIND,
         "legacy_parser_commit": LEGACY_PARSER_COMMIT,
+        "legacy_parser_contracts": {
+            FIRST20_PARSER_VERSION: {
+                "ranges": [[1, 20]],
+                "semantics": "bounded line extraction reconciled against complete grammar",
+                "evidence": FIRST20_PARSER_EVIDENCE,
+            },
+            RESUMABLE_PARSER_VERSION: {
+                "ranges": [[21, 220], [221, 533]],
+                "semantics": "strict reusable raw-first historical grammar",
+                "implementation_commit": LEGACY_PARSER_COMMIT,
+            },
+        },
         "status": status,
         "missing_evidence": sorted(set(missing_evidence)),
         "execution_performed": False,
