@@ -1,8 +1,8 @@
 {
   "acquisition_note": "dependency-free offline ETT export/plan runner from PR262 exact head",
-  "expires_at": "2026-11-01T14:47:38.435619Z",
+  "expires_at": null,
   "generation": 416,
-  "holder": "/root/a0-metadata-reconcile-20261101T1417Z",
+  "holder": null,
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -36,7 +36,7 @@
     "repaired_at": "2026-10-27T19:46:22Z",
     "state_preserved": "released"
   },
-  "state": "active",
-  "token": "59b156842837465784f26a3644037158",
-  "updated_at": "2026-11-01T14:17:38.435619Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-11-01T14:19:15.458663Z"
 }
