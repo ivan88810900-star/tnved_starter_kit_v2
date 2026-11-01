@@ -1,8 +1,8 @@
 {
   "acquisition_note": "clean standalone offline ETT tool draft PR from exact main e526dfb",
-  "expires_at": "2026-11-01T16:50:27.138592Z",
+  "expires_at": null,
   "generation": 421,
-  "holder": "/root/scheduled-cycle421-20261101T162024Z",
+  "holder": null,
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -36,14 +36,14 @@
     "repaired_at": "2026-10-27T19:46:22Z",
     "state_preserved": "released"
   },
-  "state": "active",
-  "token": "c49ecfe914b14ea5beb5869b9436688b",
-  "updated_at": "2026-11-01T16:20:27.138592Z",
   "serialization_repair_421": {
     "defect": "acquire serialization replacer omitted nested lease metadata",
     "prior_blob_sha": "58be67104722b867b01bad024b60aab85b3bbba7",
     "prior_commit_sha": "8c979995ad82e8278f3269b000f7e4ee820dda9d",
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
-  }
+  },
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-11-01T16:25:02.390576Z"
 }
