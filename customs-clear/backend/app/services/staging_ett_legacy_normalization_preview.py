@@ -17,8 +17,10 @@ from app.services.staging_ett_legacy_recovery import (
     LEGACY_PARSER_COMMIT,
     RESUMABLE_PARSER_VERSION,
     SOURCE_KEYS,
+    EttLegacyRecoveryError,
     _run_range,
     _validate_rows,
+    build_legacy_recovery_envelope,
 )
 from app.services.staging_ett_normalization_core import (
     ETT_NORMALIZER_VERSION,
@@ -197,8 +199,11 @@ def _run_for_ordinal(runs: Sequence[Mapping[str, Any]], ordinal: int) -> Mapping
 
 def build_legacy_normalization_preview(
     recovery_envelope: Mapping[str, Any],
+    *,
+    original_bytes: bytes,
+    source_text_bytes: bytes,
 ) -> dict[str, Any]:
-    """Validate a recovery envelope and return JSON-only technical results."""
+    """Reconcile exact evidence and return JSON-only technical results."""
 
     envelope = _mapping(recovery_envelope, "recovery envelope")
     recovery_sha = _validate_envelope_integrity(envelope)
@@ -226,6 +231,25 @@ def build_legacy_normalization_preview(
     page_count = _positive_int(source.get("page_count"), "recovery source page_count")
     _sha256(derived.get("source_text_sha256"), "recovery source text sha256")
 
+    try:
+        rebuilt = build_legacy_recovery_envelope(
+            source=source,
+            legacy_runs=_sequence(
+                observed.get("legacy_runs"), "observed legacy_runs"
+            ),
+            raw_rows=_sequence(observed.get("raw_rows"), "observed raw_rows"),
+            original_bytes=original_bytes,
+            source_text_bytes=source_text_bytes,
+        )
+    except EttLegacyRecoveryError as exc:
+        raise EttLegacyPreviewError(
+            f"recovery envelope does not match exact evidence: {exc}"
+        ) from exc
+    if rebuilt != envelope:
+        raise EttLegacyPreviewError(
+            "recovery envelope does not equal the exact-evidence reconstruction"
+        )
+
     observed_runs = _sequence(observed.get("legacy_runs"), "observed legacy_runs")
     derived_ranges = _sequence(derived.get("run_ranges"), "derived run_ranges")
     runs = _validate_runs(
@@ -234,10 +258,13 @@ def build_legacy_normalization_preview(
     raw_rows_input = _sequence(observed.get("raw_rows"), "observed raw_rows")
     raw_rows = _validate_rows(raw_rows_input, source_id=source_id, chapter="29")
     provenance_rows = _sequence(derived.get("provenance"), "derived provenance")
+    derived_raw_count = _positive_int(
+        derived.get("raw_count"), "recovery derived raw_count"
+    )
     if (
         len(raw_rows) != EXPECTED_RAW_COUNT
         or len(provenance_rows) != EXPECTED_RAW_COUNT
-        or derived.get("raw_count") != EXPECTED_RAW_COUNT
+        or derived_raw_count != EXPECTED_RAW_COUNT
     ):
         raise EttLegacyPreviewError("recovery complete row count mismatch")
 
