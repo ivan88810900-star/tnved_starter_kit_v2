@@ -79,4 +79,27 @@ The operator must execute the reviewed SQL inside one explicitly owned,
 authorized transaction. Generation is not execution. All results remain
 technical `UNVERIFIED` data with `verified=false` and `admitted=false`.
 
+## Legacy 533-row preview
+
+A separately recovered legacy chapter-29 envelope can be converted into a
+deterministic JSON-only technical preview:
+
+```bash
+python -S scripts/ett_legacy_normalization_preview.py \
+  --recovery-envelope /authorized/local/recovery-envelope.json \
+  --original /authorized/local/original.pdf \
+  --source-text /authorized/local/source.txt \
+  --output /new/local/preview.json
+```
+
+The command requires the exact original and page-aware source-text bytes that
+were used to reconstruct the recovery envelope. It rejects duplicate JSON keys,
+non-finite JSON numbers, evidence drift, incomplete runs, and any existing
+output path. The completed preview is linked into place atomically and is never
+used to generate SQL or contact a database or network service.
+
+Every preview row retains its legacy run ID, historical parser version, raw-line
+SHA-256, original fields, and page/line provenance. Repeated HS codes remain
+separate when their raw identities differ. All rows and summary counts remain
+technical `UNVERIFIED` results with `verified=0` and `admitted=0`.
 
