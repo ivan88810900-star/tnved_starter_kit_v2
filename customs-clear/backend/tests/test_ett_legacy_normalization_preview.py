@@ -107,6 +107,56 @@ class EttLegacyNormalizationPreviewTests(unittest.TestCase):
         self.assertEqual(first["preview_sha256"], second["preview_sha256"])
         self.assertEqual(envelope, before)
 
+    def test_rehashed_type_and_provenance_corruption_fails_closed(self) -> None:
+        corruptions = (
+            ("schema_version", lambda envelope: envelope.update(schema_version=True)),
+            ("verified", lambda envelope: envelope.update(verified=False)),
+            ("admitted", lambda envelope: envelope.update(admitted=False)),
+            (
+                "source size",
+                lambda envelope: envelope["observed"]["source"].update(
+                    size_bytes=True
+                ),
+            ),
+            (
+                "source page count",
+                lambda envelope: envelope["observed"]["source"].update(
+                    page_count=-1
+                ),
+            ),
+            (
+                "provenance ordinal",
+                lambda envelope: envelope["derived"]["provenance"][0].update(
+                    ordinal=True
+                ),
+            ),
+            (
+                "page exceeds source",
+                lambda envelope: envelope["derived"]["provenance"][0].update(
+                    page_number=999, line_number=999
+                ),
+            ),
+            (
+                "page order",
+                lambda envelope: envelope["derived"]["provenance"][201].update(
+                    page_number=1, line_number=999
+                ),
+            ),
+            (
+                "line order",
+                lambda envelope: envelope["derived"]["provenance"][1].update(
+                    line_number=1
+                ),
+            ),
+        )
+        for label, corrupt in corruptions:
+            with self.subTest(label=label):
+                envelope = _envelope()
+                corrupt(envelope)
+                _rehash_envelope(envelope)
+                with self.assertRaises(EttLegacyPreviewError):
+                    build_legacy_normalization_preview(envelope)
+
 
 if __name__ == "__main__":
     unittest.main()
