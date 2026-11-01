@@ -1,8 +1,8 @@
 {
-  "acquisition_note": "repair legacy ETT recovery page, order, and parser bindings",
-  "expires_at": null,
-  "generation": 424,
-  "holder": null,
+  "acquisition_note": "complete historical ETT source sequence reconciliation gate",
+  "expires_at": "2026-11-01T19:15:46Z",
+  "generation": 425,
+  "holder": "/root/scheduled-cycle425-20261101T183046Z",
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-11-01T18:27:29Z"
+  "state": "active",
+  "token": "a0-cycle425-ett-complete-sequence-20261101",
+  "updated_at": "2026-11-01T18:30:46Z"
 }
