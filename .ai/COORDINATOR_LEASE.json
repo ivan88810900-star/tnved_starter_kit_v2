@@ -1,8 +1,8 @@
 {
   "acquisition_note": "build offline legacy533 normalization preview",
-  "expires_at": "2026-11-01T19:53:43Z",
+  "expires_at": null,
   "generation": 427,
-  "holder": "/root/scheduled-cycle427-20261101T190843Z",
+  "holder": null,
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -24,8 +24,8 @@
     "verified_by_connector": true
   },
   "previous_holder_end": {
-    "generation": 426,
-    "holder": "/root/scheduled-cycle426-20261101T184500Z"
+    "generation": 427,
+    "holder": "/root/scheduled-cycle427-20261101T190843Z"
   },
   "schema_version": 1,
   "serialization_repair": {
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "active",
-  "token": "a0-cycle427-ett-legacy-preview-20261101",
-  "updated_at": "2026-11-01T19:08:43Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-11-01T19:16:10Z"
 }
