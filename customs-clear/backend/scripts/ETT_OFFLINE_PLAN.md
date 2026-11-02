@@ -103,3 +103,25 @@ SHA-256, original fields, and page/line provenance. Repeated HS codes remain
 separate when their raw identities differ. All rows and summary counts remain
 technical `UNVERIFIED` results with `verified=0` and `admitted=0`.
 
+## Legacy chapter-29 apply package
+
+The same offline-plan command accepts the narrow
+`ETT_LEGACY_CHAPTER29_APPLY_PACKAGE_V1` package form. It contains the complete
+staged `source_object`, the reviewed recovery envelope, and descriptors for the
+exact original and page-aware source-text bytes. A previously written preview
+JSON is not an input.
+
+The loader rebuilds the existing recovery and preview from those bytes, then
+projects every preview result into the existing 20-column target contract.
+`raw_row_sha256` remains the historical raw-line digest; `result_sha256` is
+separately computed over the persisted target row. The immutable plan includes a
+crosswalk from that persisted digest to the preview digest, legacy run/parser,
+and full provenance.
+
+Legacy SQL requires the target table to exist and contains no DDL. It validates
+the exact three run rows and all 533 RAW rows, locks the target against concurrent
+writers, and preserves the caller-owned transaction, exact replay, conflict
+rollback, schema, trigger, RLS, and post-insert readback gates of the canonical
+path. Generating these artifacts does not authorize or perform a database write.
+
+
