@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "cycle": 434,
+  "task_id": "TARIFF-ETT-PR269-EXACT-HEAD-RECONCILIATION-20261102",
+  "executor": "/root/scheduled-cycle434-20261102T221418Z",
+  "recorded_at": "2026-11-02T22:20:57Z",
+  "lease": {
+    "generation": 434,
+    "holder": "/root/scheduled-cycle434-20261102T221418Z",
+    "token_verified": true
+  },
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "restored_state": {
+    "main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+    "orchestration_state_sha": "f43ab3f384b2d57a581c7a4619e99efb6da353fa",
+    "open_pull_requests": 52,
+    "open_issues": 7,
+    "coordinator_lease_generation": 434
+  },
+  "candidate": {
+    "pull_request": 269,
+    "title": "feat(ett): prepare legacy chapter-29 normalization apply",
+    "draft": true,
+    "mergeable": true,
+    "mergeable_state": "clean",
+    "head_branch": "agent/ett-legacy-normalization-preview-cli-v1",
+    "head_sha": "ded231d0abe6793f4cc2ca110f4a4b11439f8efb",
+    "base_branch": "agent/ett-legacy-normalization-preview-v1",
+    "base_sha": "ec51b53d0d266ff146870fc5c17b944023e97264",
+    "ahead_by": 26,
+    "behind_by": 0,
+    "changed_files": 8,
+    "additions": 2852,
+    "deletions": 93
+  },
+  "exact_head_ci": [
+    {
+      "run_id": 41484321363,
+      "event": "pull_request",
+      "workflow": "ETT offline normalization tool",
+      "conclusion": "success",
+      "jobs": [
+        "runner-dependency-free",
+        "postgresql-plan-integration"
+      ]
+    },
+    {
+      "run_id": 41484307461,
+      "event": "push",
+      "workflow": "ETT offline normalization tool",
+      "conclusion": "success",
+      "jobs": [
+        "runner-dependency-free",
+        "postgresql-plan-integration"
+      ]
+    },
+    {
+      "run_id": 41484307374,
+      "event": "push",
+      "workflow": "Tariff agent safety",
+      "conclusion": "success",
+      "jobs": [
+        "offline-safety"
+      ]
+    }
+  ],
+  "github_review_state": {
+    "review_threads": 0,
+    "submitted_reviews": 0
+  },
+  "bounded_a0_review": {
+    "scope": [
+      "fixed five-row source-span reconstruction and digest gates",
+      "base-state exactness, replay, partial-state and identity conflict gates",
+      "insert-only SQL, table/constraint/trigger/RLS checks",
+      "legal-status fail-closed boundary",
+      "focused unit and disposable PostgreSQL CI coverage"
+    ],
+    "confirmed_findings": [],
+    "conclusion": "NO_CONFIRMED_DEFECT_IN_BOUNDED_REVIEW",
+    "limitation": "This is A0 reconciliation, not an independent A5 approval of the current exact head."
+  },
+  "readiness": "DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING",
+  "boundaries": {
+    "database_read_or_write_performed": false,
+    "source_download_performed": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "enforcement_changed": false,
+    "live_a6_invoked": false,
+    "permissions_or_secrets_changed": false
+  },
+  "next_safe_step": "Obtain independent exact-head A5 review of ded231d0abe6793f4cc2ca110f4a4b11439f8efb and correct any findings. Keep PR 269 draft. Any persistent append apply and protected merge require separate owner decisions."
+}
