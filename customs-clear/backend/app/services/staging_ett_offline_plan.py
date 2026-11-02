@@ -144,7 +144,15 @@ _SOURCE_CODE_RE = re.compile(
     r"^[ \t]*(?:\+[ \t]+)?[0-9]{4}[ \t]+[0-9]{2}[ \t]+"
     r"[0-9]{3}[ \t]+[0-9](?:[ \t]|$)"
 )
+_STRUCTURAL_SOURCE_ROW_RE = re.compile(
+    r"^[ \t]*(?:\+[ \t]+)?(?P<g1>[0-9]{4})[ \t]+(?P<g2>[0-9]{2})[ \t]+"
+    r"(?P<g3>[0-9]{3})[ \t]+(?P<g4>[0-9])(?P<tail>.*)$"
+)
 _COLUMN_SEPARATOR_RE = re.compile(r"[ \t]{2,}")
+_DESCRIPTION_LEVEL_RE = re.compile(r"^(?P<marks>(?:[-\u2013\u2014][ \t]+)+)")
+_MAX_APPEND_DESCRIPTION_LINES = 12
+_MAX_APPEND_PARENT_SOURCE_LINES = 512
+_MAX_APPEND_PARENT_ROWS = 128
 
 PACKAGE_SCHEMA = {
     "schema_version": PACKAGE_SCHEMA_VERSION,
@@ -1069,6 +1077,8 @@ def _validate_text_provenance(
         or len(lines) != len(fragments)
     ):
         raise EttOfflinePlanError(f"{label} line/fragment binding mismatch")
+    if lines != sorted(set(lines)):
+        raise EttOfflinePlanError(f"{label} source lines must be unique and ordered")
     for index, (line_number, fragment) in enumerate(
         zip(lines, fragments), start=1
     ):
@@ -1114,6 +1124,77 @@ def _append_source_locations(source_text: str) -> tuple[list[str], list[dict[str
         else:
             page_line_number += 1
     return logical_lines, locations
+
+
+def _structural_source_row(line: str) -> dict[str, Any] | None:
+    match = _STRUCTURAL_SOURCE_ROW_RE.match(line)
+    if match is None:
+        return None
+    columns = _COLUMN_SEPARATOR_RE.split(match.group("tail").strip(" \t"))
+    if len(columns) != 3 or any(not column for column in columns):
+        return None
+    description, supplementary_unit, duty_text = columns
+    level_match = _DESCRIPTION_LEVEL_RE.match(description)
+    level = 0
+    if level_match is not None:
+        level = len(re.findall(r"[-\u2013\u2014]", level_match.group("marks")))
+    return {
+        "hs_code": "".join(match.group(name) for name in ("g1", "g2", "g3", "g4")),
+        "description": description,
+        "supplementary_unit": supplementary_unit,
+        "duty_text": duty_text,
+        "level": level,
+    }
+
+
+def _authoritative_description_provenance(
+    source_lines: list[str], source_line_number: int
+) -> dict[str, Any]:
+    row = _structural_source_row(source_lines[source_line_number - 1])
+    if row is None:
+        raise EttOfflinePlanError("append authoritative description row is malformed")
+    bound = min(
+        len(source_lines),
+        source_line_number + _MAX_APPEND_DESCRIPTION_LINES - 1,
+    )
+    lines = [source_line_number]
+    fragments = [row["description"]]
+    cursor = source_line_number
+    while cursor < len(source_lines):
+        candidate = source_lines[cursor]
+        if _SOURCE_CODE_RE.match(candidate) is not None:
+            break
+        if cursor + 1 > bound:
+            raise EttOfflinePlanError("append description exceeds bounded source span")
+        fragment = candidate.strip()
+        if fragment:
+            lines.append(cursor + 1)
+            fragments.append(fragment)
+        cursor += 1
+    return {
+        "text": " ".join(fragments),
+        "source_lines": lines,
+        "fragments": fragments,
+    }
+
+
+def _authoritative_parent_provenance(
+    source_lines: list[str], source_line_number: int, child_level: int
+) -> dict[str, Any]:
+    if child_level < 1:
+        raise EttOfflinePlanError("append row has no structural parent level")
+    lower_bound = max(0, source_line_number - 1 - _MAX_APPEND_PARENT_SOURCE_LINES)
+    observed_rows = 0
+    for index in range(source_line_number - 2, lower_bound - 1, -1):
+        candidate = _structural_source_row(source_lines[index])
+        if candidate is None:
+            continue
+        observed_rows += 1
+        if observed_rows > _MAX_APPEND_PARENT_ROWS:
+            break
+        if candidate["level"] < child_level:
+            return _authoritative_description_provenance(source_lines, index + 1)
+    raise EttOfflinePlanError("append structural parent is absent from bounded source span")
 
 
 def _render_legacy_append_sql(plan: Mapping[str, Any]) -> str:
@@ -1422,6 +1503,15 @@ def _build_legacy_append_offline_artifacts(
     if "\ufffd" in source_text:
         raise EttOfflinePlanError("append source text contains replacement characters")
     logical_lines, locations = _append_source_locations(source_text)
+    authoritative_plus_lines = [
+        index
+        for index, line in enumerate(logical_lines, start=1)
+        if _APPEND_CODE_RE.match(line) is not None
+    ]
+    if len(authoritative_plus_lines) != 5:
+        raise EttOfflinePlanError(
+            "retained source must contain exactly five authoritative plus rows"
+        )
 
     append_values = package.get("append_rows")
     if not isinstance(append_values, list) or len(append_values) != 5:
@@ -1503,13 +1593,46 @@ def _build_legacy_append_offline_artifacts(
             label=f"{label}.description_provenance",
             source_lines=logical_lines,
         )
-        if description_provenance["fragments"][0] != description:
-            raise EttOfflinePlanError("append description first fragment mismatch")
+        authoritative_description = _authoritative_description_provenance(
+            logical_lines, source_line_number
+        )
+        if description_provenance != authoritative_description:
+            raise EttOfflinePlanError(
+                "append description provenance is incomplete or not source-adjacent"
+            )
+        structural_row = _structural_source_row(raw_line)
+        if structural_row is None:
+            raise EttOfflinePlanError("append structural source row is malformed")
+        semantic_description = _DESCRIPTION_LEVEL_RE.sub(
+            "", structural_row["description"], count=1
+        ).strip().casefold().rstrip(":")
+        if semantic_description == "прочие" and structural_row["level"] < 1:
+            raise EttOfflinePlanError(
+                "append residual description lacks a structural parent level"
+            )
         parent_heading = _validate_text_provenance(
             item.get("parent_heading_provenance"),
             label=f"{label}.parent_heading_provenance",
             source_lines=logical_lines,
         )
+        if structural_row["level"]:
+            authoritative_parent = _authoritative_parent_provenance(
+                logical_lines,
+                source_line_number,
+                structural_row["level"],
+            )
+            if parent_heading != authoritative_parent:
+                raise EttOfflinePlanError(
+                    "append parent provenance does not match the bounded structural parent"
+                )
+        elif (
+            parent_heading["source_lines"][-1] >= source_line_number
+            or parent_heading["source_lines"][0]
+            < max(1, source_line_number - _MAX_APPEND_PARENT_SOURCE_LINES)
+        ):
+            raise EttOfflinePlanError(
+                "append level-zero context is outside its bounded preceding span"
+            )
         append_raw.append(
             {
                 "source_id": source["source_id"],
@@ -1538,6 +1661,10 @@ def _build_legacy_append_offline_artifacts(
         )
     if [row["source_position"] for row in crosswalk] != sorted(seen_positions):
         raise EttOfflinePlanError("append rows must follow immutable source position order")
+    if [row["source_line_number"] for row in crosswalk] != authoritative_plus_lines:
+        raise EttOfflinePlanError(
+            "append rows do not cover the complete authoritative plus sequence"
+        )
 
     append_results: list[dict[str, Any]] = []
     for raw, link in zip(append_raw, crosswalk):
