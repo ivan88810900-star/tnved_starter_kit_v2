@@ -17,6 +17,7 @@ from typing import Any
 
 
 PARSER_VERSION = "ett-pdftotext-layout-raw-v1"
+PLUS_PARSER_VERSION = "ett-pdftotext-layout-raw-v2-plus"
 ROW_STATUS = "COLLECTED_UNVERIFIED"
 MAX_BATCH_SIZE = 10_000
 
@@ -34,11 +35,15 @@ class AmbiguousEttRowError(StagingRawIngestError):
 
 
 _CODE_SHAPED_RE = re.compile(
+    r"^[ \t]*(?P<g1>[0-9]{4})[ \t]+(?P<g2>[0-9]{2})[ \t]+"
+    r"(?P<g3>[0-9]{3})[ \t]+(?P<g4>[0-9])(?P<tail>.*)$"
+)
+_PLUS_CODE_SHAPED_RE = re.compile(
     r"^[ \t]*(?:\+[ \t]+)?(?P<g1>[0-9]{4})[ \t]+(?P<g2>[0-9]{2})[ \t]+"
     r"(?P<g3>[0-9]{3})[ \t]+(?P<g4>[0-9])(?P<tail>.*)$"
 )
 _UNSUPPORTED_PREFIX_RE = re.compile(
-    r"^[ \t]*(?P<prefix>[^\w\s]+)[ \t]*[0-9]{4}[ \t]+[0-9]{2}[ \t]+"
+    r"^[ \t]*(?P<prefix>[^\w\s]+)[^\S\r\n]*[0-9]{4}[ \t]+[0-9]{2}[ \t]+"
     r"[0-9]{3}[ \t]+[0-9](?:[ \t]|$)"
 )
 _COLUMN_SEPARATOR_RE = re.compile(r"[ \t]{2,}")
@@ -60,12 +65,17 @@ def _decode_utf8_strict(source_bytes: bytes) -> str:
     return text
 
 
-def _parse_rows(text: str) -> list[dict[str, Any]]:
+def _parse_rows(text: str, *, allow_leading_plus: bool) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
+    row_pattern = _PLUS_CODE_SHAPED_RE if allow_leading_plus else _CODE_SHAPED_RE
     for line_number, raw_line in enumerate(text.splitlines(), start=1):
-        match = _CODE_SHAPED_RE.match(raw_line)
+        match = row_pattern.match(raw_line)
         if match is None:
-            prefixed = _UNSUPPORTED_PREFIX_RE.match(raw_line)
+            prefixed = (
+                _UNSUPPORTED_PREFIX_RE.match(raw_line)
+                if allow_leading_plus
+                else None
+            )
             if prefixed is not None:
                 raise AmbiguousEttRowError(
                     f"line {line_number}: unsupported code prefix "
@@ -145,6 +155,7 @@ def prepare_ett_staging_batch(
     *,
     start_ordinal: int = 1,
     batch_size: int = 100,
+    allow_leading_plus: bool = False,
 ) -> dict[str, Any]:
     """Return a deterministic bounded raw batch and global duplicate evidence.
 
@@ -157,6 +168,8 @@ def prepare_ett_staging_batch(
         raise TypeError("start_ordinal must be an integer")
     if isinstance(batch_size, bool) or not isinstance(batch_size, int):
         raise TypeError("batch_size must be an integer")
+    if type(allow_leading_plus) is not bool:
+        raise TypeError("allow_leading_plus must be a boolean")
     if start_ordinal < 1:
         raise StagingRawIngestError("start_ordinal must be at least 1")
     if batch_size < 1 or batch_size > MAX_BATCH_SIZE:
@@ -165,7 +178,7 @@ def prepare_ett_staging_batch(
         )
 
     text = _decode_utf8_strict(source_bytes)
-    rows = _parse_rows(text)
+    rows = _parse_rows(text, allow_leading_plus=allow_leading_plus)
     total_raw_count = len(rows)
     if start_ordinal > total_raw_count + 1:
         raise StagingRawIngestError(
@@ -182,7 +195,8 @@ def prepare_ett_staging_batch(
 
     return {
         "schema_version": 1,
-        "parser_version": PARSER_VERSION,
+        "parser_version": PLUS_PARSER_VERSION if allow_leading_plus else PARSER_VERSION,
+        "allow_leading_plus": allow_leading_plus,
         "source_text_sha256": hashlib.sha256(source_bytes).hexdigest(),
         "row_status": ROW_STATUS,
         "normalization_performed": False,
@@ -219,6 +233,7 @@ __all__ = [
     "InvalidUtf8SourceError",
     "MAX_BATCH_SIZE",
     "PARSER_VERSION",
+    "PLUS_PARSER_VERSION",
     "ROW_STATUS",
     "StagingRawIngestError",
     "prepare_ett_staging_batch",
