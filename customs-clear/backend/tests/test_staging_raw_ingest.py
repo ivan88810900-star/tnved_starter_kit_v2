@@ -45,18 +45,24 @@ class StagingRawIngestTests(unittest.TestCase):
             row["row_sha256"], hashlib.sha256(raw_line.encode("utf-8")).hexdigest()
         )
         self.assertEqual(payload["parser_version"], PARSER_VERSION)
-        self.assertIs(payload["allow_leading_plus"], False)
+        self.assertEqual(
+            set(payload),
+            {
+                "schema_version",
+                "parser_version",
+                "source_text_sha256",
+                "row_status",
+                "normalization_performed",
+                "legal_admission_performed",
+                "totals",
+                "batch",
+                "resume_cursor",
+                "duplicate_evidence",
+            },
+        )
         self.assertEqual(row["status"], "COLLECTED_UNVERIFIED")
         self.assertIs(payload["normalization_performed"], False)
         self.assertIs(payload["legal_admission_performed"], False)
-        self.assertEqual(
-            payload["completeness"],
-            {
-                "status": "BLOCKED",
-                "source_provenance_verified": False,
-                "multiline_continuations_collected": False,
-            },
-        )
 
     def test_literal_plus_prefix_is_preserved_and_hashed_exactly(self) -> None:
         raw_line = "+ " + _line(
@@ -80,6 +86,14 @@ class StagingRawIngestTests(unittest.TestCase):
         )
         self.assertEqual(payload["parser_version"], PLUS_PARSER_VERSION)
         self.assertIs(payload["allow_leading_plus"], True)
+        self.assertEqual(
+            payload["completeness"],
+            {
+                "status": "BLOCKED",
+                "source_provenance_verified": False,
+                "multiline_continuations_collected": False,
+            },
+        )
 
     def test_chapter30_shape_keeps_82_code_lines_and_16_plus_markers(self) -> None:
         lines = []
@@ -141,7 +155,8 @@ class StagingRawIngestTests(unittest.TestCase):
         )
 
         self.assertEqual(legacy["parser_version"], PARSER_VERSION)
-        self.assertIs(legacy["allow_leading_plus"], False)
+        self.assertNotIn("allow_leading_plus", legacy)
+        self.assertNotIn("completeness", legacy)
         self.assertEqual(legacy["totals"]["raw_count"], 533)
         self.assertEqual(legacy["batch"]["rows"][151]["ordinal"], 152)
         self.assertEqual(legacy["batch"]["rows"][151]["raw_line"], unmarked[151])
