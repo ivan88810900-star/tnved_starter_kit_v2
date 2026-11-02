@@ -211,6 +211,14 @@ PACKAGE_SCHEMA = {
         ],
         "append_row_fields": sorted(APPEND_ROW_KEYS),
         "text_provenance_fields": sorted(TEXT_PROVENANCE_KEYS),
+        "parent_heading_modes": {
+            "structural_child": "exact nonempty bounded structural parent",
+            "standalone_four_digit_root": {
+                "text": "",
+                "source_lines": [],
+                "fragments": [],
+            },
+        },
         "artifacts": {
             name: sorted(ARTIFACT_KEYS)
             for name in sorted(LEGACY_ARTIFACT_NAMES)
@@ -1062,12 +1070,17 @@ def _validate_text_provenance(
     *,
     label: str,
     source_lines: list[str],
+    allow_empty: bool = False,
 ) -> dict[str, Any]:
     provenance = _mapping(value, label)
     _exact_keys(provenance, TEXT_PROVENANCE_KEYS, label)
     text = provenance.get("text")
     lines = provenance.get("source_lines")
     fragments = provenance.get("fragments")
+    if text == "" and lines == [] and fragments == []:
+        if allow_empty:
+            return {"text": "", "source_lines": [], "fragments": []}
+        raise EttOfflinePlanError(f"{label} cannot be empty for a structural child")
     if not isinstance(text, str) or not text:
         raise EttOfflinePlanError(f"{label}.text must be a nonempty string")
     if (
@@ -1205,8 +1218,7 @@ def _render_legacy_append_sql(plan: Mapping[str, Any]) -> str:
     append_run_hex = _json_hex(plan["append_ingest_run"])
     append_raw_hex = _json_hex(plan["append_raw_rows"])
     append_results_hex = _json_hex(plan["append_results"])
-    columns_hex = _json_hex(
-        [
+    normalization_columns = [
             ["source_id", "text", True],
             ["raw_row_sha256", "text", True],
             ["ordinal", "integer", True],
@@ -1228,7 +1240,88 @@ def _render_legacy_append_sql(plan: Mapping[str, Any]) -> str:
             ["admitted", "boolean", True],
             ["result_sha256", "text", True],
         ]
-    )
+    def constraint(
+        kind: str,
+        columns: list[str],
+        *,
+        referenced_table: str | None = None,
+        referenced_columns: list[str] | None = None,
+    ) -> dict[str, Any]:
+        foreign = kind == "f"
+        return {
+            "type": kind,
+            "columns": columns,
+            "referenced_table": referenced_table,
+            "referenced_columns": referenced_columns,
+            "deferrable": False,
+            "initially_deferred": False,
+            "validated": True,
+            "on_update": "a" if foreign else None,
+            "on_delete": "a" if foreign else None,
+            "match_type": "s" if foreign else None,
+        }
+
+    table_contracts = [
+        {
+            "table": "tariff_ingest.ingest_runs",
+            "columns": [
+                ["run_id", "text", True],
+                ["source_id", "text", True],
+                ["scope", "jsonb", True],
+                ["parser_version", "text", True],
+                ["status", "text", True],
+                ["raw_count", "integer", True],
+                ["unique_count", "integer", True],
+                ["normalized_count", "integer", True],
+                ["rejected_count", "integer", True],
+                ["resume_cursor", "jsonb", True],
+                ["started_at", "timestamp with time zone", True],
+                ["completed_at", "timestamp with time zone", True],
+                ["updated_at", "timestamp with time zone", True],
+            ],
+            "constraints": [constraint("p", ["run_id"])],
+        },
+        {
+            "table": "tariff_ingest.ett_collected_rows",
+            "columns": [
+                ["source_id", "text", True],
+                ["hs_code", "text", True],
+                ["description", "text", True],
+                ["supplementary_unit", "text", True],
+                ["duty_text", "text", True],
+                ["raw_line", "text", True],
+                ["row_sha256", "text", True],
+                ["status", "text", True],
+                ["ordinal", "integer", True],
+            ],
+            "constraints": [
+                constraint(
+                    "f",
+                    ["source_id"],
+                    referenced_table="tariff_ingest.source_objects",
+                    referenced_columns=["source_id"],
+                ),
+                constraint("p", ["source_id", "row_sha256"]),
+                constraint("u", ["source_id", "hs_code"]),
+            ],
+        },
+        {
+            "table": "tariff_ingest.ett_normalization_results",
+            "columns": normalization_columns,
+            "constraints": [
+                constraint(
+                    "f",
+                    ["source_id", "raw_row_sha256"],
+                    referenced_table="tariff_ingest.ett_collected_rows",
+                    referenced_columns=["source_id", "row_sha256"],
+                ),
+                constraint("p", ["source_id", "raw_row_sha256", "parser_version"]),
+                constraint("u", ["result_sha256"]),
+                constraint("u", ["source_id", "ordinal", "parser_version"]),
+            ],
+        },
+    ]
+    table_contracts_hex = _json_hex(table_contracts)
     return f"""-- Generated offline from an exact legacy append package.
 -- Execute only inside an explicit caller-owned transaction against tariff_staging.
 -- This file owns no connection or transaction boundary and contains INSERT only.
@@ -1242,8 +1335,11 @@ DECLARE
     expected_append_run jsonb := convert_from(decode('{append_run_hex}', 'hex'), 'UTF8')::jsonb;
     expected_append_raw jsonb := convert_from(decode('{append_raw_hex}', 'hex'), 'UTF8')::jsonb;
     expected_append_results jsonb := convert_from(decode('{append_results_hex}', 'hex'), 'UTF8')::jsonb;
-    expected_columns jsonb := convert_from(decode('{columns_hex}', 'hex'), 'UTF8')::jsonb;
+    expected_table_contracts jsonb := convert_from(decode('{table_contracts_hex}', 'hex'), 'UTF8')::jsonb;
+    expected_table jsonb;
+    table_oid regclass;
     actual_columns jsonb;
+    actual_constraints jsonb;
     source_run_count bigint;
     source_raw_count bigint;
     source_result_count bigint;
@@ -1275,6 +1371,81 @@ BEGIN
           AND s.captured_at = (expected_source->>'captured_at')::timestamptz
           AND s.status = expected_source->>'status'
     ) THEN RAISE EXCEPTION 'source_objects package mismatch'; END IF;
+
+    FOR expected_table IN
+        SELECT value FROM jsonb_array_elements(expected_table_contracts)
+    LOOP
+        table_oid := to_regclass(expected_table->>'table');
+        IF table_oid IS NULL THEN
+            RAISE EXCEPTION 'append write table is missing: %', expected_table->>'table';
+        END IF;
+        SELECT jsonb_agg(
+            jsonb_build_array(
+                a.attname,
+                pg_catalog.format_type(a.atttypid, a.atttypmod),
+                a.attnotnull
+            ) ORDER BY a.attnum
+        ) INTO actual_columns
+        FROM pg_catalog.pg_attribute a
+        WHERE a.attrelid = table_oid AND a.attnum > 0 AND NOT a.attisdropped;
+        IF actual_columns IS DISTINCT FROM expected_table->'columns' THEN
+            RAISE EXCEPTION 'append write table column contract mismatch: %',
+                expected_table->>'table';
+        END IF;
+
+        SELECT COALESCE(jsonb_agg(q.contract ORDER BY q.constraint_type, q.column_key), '[]'::jsonb)
+          INTO actual_constraints
+        FROM (
+            SELECT c.contype::text AS constraint_type,
+                   (SELECT string_agg(a.attname::text, ',' ORDER BY u.ord)
+                    FROM unnest(c.conkey) WITH ORDINALITY u(attnum, ord)
+                    JOIN pg_catalog.pg_attribute a
+                      ON a.attrelid = c.conrelid AND a.attnum = u.attnum) AS column_key,
+                   jsonb_build_object(
+                       'type', c.contype::text,
+                       'columns', (SELECT jsonb_agg(a.attname::text ORDER BY u.ord)
+                                   FROM unnest(c.conkey) WITH ORDINALITY u(attnum, ord)
+                                   JOIN pg_catalog.pg_attribute a
+                                     ON a.attrelid = c.conrelid AND a.attnum = u.attnum),
+                       'referenced_table', CASE WHEN c.contype = 'f'
+                           THEN c.confrelid::regclass::text ELSE NULL END,
+                       'referenced_columns', CASE WHEN c.contype = 'f' THEN
+                           (SELECT jsonb_agg(a.attname::text ORDER BY u.ord)
+                            FROM unnest(c.confkey) WITH ORDINALITY u(attnum, ord)
+                            JOIN pg_catalog.pg_attribute a
+                              ON a.attrelid = c.confrelid AND a.attnum = u.attnum)
+                           ELSE NULL END,
+                       'deferrable', c.condeferrable,
+                       'initially_deferred', c.condeferred,
+                       'validated', c.convalidated,
+                       'on_update', CASE WHEN c.contype = 'f' THEN c.confupdtype::text ELSE NULL END,
+                       'on_delete', CASE WHEN c.contype = 'f' THEN c.confdeltype::text ELSE NULL END,
+                       'match_type', CASE WHEN c.contype = 'f' THEN c.confmatchtype::text ELSE NULL END
+                   ) AS contract
+            FROM pg_catalog.pg_constraint c
+            WHERE c.conrelid = table_oid AND c.contype IN ('p', 'u', 'f')
+        ) q;
+        IF actual_constraints IS DISTINCT FROM expected_table->'constraints' THEN
+            RAISE EXCEPTION 'append write table constraint contract mismatch: %',
+                expected_table->>'table';
+        END IF;
+    END LOOP;
+
+    IF EXISTS (
+        SELECT 1 FROM pg_catalog.pg_trigger t
+        WHERE t.tgrelid IN (
+            'tariff_ingest.ingest_runs'::regclass,
+            'tariff_ingest.ett_collected_rows'::regclass,
+            'tariff_ingest.ett_normalization_results'::regclass
+        ) AND NOT t.tgisinternal
+    ) OR EXISTS (
+        SELECT 1 FROM pg_catalog.pg_class c
+        WHERE c.oid IN (
+            'tariff_ingest.ingest_runs'::regclass,
+            'tariff_ingest.ett_collected_rows'::regclass,
+            'tariff_ingest.ett_normalization_results'::regclass
+        ) AND (c.relrowsecurity OR c.relforcerowsecurity)
+    ) THEN RAISE EXCEPTION 'append targets have unsupported triggers or RLS'; END IF;
 
     IF EXISTS (
         SELECT 1 FROM jsonb_array_elements(expected_base_runs) e
@@ -1358,31 +1529,6 @@ BEGIN
         RAISE EXCEPTION 'append current state is partial or conflicting';
     END IF;
 
-    SELECT jsonb_agg(
-        jsonb_build_array(a.attname, pg_catalog.format_type(a.atttypid, a.atttypmod), a.attnotnull)
-        ORDER BY a.attnum
-    ) INTO actual_columns
-    FROM pg_catalog.pg_attribute a
-    WHERE a.attrelid = 'tariff_ingest.ett_normalization_results'::regclass
-      AND a.attnum > 0 AND NOT a.attisdropped;
-    IF actual_columns IS DISTINCT FROM expected_columns THEN
-        RAISE EXCEPTION 'conflicting ett_normalization_results column contract';
-    END IF;
-    IF EXISTS (
-        SELECT 1 FROM pg_catalog.pg_trigger t
-        WHERE t.tgrelid IN (
-            'tariff_ingest.ingest_runs'::regclass,
-            'tariff_ingest.ett_collected_rows'::regclass,
-            'tariff_ingest.ett_normalization_results'::regclass
-        ) AND NOT t.tgisinternal
-    ) OR EXISTS (
-        SELECT 1 FROM pg_catalog.pg_class c
-        WHERE c.oid IN (
-            'tariff_ingest.ingest_runs'::regclass,
-            'tariff_ingest.ett_collected_rows'::regclass,
-            'tariff_ingest.ett_normalization_results'::regclass
-        ) AND (c.relrowsecurity OR c.relforcerowsecurity)
-    ) THEN RAISE EXCEPTION 'append targets have unsupported triggers or RLS'; END IF;
     IF EXISTS (
         SELECT 1 FROM tariff_ingest.ingest_runs r
         WHERE r.run_id = expected_append_run->>'run_id'
@@ -1416,7 +1562,10 @@ BEGIN
     GET DIAGNOSTICS inserted_count = ROW_COUNT;
     IF inserted_count <> 1 THEN RAISE EXCEPTION 'append run insert count mismatch'; END IF;
 
-    INSERT INTO tariff_ingest.ett_collected_rows
+    INSERT INTO tariff_ingest.ett_collected_rows (
+        source_id, hs_code, description, supplementary_unit, duty_text,
+        raw_line, row_sha256, status, ordinal
+    )
     SELECT * FROM jsonb_to_recordset(expected_append_raw) AS x(
       source_id text, hs_code text, description text, supplementary_unit text,
       duty_text text, raw_line text, row_sha256 text, status text, ordinal integer
@@ -1610,12 +1759,14 @@ def _build_legacy_append_offline_artifacts(
             raise EttOfflinePlanError(
                 "append residual description lacks a structural parent level"
             )
+        standalone_root = hs_code[4:] == "000000"
         parent_heading = _validate_text_provenance(
             item.get("parent_heading_provenance"),
             label=f"{label}.parent_heading_provenance",
             source_lines=logical_lines,
+            allow_empty=standalone_root,
         )
-        if structural_row["level"]:
+        if not standalone_root:
             authoritative_parent = _authoritative_parent_provenance(
                 logical_lines,
                 source_line_number,
@@ -1625,13 +1776,9 @@ def _build_legacy_append_offline_artifacts(
                 raise EttOfflinePlanError(
                     "append parent provenance does not match the bounded structural parent"
                 )
-        elif (
-            parent_heading["source_lines"][-1] >= source_line_number
-            or parent_heading["source_lines"][0]
-            < max(1, source_line_number - _MAX_APPEND_PARENT_SOURCE_LINES)
-        ):
+        elif parent_heading != {"text": "", "source_lines": [], "fragments": []}:
             raise EttOfflinePlanError(
-                "append level-zero context is outside its bounded preceding span"
+                "append standalone root must use the explicit no-parent provenance"
             )
         append_raw.append(
             {
@@ -1761,6 +1908,7 @@ def _build_legacy_append_offline_artifacts(
             "storage ordinals 534 through 538 never stand for PDF source positions",
             "fourth-run crosswalk binds storage/source/global/page/line provenance",
             "multiline descriptions and parent headings retain exact source fragments",
+            "only a four-digit standalone root code may use explicit empty parent provenance",
             "only one run, five RAW rows, and five normalization rows may be inserted",
             "replay performs zero DML and partial or conflicting state fails closed",
             "all legal_status values are UNVERIFIED; verified and admitted are false",
