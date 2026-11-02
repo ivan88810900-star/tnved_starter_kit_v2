@@ -11,6 +11,11 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
 
+from .staging_ett_legacy_normalization_preview import (
+    EttLegacyPreviewError,
+    build_legacy_normalization_preview,
+)
+from .staging_ett_legacy_recovery import EXPECTED_RAW_COUNT
 from .staging_ett_normalization_core import (
     COLLECTED_UNVERIFIED,
     ETT_NORMALIZER_VERSION,
@@ -24,6 +29,8 @@ from .staging_ett_normalization_core import (
 PACKAGE_SCHEMA_VERSION = 1
 TARGET_SCHEMA = "tariff_ingest"
 TARGET_TABLE = "ett_normalization_results"
+LEGACY_PACKAGE_KIND = "ETT_LEGACY_CHAPTER29_APPLY_PACKAGE_V1"
+LEGACY_PLAN_KIND = "ETT_LEGACY_CHAPTER29_NORMALIZATION_PLAN"
 
 SOURCE_KEYS = {
     "source_id",
@@ -64,6 +71,7 @@ RAW_KEYS = {
 }
 ARTIFACT_KEYS = {"path", "sha256", "size_bytes"}
 ARTIFACT_NAMES = {"source_bytes", "retained_manifest", "retained_extraction"}
+LEGACY_ARTIFACT_NAMES = {"original_bytes", "source_text_bytes"}
 EXTRACTION_KEYS = {"schema_version", "source_id", "source_revision", "rows"}
 EXTRACTION_ROW_KEYS = {
     "ordinal",
@@ -134,6 +142,21 @@ PACKAGE_SCHEMA = {
     },
     "retained_extraction_forms": ["row array", "object containing rows"],
     "retained_extraction_row_fields": sorted(EXTRACTION_ROW_KEYS),
+    "legacy_chapter29_v1": {
+        "kind": LEGACY_PACKAGE_KIND,
+        "required_top_level": [
+            "schema_version",
+            "kind",
+            "normalizer_version",
+            "source_object",
+            "recovery_envelope",
+            "artifacts",
+        ],
+        "artifacts": {
+            name: sorted(ARTIFACT_KEYS)
+            for name in sorted(LEGACY_ARTIFACT_NAMES)
+        },
+    },
 }
 
 
@@ -181,6 +204,21 @@ def _aware_instant(value: Any, label: str) -> datetime:
     if parsed.utcoffset() is None:
         raise EttOfflinePlanError(f"{label} must include a timezone")
     return parsed.astimezone(timezone.utc)
+
+
+def _validate_source_object(value: Any) -> Mapping[str, Any]:
+    source = _mapping(value, "source_object")
+    _exact_keys(source, SOURCE_KEYS, "source_object")
+    for field in SOURCE_KEYS - {"size_bytes"}:
+        if not isinstance(source.get(field), str) or not source[field]:
+            raise EttOfflinePlanError(f"source_object.{field} must be a string")
+    _strict_positive_int(source.get("size_bytes"), "source_object.size_bytes")
+    _aware_instant(source.get("captured_at"), "source_object.captured_at")
+    if source.get("status") != COLLECTED_UNVERIFIED:
+        raise EttOfflinePlanError(
+            "source_object status is not COLLECTED_UNVERIFIED"
+        )
+    return source
 
 
 def _sha256_bytes(value: bytes) -> str:
@@ -461,8 +499,9 @@ def _json_hex(value: Any) -> str:
 
 
 def _render_sql(plan: Mapping[str, Any]) -> str:
+    legacy = plan.get("kind") == LEGACY_PLAN_KIND
     source_hex = _json_hex(plan["source_object"])
-    run_hex = _json_hex(plan["ingest_run"])
+    run_hex = _json_hex(plan["ingest_runs"] if legacy else plan["ingest_run"])
     raw_hex = _json_hex(plan["raw_rows"])
     results_hex = _json_hex(plan["rows"])
     columns = [
@@ -488,46 +527,47 @@ def _render_sql(plan: Mapping[str, Any]) -> str:
         ["result_sha256", "text", True],
     ]
     columns_hex = _json_hex(columns)
-    return f"""-- Generated offline from a fully validated local package.
--- Execute only inside an explicit caller-owned transaction with scoped staging access.
--- This file has no connection settings and intentionally owns no transaction boundary.
-
-DO $ett_offline_plan$
-DECLARE
-    expected_source jsonb := convert_from(decode('{source_hex}', 'hex'), 'UTF8')::jsonb;
-    expected_run jsonb := convert_from(decode('{run_hex}', 'hex'), 'UTF8')::jsonb;
-    expected_raw jsonb := convert_from(decode('{raw_hex}', 'hex'), 'UTF8')::jsonb;
-    expected_results jsonb := convert_from(decode('{results_hex}', 'hex'), 'UTF8')::jsonb;
-    expected_columns jsonb := convert_from(decode('{columns_hex}', 'hex'), 'UTF8')::jsonb;
-    actual_columns jsonb;
-    existing_count bigint;
-    inserted_count bigint;
-BEGIN
-    IF current_database() <> 'tariff_staging' THEN
-        RAISE EXCEPTION 'offline plan targets tariff_staging only';
-    END IF;
-    LOCK TABLE tariff_ingest.source_objects,
-               tariff_ingest.ingest_runs,
-               tariff_ingest.ett_collected_rows IN SHARE MODE;
+    if legacy:
+        run_declaration = (
+            "expected_runs jsonb := "
+            f"convert_from(decode('{run_hex}', 'hex'), 'UTF8')::jsonb;"
+        )
+        run_preflight = """
+    IF (SELECT count(*) FROM tariff_ingest.ingest_runs r
+        WHERE r.source_id = expected_source->>'source_id')
+       <> jsonb_array_length(expected_runs)
+       OR EXISTS (
+          SELECT 1 FROM jsonb_array_elements(expected_runs) e
+          WHERE NOT EXISTS (
+              SELECT 1 FROM tariff_ingest.ingest_runs r
+              WHERE r.run_id = e->>'run_id'
+                AND r.source_id = e->>'source_id'
+                AND r.scope = e->'scope'
+                AND r.parser_version = e->>'parser_version'
+                AND r.status = e->>'status'
+                AND r.raw_count = (e->>'raw_count')::integer
+                AND r.unique_count = (e->>'unique_count')::integer
+                AND r.normalized_count = (e->>'normalized_count')::integer
+                AND r.rejected_count = (e->>'rejected_count')::integer
+                AND r.resume_cursor = e->'resume_cursor'
+          )
+       ) THEN
+        RAISE EXCEPTION 'legacy ingest_runs package mismatch';
+    END IF;"""
+        target_setup = """
+    IF to_regclass('tariff_ingest.ett_normalization_results') IS NULL THEN
+        RAISE EXCEPTION 'legacy normalization target table is missing';
+    END IF;"""
+    else:
+        run_declaration = (
+            "expected_run jsonb := "
+            f"convert_from(decode('{run_hex}', 'hex'), 'UTF8')::jsonb;"
+        )
+        run_preflight = """
     IF (SELECT count(*) FROM tariff_ingest.ingest_runs r
         WHERE r.source_id = expected_source->>'source_id') <> 1 THEN
         RAISE EXCEPTION 'staged ETT source must have exactly one raw ingest run';
     END IF;
-    IF NOT EXISTS (
-        SELECT 1 FROM tariff_ingest.source_objects s
-        WHERE s.source_id = expected_source->>'source_id'
-          AND s.authority = expected_source->>'authority'
-          AND s.dataset = expected_source->>'dataset'
-          AND s.source_url = expected_source->>'source_url'
-          AND s.source_revision = expected_source->>'source_revision'
-          AND s.object_bucket = expected_source->>'object_bucket'
-          AND s.object_key = expected_source->>'object_key'
-          AND s.sha256 = expected_source->>'sha256'
-          AND s.size_bytes = (expected_source->>'size_bytes')::bigint
-          AND s.media_type = expected_source->>'media_type'
-          AND s.captured_at = (expected_source->>'captured_at')::timestamptz
-          AND s.status = expected_source->>'status'
-    ) THEN RAISE EXCEPTION 'source_objects package mismatch'; END IF;
     IF NOT EXISTS (
         SELECT 1 FROM tariff_ingest.ingest_runs r
         WHERE r.run_id = expected_run->>'run_id'
@@ -540,26 +580,8 @@ BEGIN
           AND r.normalized_count = (expected_run->>'normalized_count')::integer
           AND r.rejected_count = (expected_run->>'rejected_count')::integer
           AND r.resume_cursor = expected_run->'resume_cursor'
-    ) THEN RAISE EXCEPTION 'ingest_runs package mismatch'; END IF;
-    IF (SELECT count(*) FROM tariff_ingest.ett_collected_rows r
-        WHERE r.source_id = expected_source->>'source_id')
-       <> jsonb_array_length(expected_raw)
-       OR EXISTS (
-          SELECT 1 FROM jsonb_array_elements(expected_raw) e
-          WHERE NOT EXISTS (
-              SELECT 1 FROM tariff_ingest.ett_collected_rows r
-              WHERE r.source_id = e->>'source_id'
-                AND r.hs_code = e->>'hs_code'
-                AND r.description = e->>'description'
-                AND r.supplementary_unit = e->>'supplementary_unit'
-                AND r.duty_text = e->>'duty_text'
-                AND r.raw_line = e->>'raw_line'
-                AND r.row_sha256 = e->>'row_sha256'
-                AND r.status = e->>'status'
-                AND r.ordinal = (e->>'ordinal')::integer
-          )
-       ) THEN RAISE EXCEPTION 'ett_collected_rows package mismatch'; END IF;
-
+    ) THEN RAISE EXCEPTION 'ingest_runs package mismatch'; END IF;"""
+        target_setup = """
     IF to_regclass('tariff_ingest.ett_normalization_results') IS NULL THEN
         EXECUTE $ett_ddl$
             CREATE TABLE tariff_ingest.ett_normalization_results (
@@ -594,7 +616,66 @@ BEGIN
                         (source_id, row_sha256)
             )
         $ett_ddl$;
+    END IF;"""
+    return f"""-- Generated offline from a fully validated local package.
+-- Execute only inside an explicit caller-owned transaction with scoped staging access.
+-- This file has no connection settings and intentionally owns no transaction boundary.
+
+DO $ett_offline_plan$
+DECLARE
+    expected_source jsonb := convert_from(decode('{source_hex}', 'hex'), 'UTF8')::jsonb;
+    {run_declaration}
+    expected_raw jsonb := convert_from(decode('{raw_hex}', 'hex'), 'UTF8')::jsonb;
+    expected_results jsonb := convert_from(decode('{results_hex}', 'hex'), 'UTF8')::jsonb;
+    expected_columns jsonb := convert_from(decode('{columns_hex}', 'hex'), 'UTF8')::jsonb;
+    actual_columns jsonb;
+    existing_count bigint;
+    inserted_count bigint;
+BEGIN
+    IF current_database() <> 'tariff_staging' THEN
+        RAISE EXCEPTION 'offline plan targets tariff_staging only';
     END IF;
+    LOCK TABLE tariff_ingest.source_objects,
+               tariff_ingest.ingest_runs,
+               tariff_ingest.ett_collected_rows IN SHARE MODE;
+    IF NOT EXISTS (
+        SELECT 1 FROM tariff_ingest.source_objects s
+        WHERE s.source_id = expected_source->>'source_id'
+          AND s.authority = expected_source->>'authority'
+          AND s.dataset = expected_source->>'dataset'
+          AND s.source_url = expected_source->>'source_url'
+          AND s.source_revision = expected_source->>'source_revision'
+          AND s.object_bucket = expected_source->>'object_bucket'
+          AND s.object_key = expected_source->>'object_key'
+          AND s.sha256 = expected_source->>'sha256'
+          AND s.size_bytes = (expected_source->>'size_bytes')::bigint
+          AND s.media_type = expected_source->>'media_type'
+          AND s.captured_at = (expected_source->>'captured_at')::timestamptz
+          AND s.status = expected_source->>'status'
+    ) THEN RAISE EXCEPTION 'source_objects package mismatch'; END IF;
+{run_preflight}
+    IF (SELECT count(*) FROM tariff_ingest.ett_collected_rows r
+        WHERE r.source_id = expected_source->>'source_id')
+       <> jsonb_array_length(expected_raw)
+       OR EXISTS (
+          SELECT 1 FROM jsonb_array_elements(expected_raw) e
+          WHERE NOT EXISTS (
+              SELECT 1 FROM tariff_ingest.ett_collected_rows r
+              WHERE r.source_id = e->>'source_id'
+                AND r.hs_code = e->>'hs_code'
+                AND r.description = e->>'description'
+                AND r.supplementary_unit = e->>'supplementary_unit'
+                AND r.duty_text = e->>'duty_text'
+                AND r.raw_line = e->>'raw_line'
+                AND r.row_sha256 = e->>'row_sha256'
+                AND r.status = e->>'status'
+                AND r.ordinal = (e->>'ordinal')::integer
+          )
+       ) THEN RAISE EXCEPTION 'ett_collected_rows package mismatch'; END IF;
+
+{target_setup}
+    LOCK TABLE tariff_ingest.ett_normalization_results
+        IN SHARE ROW EXCLUSIVE MODE;
 
     SELECT jsonb_agg(
         jsonb_build_array(a.attname, pg_catalog.format_type(a.atttypid, a.atttypmod), a.attnotnull)
@@ -746,6 +827,158 @@ $ett_offline_plan$;
 """
 
 
+def _build_legacy_offline_artifacts(
+    package_dir: Path, package: Mapping[str, Any]
+) -> tuple[dict[str, Any], str]:
+    top_keys = {
+        "schema_version",
+        "kind",
+        "normalizer_version",
+        "source_object",
+        "recovery_envelope",
+        "artifacts",
+    }
+    _exact_keys(package, top_keys, "legacy package.json")
+    if (
+        type(package.get("schema_version")) is not int
+        or package["schema_version"] != PACKAGE_SCHEMA_VERSION
+        or package.get("kind") != LEGACY_PACKAGE_KIND
+    ):
+        raise EttOfflinePlanError("legacy package contract mismatch")
+    if package.get("normalizer_version") != ETT_NORMALIZER_VERSION:
+        raise EttOfflinePlanError("normalizer_version mismatch")
+
+    source = _validate_source_object(package.get("source_object"))
+    descriptors = _mapping(package.get("artifacts"), "artifacts")
+    _exact_keys(descriptors, LEGACY_ARTIFACT_NAMES, "legacy artifacts")
+    artifacts = {
+        name: _read_artifact(package_dir, descriptors[name], name)
+        for name in sorted(LEGACY_ARTIFACT_NAMES)
+    }
+    original_bytes, original_descriptor = artifacts["original_bytes"]
+    source_text_bytes, _ = artifacts["source_text_bytes"]
+    if (
+        source["sha256"] != _sha256_bytes(original_bytes)
+        or source["size_bytes"] != len(original_bytes)
+        or original_descriptor["sha256"] != source["sha256"]
+    ):
+        raise EttOfflinePlanError(
+            "legacy original bytes do not match source_object identity"
+        )
+
+    recovery = _mapping(package.get("recovery_envelope"), "recovery_envelope")
+    try:
+        preview = build_legacy_normalization_preview(
+            recovery,
+            original_bytes=original_bytes,
+            source_text_bytes=source_text_bytes,
+        )
+    except EttLegacyPreviewError as exc:
+        raise EttOfflinePlanError(str(exc)) from exc
+    observed = _mapping(recovery.get("observed"), "recovery observed")
+    recovery_source = _mapping(observed.get("source"), "recovery source")
+    for key in ("source_id", "sha256", "size_bytes"):
+        if recovery_source.get(key) != source.get(key):
+            raise EttOfflinePlanError(
+                f"recovery source {key} does not match source_object"
+            )
+    if recovery_source.get("chapter") != "29":
+        raise EttOfflinePlanError("recovery source chapter mismatch")
+
+    ingest_runs_value = observed.get("legacy_runs")
+    raw_rows_value = observed.get("raw_rows")
+    if not isinstance(ingest_runs_value, list) or len(ingest_runs_value) != 3:
+        raise EttOfflinePlanError("legacy package must contain exactly three runs")
+    if not isinstance(raw_rows_value, list) or len(raw_rows_value) != EXPECTED_RAW_COUNT:
+        raise EttOfflinePlanError("legacy package must contain exactly 533 RAW rows")
+    ingest_runs = [dict(_mapping(run, "legacy ingest run")) for run in ingest_runs_value]
+    raw_rows = [dict(_mapping(row, "legacy raw row")) for row in raw_rows_value]
+
+    projected_rows: list[dict[str, Any]] = []
+    crosswalk: list[dict[str, Any]] = []
+    for preview_row in preview["rows"]:
+        provenance = _mapping(preview_row["provenance"], "preview provenance")
+        payload = {
+            "source_id": source["source_id"],
+            "raw_row_sha256": preview_row["legacy_raw_row_sha256"],
+            "ordinal": preview_row["ordinal"],
+            "parser_version": preview["normalizer_version"],
+            "source_revision": source["source_revision"],
+            "hs_code": preview_row["hs_code"],
+            "page_number": provenance["page_number"],
+            "line_number": provenance["line_number"],
+            "original_description": preview_row["original_description"],
+            "original_supplementary_unit": preview_row[
+                "original_supplementary_unit"
+            ],
+            "original_duty_text": preview_row["original_duty_text"],
+            "original_raw_line": preview_row["original_raw_line"],
+            "syntax_status": preview_row["syntax_status"],
+            "normalized_rate_text": preview_row["normalized_rate_text"],
+            "is_ambiguous": preview_row["is_ambiguous"],
+            "ambiguity_reason": preview_row["ambiguity_reason"],
+            "legal_status": preview_row["legal_status"],
+            "verified": preview_row["verified"],
+            "admitted": preview_row["admitted"],
+        }
+        persisted_hash = sha256_json(payload)
+        projected_rows.append({**payload, "result_sha256": persisted_hash})
+        crosswalk.append(
+            {
+                "ordinal": preview_row["ordinal"],
+                "persisted_result_sha256": persisted_hash,
+                "preview_result_sha256": preview_row["result_sha256"],
+                "legacy_run_id": preview_row["legacy_run_id"],
+                "legacy_parser_version": preview_row["legacy_parser_version"],
+                "provenance": dict(provenance),
+            }
+        )
+
+    plan: dict[str, Any] = {
+        "schema_version": 1,
+        "kind": LEGACY_PLAN_KIND,
+        "target": "tariff_staging.tariff_ingest.ett_normalization_results",
+        "transaction_owner": "CALLER",
+        "execution_performed": False,
+        "source_object": dict(source),
+        "ingest_runs": ingest_runs,
+        "raw_rows": raw_rows,
+        "retained_artifacts": {
+            name: descriptor for name, (_, descriptor) in artifacts.items()
+        },
+        "recovery_envelope_sha256": recovery["envelope_sha256"],
+        "preview_sha256": preview["preview_sha256"],
+        "normalizer_version": preview["normalizer_version"],
+        "expected_counts": {
+            "raw": EXPECTED_RAW_COUNT,
+            "parsed": preview["counts"]["parsed"],
+            "ambiguous": preview["counts"]["ambiguous"],
+            "legal": 0,
+            "verified": 0,
+            "admitted": 0,
+        },
+        "normalization_digest": sha256_json(projected_rows),
+        "rows": projected_rows,
+        "legacy_crosswalk": crosswalk,
+        "invariants": [
+            "exact retained bytes rebuild the reviewed recovery and preview",
+            "exactly three reviewed legacy runs bind ordinals 1 through 533",
+            "legacy RAW hashes and source/run identities are never rewritten",
+            "persisted hashes cover the exact target-table row contract",
+            "crosswalk binds persisted and preview hashes to legacy provenance",
+            "target table must already exist; legacy SQL contains no DDL",
+            "caller owns the transaction; generated SQL has no transaction boundary",
+            "same-version exact replay mutates zero rows",
+            "same-version conflict or incomplete replay fails closed",
+            "all legal_status values are UNVERIFIED; verified and admitted are false",
+        ],
+    }
+    sql = _render_sql(plan)
+    plan["sql_sha256"] = _sha256_bytes(sql.encode("utf-8"))
+    plan["plan_sha256"] = sha256_json(plan)
+    return plan, sql
+
+
 def build_offline_artifacts(package_dir: Path) -> tuple[dict[str, Any], str]:
     """Fully validate an explicit local package before returning plan and SQL."""
 
@@ -759,6 +992,8 @@ def build_offline_artifacts(package_dir: Path) -> tuple[dict[str, Any], str]:
         _read_json_bytes(package_path.read_bytes(), "package.json"),
         "package.json",
     )
+    if package.get("kind") == LEGACY_PACKAGE_KIND:
+        return _build_legacy_offline_artifacts(package_dir, package)
     top_keys = {
         "schema_version",
         "normalizer_version",
@@ -776,26 +1011,7 @@ def build_offline_artifacts(package_dir: Path) -> tuple[dict[str, Any], str]:
     if package.get("normalizer_version") != ETT_NORMALIZER_VERSION:
         raise EttOfflinePlanError("normalizer_version mismatch")
 
-    source = _mapping(package.get("source_object"), "source_object")
-    _exact_keys(source, SOURCE_KEYS, "source_object")
-    for field in SOURCE_KEYS - {"size_bytes"}:
-        if not isinstance(source.get(field), str) or not source[field]:
-            raise EttOfflinePlanError(f"source_object.{field} must be a string")
-    _strict_positive_int(source.get("size_bytes"), "source_object.size_bytes")
-    try:
-        captured_at = datetime.fromisoformat(
-            source["captured_at"].replace("Z", "+00:00")
-        )
-    except ValueError as exc:
-        raise EttOfflinePlanError(
-            "source_object.captured_at is not ISO-8601"
-        ) from exc
-    if captured_at.utcoffset() is None:
-        raise EttOfflinePlanError(
-            "source_object.captured_at must include a timezone"
-        )
-    if source.get("status") != COLLECTED_UNVERIFIED:
-        raise EttOfflinePlanError("source_object status is not COLLECTED_UNVERIFIED")
+    source = _validate_source_object(package.get("source_object"))
     ingest_run = _mapping(package.get("ingest_run"), "ingest_run")
     _exact_keys(ingest_run, RUN_KEYS, "ingest_run")
     for field in ("raw_count", "unique_count"):
@@ -942,5 +1158,6 @@ def write_offline_artifacts(package_dir: Path, output_dir: Path) -> dict[str, An
         shutil.rmtree(temporary, ignore_errors=True)
         raise
     return plan
+
 
 
