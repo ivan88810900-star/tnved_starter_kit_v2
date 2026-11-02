@@ -193,19 +193,13 @@ def prepare_ett_staging_batch(
     next_ordinal = start_ordinal + len(batch_rows)
     complete = next_ordinal > total_raw_count
 
-    return {
+    payload = {
         "schema_version": 1,
         "parser_version": PLUS_PARSER_VERSION if allow_leading_plus else PARSER_VERSION,
-        "allow_leading_plus": allow_leading_plus,
         "source_text_sha256": hashlib.sha256(source_bytes).hexdigest(),
         "row_status": ROW_STATUS,
         "normalization_performed": False,
         "legal_admission_performed": False,
-        "completeness": {
-            "status": "BLOCKED",
-            "source_provenance_verified": False,
-            "multiline_continuations_collected": False,
-        },
         "totals": {
             "raw_count": total_raw_count,
             "unique_count": len(total_hashes),
@@ -226,6 +220,14 @@ def prepare_ett_staging_batch(
         },
         "duplicate_evidence": _duplicate_evidence(rows),
     }
+    if allow_leading_plus:
+        payload["allow_leading_plus"] = True
+        payload["completeness"] = {
+            "status": "BLOCKED",
+            "source_provenance_verified": False,
+            "multiline_continuations_collected": False,
+        }
+    return payload
 
 
 __all__ = [
