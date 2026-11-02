@@ -1,3 +1,19 @@
+## 2026-11-02 — Chapter-29 technical normalization accepted; next batch is current chapter 30
+
+- The completed chapter-29 staging operation is bound to reviewed exact commit [957ffae](https://github.com/ivan88810900-star/tnved_starter_kit_v2/commit/957ffae94303499455e3de89ae9309fbfdb97cc2), successful exact-head [CI 41460830507](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41460830507), and the public [EEC source](https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_24.05.2024.pdf). Independent parent QA passed before execution.
+- Atomic insert transaction `264195` added 533 results. Transaction `265217` replayed the exact plan with zero INSERT/UPDATE/DELETE; full readback matched all 533 planned results and every row/`xmin` remained unchanged.
+- Accepted staging baseline: **619 results / 444 PARSED / 175 AMBIGUOUS / 0 verified / 0 admitted**. RAW/source/run identities and the previous 86 results were preserved. This is technical staging only, not legal or calculation admission.
+- Public checksums: source PDF `418666f5fc61db171a9d0bbcf068753504cd29ff04f0f4ac62d4e1147980b51a`; SQL file `1030b5f38541d6f621d469f03bb541e854f634e51281fc25772f9919cd5fd954`; normalization digest `2aea71dbb3e8ffc489fb8055a9f4d15ab0d7b82e785029c2a658c1093c86881c`; private execution-report file SHA-256 `f77e57139a933e129c8f7689f1f411e006f6490648ecdcadccc97080dab94b77`. The private file itself is not published.
+- Durable sanitized receipt: `.ai/orchestration/evidence/cycle430_chapter29_normalization_acceptance.json`.
+
+### Next official batch inventory
+
+- The live EEC ETT index points chapter 30 to [revision 2026-03-08](https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.30_2022_08.03.2026.pdf), a 14-page pharmaceutical-products PDF. Repository `main` still lists `ru.30_2022_01.07.2024.pdf`; therefore the current revision must be acquired and verified before packaging.
+- Current accepted RAW inventory is exactly the completed chapter-29 533 plus group-01 86, so chapter-30 RAW is absent. Exact row scope is deliberately unknown until deterministic extraction; do not infer it from page count.
+- Use the existing canonical path: `staging_raw_ingest.prepare_ett_staging_batch` (strict UTF-8, ASCII 10-digit codes, exact raw-line hashes; batch bound 10,000), then `staging_ett_ingest.ingest_ett_rows` (caller-owned transaction, immutable source/run/RAW, exact replay), then canonical single-run `staging_ett_offline_plan.build_offline_artifacts` and `staging_ett_normalization_core.build_ett_normalization_plan`. The chapter-29 legacy three-run package is source-specific and must not be reused.
+- Known compatibility gate: the existing DB RAW loader has `MAX_ETT_ROWS = 86`, while the reviewed normalization core accepts 1..533. First generate and independently QA the current chapter-30 package without DB writes. If its exact row count exceeds 86 but is at most 533, the only indicated code change is a reviewed bound/test widening in the existing loader; no new tool, table or architecture is justified.
+- No further database write, merge, deploy, enforcement, legal admission, new table or architecture is authorized. The consumed chapter-29 permission does not cover chapter 30.
+
 ## 2026-10-30 — PR #263 offline ETT plan evidence reconciled
 
 - Draft [PR #263](https://github.com/ivan88810900-star/tnved_starter_kit_v2/pull/263) remains at exact head `b26f938f236d707ac2ff2d875d5ffc9f94fbb58b`, stacked on unmerged PR #262; no code or candidate SHA changed in this metadata-only reconciliation.
