@@ -16,7 +16,11 @@ if str(BACKEND_ROOT) not in sys.path:
 
 from app.services.staging_ett_normalization_core import sha256_json
 from app.services.staging_ett_offline_plan import _render_sql, build_offline_artifacts
-from tests.test_ett_offline_plan_runner import _build_legacy_package, _build_package
+from tests.test_ett_offline_plan_runner import (
+    _build_legacy_append_package,
+    _build_legacy_package,
+    _build_package,
+)
 
 
 DATABASE = "tariff_staging"
@@ -204,6 +208,38 @@ SELECT * FROM jsonb_to_recordset(
   original_duty_text text, original_raw_line text, syntax_status text,
   normalized_rate_text text, is_ambiguous boolean, ambiguity_reason text,
   legal_status text, verified boolean, admitted boolean, result_sha256 text
+);
+"""
+
+
+def _run_insert_sql(run) -> str:
+    run_hex = _hex_json(run)
+    return f"""
+INSERT INTO tariff_ingest.ingest_runs (
+  run_id, source_id, scope, parser_version, status, raw_count, unique_count,
+  normalized_count, rejected_count, resume_cursor
+)
+SELECT x.run_id, x.source_id, x.scope, x.parser_version, x.status, x.raw_count,
+       x.unique_count, x.normalized_count, x.rejected_count, x.resume_cursor
+FROM jsonb_to_record(
+  convert_from(decode('{run_hex}', 'hex'), 'UTF8')::jsonb
+) AS x(
+  run_id text, source_id text, scope jsonb, parser_version text, status text,
+  raw_count integer, unique_count integer, normalized_count integer,
+  rejected_count integer, resume_cursor jsonb
+);
+"""
+
+
+def _raw_insert_sql(rows) -> str:
+    rows_hex = _hex_json(rows)
+    return f"""
+INSERT INTO tariff_ingest.ett_collected_rows
+SELECT * FROM jsonb_to_recordset(
+  convert_from(decode('{rows_hex}', 'hex'), 'UTF8')::jsonb
+) AS x(
+  source_id text, hs_code text, description text, supplementary_unit text,
+  duty_text text, raw_line text, row_sha256 text, status text, ordinal integer
 );
 """
 
@@ -546,6 +582,187 @@ def main() -> int:
         )
         assert _scalar(fingerprint_sql) == before_replay
 
+        append_package_dir = root / "legacy-append-package"
+        _build_legacy_append_package(append_package_dir)
+        append_plan, append_sql = build_offline_artifacts(append_package_dir)
+        append_source_id = append_plan["source_object"]["source_id"]
+        append_base_plan = {
+            "source_object": append_plan["source_object"],
+            "ingest_runs": append_plan["base_ingest_runs"],
+            "raw_rows": append_plan["base_raw_rows"],
+        }
+        append_setup = root / "legacy-append-setup.sql"
+        append_setup.write_text(
+            _setup_legacy_sql(append_base_plan)
+            + _result_insert_sql(append_plan["base_results"]),
+            encoding="utf-8",
+        )
+        _psql(path=append_setup)
+        append_apply = root / "legacy-append-apply.sql"
+        append_apply.write_text(append_sql, encoding="utf-8")
+        assert _scalar(
+            "SELECT count(*) FROM tariff_ingest.ett_normalization_results"
+        ) == "619"
+        assert _scalar(
+            "SELECT count(*) FROM tariff_ingest.ingest_runs "
+            f"WHERE source_id='{append_source_id}'"
+        ) == "3"
+        assert _scalar(
+            "SELECT count(*) FROM tariff_ingest.ett_collected_rows "
+            f"WHERE source_id='{append_source_id}'"
+        ) == "533"
+
+        _psql(path=append_apply, rollback=True)
+        assert _scalar(
+            "SELECT count(*) FROM tariff_ingest.ett_normalization_results"
+        ) == "619"
+
+        _psql(sql=_run_insert_sql(append_plan["append_ingest_run"]))
+        failure = _psql(path=append_apply, succeeds=False)
+        _assert_error(failure, "append current state is partial or conflicting")
+        assert _scalar(
+            "SELECT count(*) FROM tariff_ingest.ett_collected_rows "
+            f"WHERE source_id='{append_source_id}'"
+        ) == "533"
+        _psql(
+            sql="DELETE FROM tariff_ingest.ingest_runs "
+            f"WHERE run_id='{append_plan['append_ingest_run']['run_id']}'"
+        )
+
+        _psql(sql=_raw_insert_sql(append_plan["append_raw_rows"][:1]))
+        failure = _psql(path=append_apply, succeeds=False)
+        _assert_error(failure, "append current state is partial or conflicting")
+        assert _scalar(
+            "SELECT count(*) FROM tariff_ingest.ingest_runs "
+            f"WHERE source_id='{append_source_id}'"
+        ) == "3"
+        _psql(
+            sql="DELETE FROM tariff_ingest.ett_collected_rows "
+            f"WHERE source_id='{append_source_id}' AND ordinal=534"
+        )
+
+        append_holder = subprocess.Popen(
+            [
+                "sudo", "-u", "postgres", "psql", "-X",
+                "--set", "ON_ERROR_STOP=1", "--dbname", DATABASE,
+                "--command",
+                "BEGIN; LOCK TABLE tariff_ingest.ett_collected_rows "
+                "IN ROW EXCLUSIVE MODE; SELECT pg_sleep(3); COMMIT;",
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        for _ in range(30):
+            if _scalar(
+                "SELECT count(*) FROM pg_locks WHERE relation="
+                "'tariff_ingest.ett_collected_rows'::regclass "
+                "AND mode='RowExclusiveLock' AND granted"
+            ) == "1":
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError("append concurrent writer lock was not observed")
+        locked_append_apply = root / "legacy-append-apply-locked.sql"
+        locked_append_apply.write_text(
+            "SET lock_timeout='200ms';\n" + append_sql, encoding="utf-8"
+        )
+        failure = _psql(path=locked_append_apply, succeeds=False)
+        _assert_error(failure, "lock timeout")
+        holder_stdout, holder_stderr = append_holder.communicate(timeout=10)
+        assert append_holder.returncode == 0, holder_stdout + holder_stderr
+
+        append_old_staging_sql = (
+            "SELECT md5(string_agg(v, ',' ORDER BY v)) FROM ("
+            "SELECT 'source:' || xmin::text || ':' || to_jsonb(s)::text AS v "
+            "FROM tariff_ingest.source_objects s "
+            f"WHERE source_id='{append_source_id}' UNION ALL "
+            "SELECT 'run:' || xmin::text || ':' || to_jsonb(r)::text "
+            "FROM tariff_ingest.ingest_runs r "
+            f"WHERE source_id='{append_source_id}' UNION ALL "
+            "SELECT 'raw:' || xmin::text || ':' || to_jsonb(r)::text "
+            "FROM tariff_ingest.ett_collected_rows r "
+            f"WHERE source_id='{append_source_id}' AND ordinal <= 533) x"
+        )
+        append_old_results_sql = (
+            "SELECT md5(string_agg(xmin::text || ':' || result_sha256, ',' "
+            "ORDER BY ordinal)) FROM tariff_ingest.ett_normalization_results "
+            f"WHERE source_id='{append_source_id}' AND ordinal <= 533"
+        )
+        append_old_staging = _scalar(append_old_staging_sql)
+        append_old_results = _scalar(append_old_results_sql)
+        _psql(path=append_apply)
+        assert _scalar(
+            "SELECT count(*) FROM tariff_ingest.ett_normalization_results"
+        ) == "624"
+        assert _scalar(
+            "SELECT count(*) FILTER (WHERE syntax_status='PARSED'), "
+            "count(*) FILTER (WHERE is_ambiguous), "
+            "count(*) FILTER (WHERE legal_status<>'UNVERIFIED'), "
+            "count(*) FILTER (WHERE verified), count(*) FILTER (WHERE admitted) "
+            "FROM tariff_ingest.ett_normalization_results"
+        ) == "447|177|0|0|0"
+        assert _scalar(
+            "SELECT count(*) FROM tariff_ingest.ingest_runs "
+            f"WHERE source_id='{append_source_id}'"
+        ) == "4"
+        assert _scalar(
+            "SELECT count(*) FROM tariff_ingest.ett_collected_rows "
+            f"WHERE source_id='{append_source_id}'"
+        ) == "538"
+        assert _scalar(append_old_staging_sql) == append_old_staging
+        assert _scalar(append_old_results_sql) == append_old_results
+        stored_scope = json.loads(
+            _scalar(
+                "SELECT scope::text FROM tariff_ingest.ingest_runs "
+                f"WHERE run_id='{append_plan['append_ingest_run']['run_id']}'"
+            )
+        )
+        assert stored_scope["append_crosswalk_sha256"] == append_plan[
+            "append_crosswalk_sha256"
+        ]
+        assert sha256_json(stored_scope["append_crosswalk"]) == append_plan[
+            "append_crosswalk_sha256"
+        ]
+        assert [
+            row["storage_ordinal"] for row in stored_scope["append_crosswalk"]
+        ] == [534, 535, 536, 537, 538]
+        assert [
+            row["source_position"] for row in stored_scope["append_crosswalk"]
+        ] != [534, 535, 536, 537, 538]
+        append_all_fingerprint_sql = (
+            "SELECT md5(string_agg(v, ',' ORDER BY v)) FROM ("
+            "SELECT 'source:' || xmin::text || ':' || to_jsonb(s)::text AS v "
+            "FROM tariff_ingest.source_objects s "
+            f"WHERE source_id='{append_source_id}' UNION ALL "
+            "SELECT 'run:' || xmin::text || ':' || to_jsonb(r)::text "
+            "FROM tariff_ingest.ingest_runs r "
+            f"WHERE source_id='{append_source_id}' UNION ALL "
+            "SELECT 'raw:' || xmin::text || ':' || to_jsonb(r)::text "
+            "FROM tariff_ingest.ett_collected_rows r "
+            f"WHERE source_id='{append_source_id}' UNION ALL "
+            "SELECT 'result:' || xmin::text || ':' || to_jsonb(r)::text "
+            "FROM tariff_ingest.ett_normalization_results r "
+            f"WHERE source_id='{append_source_id}') x"
+        )
+        append_all_fingerprint = _scalar(append_all_fingerprint_sql)
+        _psql(path=append_apply)
+        assert _scalar(append_all_fingerprint_sql) == append_all_fingerprint
+        assert _scalar(append_old_staging_sql) == append_old_staging
+        assert _scalar(append_old_results_sql) == append_old_results
+
+        _psql(
+            sql="DELETE FROM tariff_ingest.ett_normalization_results "
+            f"WHERE source_id='{append_source_id}'; "
+            "DELETE FROM tariff_ingest.ett_collected_rows "
+            f"WHERE source_id='{append_source_id}'; "
+            "DELETE FROM tariff_ingest.ingest_runs "
+            f"WHERE source_id='{append_source_id}'; "
+            "DELETE FROM tariff_ingest.source_objects "
+            f"WHERE source_id='{append_source_id}'"
+        )
+        assert _scalar(fingerprint_sql) == before_replay
+
         _psql(
             sql="UPDATE tariff_ingest.ett_normalization_results "
             "SET original_duty_text='corrupt' WHERE ordinal=1"
@@ -636,7 +853,10 @@ def main() -> int:
             "WHERE table_schema='tariff_ingest'"
         ) == "8"
 
-    print("PostgreSQL offline plan probe: first apply/replay/conflict/history/schema PASS")
+    print(
+        "PostgreSQL offline plan probe: "
+        "first apply/replay/conflict/history/schema/append5 PASS"
+    )
     return 0
 
 
