@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "cycle": 430,
+  "task_id": "TARIFF-ETT-CHAPTER29-NORMALIZATION-ACCEPTANCE-20261102",
+  "recorded_at": "2026-11-02T15:03:00Z",
+  "classification": "SANITIZED_PUBLIC_ACCEPTANCE_RECEIPT",
+  "scope": {
+    "operation": "one bounded chapter-29 technical-normalization insert into existing tariff_ingest.ett_normalization_results",
+    "database_layer": "non-production staging",
+    "ddl_performed": false,
+    "update_delete_performed": false,
+    "legal_admission_performed": false
+  },
+  "reviewed_candidate": {
+    "commit_sha": "957ffae94303499455e3de89ae9309fbfdb97cc2",
+    "commit_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/commit/957ffae94303499455e3de89ae9309fbfdb97cc2",
+    "exact_head_ci_run_id": 41460830507,
+    "exact_head_ci_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41460830507",
+    "independent_parent_qa": "PASS before execution"
+  },
+  "source": {
+    "authority": "Eurasian Economic Commission",
+    "public_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_24.05.2024.pdf",
+    "revision": "2024-05-24",
+    "pdf_sha256": "418666f5fc61db171a9d0bbcf068753504cd29ff04f0f4ac62d4e1147980b51a"
+  },
+  "execution": {
+    "insert_transaction_id": 264195,
+    "replay_transaction_id": 265217,
+    "inserted_results": 533,
+    "replay_mutations": {
+      "insert": 0,
+      "update": 0,
+      "delete": 0
+    },
+    "readback": "all 533 results matched the reviewed plan",
+    "replay_readback": "all rows and xmin values were unchanged",
+    "preserved_state": [
+      "RAW rows",
+      "source identities",
+      "ingest-run identities",
+      "the pre-existing 86 normalization results"
+    ]
+  },
+  "baseline": {
+    "before": {
+      "results": 86,
+      "parsed": 81,
+      "ambiguous": 5,
+      "verified": 0,
+      "admitted": 0
+    },
+    "after": {
+      "results": 619,
+      "parsed": 444,
+      "ambiguous": 175,
+      "verified": 0,
+      "admitted": 0
+    }
+  },
+  "checksums": {
+    "sql_file_sha256": "1030b5f38541d6f621d469f03bb541e854f634e51281fc25772f9919cd5fd954",
+    "normalization_digest": "2aea71dbb3e8ffc489fb8055a9f4d15ab0d7b82e785029c2a658c1093c86881c",
+    "private_execution_report_file_sha256": "f77e57139a933e129c8f7689f1f411e006f6490648ecdcadccc97080dab94b77"
+  },
+  "privacy": {
+    "private_report_published": false,
+    "excluded": [
+      "533 result rows",
+      "source exports",
+      "presigned URLs",
+      "private chat",
+      "database credentials",
+      "private paths and links"
+    ],
+    "note": "The private execution report checksum is the SHA-256 of the report file bytes; it is not a receipt payload digest."
+  },
+  "boundaries": {
+    "one_time_write_authorization_consumed": true,
+    "no_database_operation_in_cycle_430": true,
+    "no_merge_deploy_enforcement_or_admission": true
+  }
+}
