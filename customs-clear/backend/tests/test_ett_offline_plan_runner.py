@@ -17,8 +17,14 @@ from app.services.staging_ett_normalization_core import (
 )
 from app.services.staging_ett_offline_plan import (
     EttOfflinePlanError,
+    LEGACY_PACKAGE_KIND,
     build_offline_artifacts,
     write_offline_artifacts,
+)
+from tests.test_ett_legacy_recovery import (
+    _build as _build_legacy_recovery,
+    _fixture as _legacy_fixture,
+    _historical_line,
 )
 
 
@@ -195,6 +201,75 @@ def _build_package(
     return package
 
 
+def _build_legacy_package(root: Path) -> dict:
+    root.mkdir()
+    fixture = _legacy_fixture()
+    for ordinal, row in enumerate(fixture["raw_rows"], start=1):
+        duty = "5 with note" if ordinal <= 170 else "5"
+        row["duty_text"] = duty
+        row["raw_line"] = _historical_line(
+            row["hs_code"],
+            row["description"],
+            row["supplementary_unit"],
+            duty,
+        )
+        row["row_sha256"] = hashlib.sha256(
+            row["raw_line"].encode("utf-8")
+        ).hexdigest()
+    lines = [row["raw_line"] for row in fixture["raw_rows"]]
+    fixture["source_text_bytes"] = "\n\f".join(
+        [
+            "\n".join(lines[:200]),
+            "\n".join(lines[200:400]),
+            "\n".join(lines[400:]),
+        ]
+    ).encode("utf-8")
+    source_text_sha = hashlib.sha256(fixture["source_text_bytes"]).hexdigest()
+    fixture["legacy_runs"][1]["scope"]["source_text_sha256"] = source_text_sha
+    fixture["legacy_runs"][2]["scope"]["source_text_sha256"] = source_text_sha
+    recovery = _build_legacy_recovery(fixture)
+
+    original_path = root / "original.bin"
+    source_text_path = root / "source.txt"
+    original_path.write_bytes(fixture["original_bytes"])
+    source_text_path.write_bytes(fixture["source_text_bytes"])
+    source = {
+        "source_id": fixture["source"]["source_id"],
+        "authority": "EEC",
+        "dataset": "EEC-ETT",
+        "source_url": "https://eec.eaeunion.org/synthetic/chapter29.pdf",
+        "source_revision": "synthetic-chapter29",
+        "object_bucket": "official-originals",
+        "object_key": "ett/synthetic/chapter29/original.pdf",
+        "sha256": fixture["source"]["sha256"],
+        "size_bytes": fixture["source"]["size_bytes"],
+        "media_type": "application/pdf",
+        "captured_at": "2026-10-16T00:00:00Z",
+        "status": COLLECTED_UNVERIFIED,
+    }
+    package = {
+        "schema_version": 1,
+        "kind": LEGACY_PACKAGE_KIND,
+        "normalizer_version": ETT_NORMALIZER_VERSION,
+        "source_object": source,
+        "recovery_envelope": recovery,
+        "artifacts": {
+            "original_bytes": {
+                "path": "original.bin",
+                "sha256": hashlib.sha256(fixture["original_bytes"]).hexdigest(),
+                "size_bytes": len(fixture["original_bytes"]),
+            },
+            "source_text_bytes": {
+                "path": "source.txt",
+                "sha256": source_text_sha,
+                "size_bytes": len(fixture["source_text_bytes"]),
+            },
+        },
+    }
+    _write_canonical(root / "package.json", package)
+    return package
+
+
 def _rewrite_package(root: Path, package: dict) -> None:
     _write_canonical(root / "package.json", package)
 
@@ -359,6 +434,104 @@ class OfflinePlanRunnerTests(unittest.TestCase):
             sql,
             r"(?im)^\s*(START\s+TRANSACTION|BEGIN\s*;|COMMIT|ROLLBACK|\\connect)\b",
         )
+
+    def test_legacy_533_projection_preserves_crosswalk_without_ddl(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            package_dir = Path(temporary) / "package"
+            package = _build_legacy_package(package_dir)
+            plan, sql = build_offline_artifacts(package_dir)
+        self.assertEqual(
+            plan["expected_counts"],
+            {
+                "raw": 533,
+                "parsed": 363,
+                "ambiguous": 170,
+                "legal": 0,
+                "verified": 0,
+                "admitted": 0,
+            },
+        )
+        self.assertEqual(len(plan["ingest_runs"]), 3)
+        self.assertEqual(len(plan["rows"]), 533)
+        self.assertEqual(len(plan["legacy_crosswalk"]), 533)
+        self.assertEqual(
+            [run["run_id"] for run in plan["ingest_runs"]],
+            [
+                "synthetic-cycle-one",
+                "synthetic-cycle-two",
+                "synthetic-cycle-three",
+            ],
+        )
+        for raw, row, link in zip(
+            package["recovery_envelope"]["observed"]["raw_rows"],
+            plan["rows"],
+            plan["legacy_crosswalk"],
+        ):
+            self.assertEqual(row["raw_row_sha256"], raw["row_sha256"])
+            self.assertEqual(link["persisted_result_sha256"], row["result_sha256"])
+            self.assertNotEqual(
+                link["preview_result_sha256"], link["persisted_result_sha256"]
+            )
+            payload = dict(row)
+            persisted = payload.pop("result_sha256")
+            self.assertEqual(persisted, sha256_json(payload))
+        self.assertNotIn("CREATE TABLE", sql)
+        self.assertNotIn("$ett_ddl$", sql)
+        self.assertIn("legacy normalization target table is missing", sql)
+        self.assertIn("IN SHARE ROW EXCLUSIVE MODE", sql)
+        self.assertEqual(
+            sql.count("INSERT INTO tariff_ingest.ett_normalization_results"), 1
+        )
+        self.assertNotRegex(sql, r"(?im)^\s*(UPDATE|DELETE|ALTER|DROP|TRUNCATE)\b")
+        self.assertNotRegex(
+            sql,
+            r"(?im)^\s*(START\s+TRANSACTION|BEGIN\s*;|COMMIT|ROLLBACK|\\connect)\b",
+        )
+
+    def test_legacy_package_contract_tampering_fails_before_sql(self):
+        mutations = (
+            (
+                "normalizer",
+                lambda package, _root: package.__setitem__(
+                    "normalizer_version", "wrong"
+                ),
+                "normalizer_version",
+            ),
+            (
+                "source identity",
+                lambda package, _root: package["source_object"].__setitem__(
+                    "source_id", "wrong"
+                ),
+                "recovery source source_id",
+            ),
+            (
+                "recovery",
+                lambda package, _root: package["recovery_envelope"]["derived"].__setitem__(
+                    "raw_count", 532
+                ),
+                "envelope SHA mismatch",
+            ),
+            (
+                "artifact descriptor",
+                lambda package, _root: package["artifacts"][
+                    "source_text_bytes"
+                ].__setitem__("sha256", "0" * 64),
+                "byte digest",
+            ),
+            (
+                "artifact bytes",
+                lambda _package, root: (root / "source.txt").write_bytes(b"wrong"),
+                "byte digest",
+            ),
+        )
+        for label, mutate, message in mutations:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
+                package_dir = Path(temporary) / "package"
+                package = _build_legacy_package(package_dir)
+                mutate(package, package_dir)
+                _rewrite_package(package_dir, package)
+                with self.assertRaisesRegex(EttOfflinePlanError, message):
+                    build_offline_artifacts(package_dir)
 
     def test_faithful_533_chapter_plan_and_534_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1024,5 +1197,6 @@ class OfflinePlanRunnerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
