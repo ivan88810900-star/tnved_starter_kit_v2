@@ -533,6 +533,35 @@ class OfflinePlanRunnerTests(unittest.TestCase):
                 with self.assertRaisesRegex(EttOfflinePlanError, message):
                     build_offline_artifacts(package_dir)
 
+    def test_legacy_package_rejects_duplicate_keys_and_nonfinite_numbers(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            package_dir = Path(temporary) / "package"
+            _build_legacy_package(package_dir)
+            package_path = package_dir / "package.json"
+            encoded = package_path.read_text(encoding="utf-8")
+            package_path.write_text(
+                encoded.replace(
+                    "{",
+                    '{"kind":"ETT_LEGACY_CHAPTER29_APPLY_PACKAGE_V1",',
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(EttOfflinePlanError, "duplicate JSON key"):
+                build_offline_artifacts(package_dir)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            package_dir = Path(temporary) / "package"
+            _build_legacy_package(package_dir)
+            package_path = package_dir / "package.json"
+            encoded = package_path.read_text(encoding="utf-8")
+            package_path.write_text(
+                encoded.replace('"schema_version":1', '"schema_version":NaN', 1),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(EttOfflinePlanError, "non-finite JSON"):
+                build_offline_artifacts(package_dir)
+
     def test_faithful_533_chapter_plan_and_534_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             package_dir = Path(temporary) / "package"
