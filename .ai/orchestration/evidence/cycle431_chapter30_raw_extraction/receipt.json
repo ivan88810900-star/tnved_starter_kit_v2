@@ -2,8 +2,8 @@
   "schema_version": 1,
   "cycle": 431,
   "task_id": "TARIFF-ETT-CHAPTER30-OFFLINE-RAW-PACKAGE-20261102",
-  "recorded_at": "2026-11-02T15:15:00Z",
-  "status": "BLOCKED_INCOMPLETE_REVIEWED_EXTRACTION",
+  "recorded_at": "2026-11-02T15:30:00Z",
+  "status": "CODE_CANDIDATE_READY_SOURCE_PACKAGE_BLOCKED",
   "source_identity": {
     "authority": "EEC",
     "dataset": "EEC-ETT",
@@ -14,21 +14,38 @@
     "source_revision": "2026-03-08",
     "filename": "ru.30_2022_08.03.2026.pdf",
     "media_type": "application/pdf",
-    "pdf_sha256": "5f4ea9bc3534c7d01b314eb7fd9219a38d8dd74d69960394f55c929f686d0249",
-    "size_bytes": 346952,
-    "pages": 14,
     "retained_public_snapshot": {
       "repository_path": "backend/app/services/source_sync/data/ru.30_2022_08.03.2026.pdf",
       "github_blob_sha": "31b281b30c6c5a8d310ac8c958539e03c7724381",
-      "note": "Public repository-retained source snapshot; no prior private-party bytes were used."
+      "inventory_sha256": "5f4ea9bc3534c7d01b314eb7fd9219a38d8dd74d69960394f55c929f686d0249",
+      "inventory_size_bytes": 346952,
+      "first_known_history_commit": "9c0a7fc7152f19cdb0ec3f47d86c1aca05801417",
+      "first_known_history_date": "2026-05-18T11:34:26Z",
+      "first_known_history_message": "Initial project state",
+      "provenance_status": "UNREVIEWED_ORIGIN_PROVENANCE",
+      "allowed_use": "INVENTORY_ONLY",
+      "note": "Blob history proves repository presence, not acquisition from or byte identity with the current official response."
     },
     "origin_verification": {
       "official_index_current_link_confirmed": true,
-      "official_pdf_web_render_confirmed": true,
-      "direct_runtime_https_download": "HTTP 403",
-      "current_live_byte_identity": "PENDING_PARENT_QA",
-      "required_check": "Independently download the official URL and require exact SHA-256 and size match before any staging write."
-    }
+      "official_webreader_metadata_available": true,
+      "reconstructed_webreader_text_is_original_bytes": false,
+      "parent_verified_chapter30_bytes_available": false,
+      "direct_request_failure": {
+        "origin": "HTTP response from the EEC site eec.eaeunion.org",
+        "platform_auto_review_denial": false,
+        "method": "direct HTTPS GET",
+        "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.30_2022_08.03.2026.pdf",
+        "attempts_before_no_retry_instruction": 2,
+        "http_status": 403,
+        "curl_exit_code": 22,
+        "safe_response_description": "The remote EEC endpoint returned HTTP 403. curl --fail reported 'The requested URL returned error: 403'. No official response body or official PDF bytes were retained.",
+        "further_download_attempts_prohibited": true,
+        "proxy_bypass_or_unofficial_mirror_used": false
+      },
+      "required_gate": "Parent supplies verified official bytes or reviewed provenance proving the retained blob is the official source; until then official SHA, size and row count remain unaccepted."
+    },
+    "webreader_reported_pages": 14
   },
   "reviewed_extractor": {
     "code_commit_sha": "6b5b635240b6549eaf55214401c30b268ffcbc0e",
@@ -44,17 +61,19 @@
     "source_layout": {
       "path": ".ai/orchestration/evidence/cycle431_chapter30_raw_extraction/source_layout.txt",
       "sha256": "90554ea32706876c28d479b42d8f0dfb7d9032311550f63553066c6d5d40b536",
-      "size_bytes": 50659
+      "size_bytes": 50659,
+      "usable_as_official_source_evidence": false
     },
     "reviewed_extractor_output": {
       "path": ".ai/orchestration/evidence/cycle431_chapter30_raw_extraction/reviewed_extractor_incomplete_batch.json",
       "sha256": "cb51d69eac5878fa8506bcb39978afbde454f18866fe32e0f067cc72346bcdbf",
       "size_bytes": 32974,
-      "usable_as_complete_package": false
-    }
+      "usable_as_complete_package": false,
+      "usable_as_official_source_evidence": false
+    },
+    "classification": "DIAGNOSTIC_ONLY_FROM_UNREVIEWED_REPOSITORY_SNAPSHOT"
   },
   "extraction_result": {
-    "actual_ten_digit_candidate_count": 82,
     "candidate_unique_codes": 82,
     "candidate_unique_raw_lines": 82,
     "reviewed_extractor_count": 66,
@@ -85,26 +104,33 @@
     "row_status": "COLLECTED_UNVERIFIED",
     "normalization_performed": false,
     "verified_count": 0,
-    "admitted_count": 0
+    "admitted_count": 0,
+    "official_actual_count": null,
+    "diagnostic_candidate_count_from_unreviewed_repository_snapshot": 82,
+    "count_acceptance_status": "NOT_ACCEPTED_PENDING_OFFICIAL_BYTES"
   },
   "caps": {
     "raw_extractor_max_batch_size": 10000,
     "database_raw_loader_max_rows": 86,
     "normalization_core_max_rows": 533,
-    "actual_count": 82,
-    "numeric_cap_blocker": false
+    "actual_count": null,
+    "numeric_cap_blocker": "NOT_FINAL_UNTIL_OFFICIAL_BYTES_VERIFIED",
+    "diagnostic_snapshot_count": 82
   },
   "blocker": {
-    "type": "FORMAT_COVERAGE",
-    "cause": "The reviewed _CODE_SHAPED_RE only accepts whitespace before a code and silently ignores the official leading '+' marker.",
-    "consequence": "The generated 66-row artifact is deterministic but incomplete and must not be staged.",
-    "minimal_reviewed_fix": [
-      "Extend the existing _CODE_SHAPED_RE to accept only an optional literal '+' plus following horizontal whitespace before the 4-2-3-1 code.",
-      "Keep raw_line and its SHA-256 byte-exact, including the '+' marker; do not strip or reinterpret the marker.",
-      "Add a chapter-30 regression proving 82/82 rows, the 16 marked rows, three-column parsing, notes/units retention, determinism and legacy unmarked behavior.",
-      "Keep other markers and malformed separators fail-closed."
+    "type": "OFFICIAL_BYTES_AND_MULTILINE_COMPLETENESS",
+    "primary_causes": [
+      "Direct official HTTPS retrieval returned HTTP 403 and parent has no verified chapter-30 bytes.",
+      "The retained repository blob lacks reviewed origin provenance.",
+      "The immutable RAW extractor intentionally does not collect multiline description continuations."
     ],
-    "implementation_performed": false,
+    "consequence": "No complete official RAW package or factual official row count is claimed. The code candidate only closes literal-marker loss.",
+    "next_gate": [
+      "Parent independently verifies official bytes or reviewed retained-blob provenance.",
+      "Parent reviews exact code candidate cb06fd72986a94a66fb4590a77edd84e6395ce31.",
+      "Define a reviewed byte-preserving continuation contract before any package or database write."
+    ],
+    "implementation_performed": true,
     "pull_request_created": false
   },
   "boundaries": {
@@ -112,6 +138,58 @@
     "no_merge_deploy_enforcement_or_admission": true,
     "task_board_touched": false,
     "no_private_prior_batch_data_used": true,
-    "next_gate": "Reviewed minimal extractor fix, full 82-row deterministic package, and independent parent QA including official-byte SHA match."
+    "next_gate": "Parent code QA plus verified official bytes and a reviewed byte-preserving continuation contract; database writes remain HOLD.",
+    "http_403_not_retried_after_instruction": true,
+    "repository_snapshot_inventory_only": true,
+    "parent_verified_bytes_available": false
+  },
+  "existing_continuation_inventory": {
+    "compatible_immutable_raw_loader_found": false,
+    "continuation_capable_path": "customs-clear/backend/scripts/tnved_pdf_parser.py",
+    "function": "_assemble_rows",
+    "exact_github_blob_sha": "adbed79cb99cbeaedd6630b8e5883858f03d3e51",
+    "incompatibility": [
+      "normalizes and joins description/unit/duty continuations",
+      "collapses whitespace and pads codes",
+      "mutates unit/duty placement",
+      "does not retain byte-exact raw_line or row SHA-256"
+    ],
+    "disposition": "Do not substitute this structural parser for the immutable RAW extractor. Multiline description completeness remains BLOCKED.",
+    "independent_a5_note": "Semantic inventory passed on the supplied local materialization; A5 could not bind that materialization to the exact GitHub blob, so exact-blob provenance of the independent copy is not claimed."
+  },
+  "code_candidate": {
+    "pr": 256,
+    "branch": "agent/product-ntm-regressions-v1",
+    "parent_sha": "6b5b635240b6549eaf55214401c30b268ffcbc0e",
+    "exact_head_sha": "cb06fd72986a94a66fb4590a77edd84e6395ce31",
+    "changed_paths": [
+      "customs-clear/backend/app/services/staging_raw_ingest.py",
+      "customs-clear/backend/tests/test_staging_raw_ingest.py"
+    ],
+    "behavior": [
+      "accepts only optional literal '+' plus horizontal whitespace before the exact 4-2-3-1 code",
+      "preserves raw_line and SHA-256 including the literal '+'",
+      "rejects unsupported adjacent or spaced punctuation prefixes in mixed input",
+      "emits explicit completeness BLOCKED, source_provenance_verified=false and multiline_continuations_collected=false"
+    ],
+    "author_validation": {
+      "unit_tests": "14 PASS",
+      "py_compile": "PASS",
+      "retained_snapshot_diagnostic": "82 rows / 16 literal-plus / 6 literal-plus duty texts ending 63С) / all units dash; diagnostic only"
+    },
+    "independent_a5": {
+      "conclusion": "PASS",
+      "findings": 0,
+      "unit_tests": "14 PASS",
+      "adversarial_prefix_cases": "15/15 PASS"
+    },
+    "exact_head_ci": {
+      "run_id": 41471869243,
+      "workflow": "Tariff agent safety",
+      "job": "offline-safety",
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41471869243"
+    },
+    "readiness": "READY_FOR_PARENT_CODE_QA_ONLY"
   }
 }
