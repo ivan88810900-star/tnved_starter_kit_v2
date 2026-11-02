@@ -1248,9 +1248,15 @@ def _fixed_append_source_row(
 
 
 def _validate_legacy_append_digests(
-    pdf_sha256: Any, declared_text_sha256: Any, observed_text_sha256: str
+    declared_pdf_sha256: Any,
+    observed_pdf_sha256: str,
+    declared_text_sha256: Any,
+    observed_text_sha256: str,
 ) -> None:
-    if pdf_sha256 != LEGACY_APPEND_SOURCE_SHA256:
+    if (
+        declared_pdf_sha256 != LEGACY_APPEND_SOURCE_SHA256
+        or observed_pdf_sha256 != LEGACY_APPEND_SOURCE_SHA256
+    ):
         raise EttOfflinePlanError("legacy append rejects non-authoritative PDF SHA-256")
     if (
         declared_text_sha256 != LEGACY_APPEND_SOURCE_TEXT_SHA256
@@ -1713,22 +1719,27 @@ def _build_legacy_append_offline_artifacts(
     ):
         raise EttOfflinePlanError("legacy append package contract mismatch")
 
+    source_candidate = _validate_source_object(package.get("source_object"))
+    artifact_descriptors = _mapping(package.get("artifacts"), "artifacts")
+    _exact_keys(artifact_descriptors, LEGACY_ARTIFACT_NAMES, "legacy append artifacts")
+    original_bytes, _ = _read_artifact(
+        package_dir, artifact_descriptors["original_bytes"], "original_bytes"
+    )
+    source_text_descriptor = artifact_descriptors["source_text_bytes"]
+    source_text_bytes, _ = _read_artifact(
+        package_dir, source_text_descriptor, "source_text_bytes"
+    )
+    _validate_legacy_append_digests(
+        source_candidate["sha256"],
+        _sha256_bytes(original_bytes),
+        source_text_descriptor.get("sha256"),
+        _sha256_bytes(source_text_bytes),
+    )
     legacy_package = dict(package)
     legacy_package.pop("append_rows")
     legacy_package["kind"] = LEGACY_PACKAGE_KIND
     base_plan, _ = _build_legacy_offline_artifacts(package_dir, legacy_package)
     source = base_plan["source_object"]
-    source_text_descriptor = _mapping(package["artifacts"], "artifacts")[
-        "source_text_bytes"
-    ]
-    source_text_bytes, _ = _read_artifact(
-        package_dir, source_text_descriptor, "source_text_bytes"
-    )
-    _validate_legacy_append_digests(
-        source["sha256"],
-        source_text_descriptor.get("sha256"),
-        _sha256_bytes(source_text_bytes),
-    )
     try:
         source_text = source_text_bytes.decode("utf-8", errors="strict")
     except UnicodeDecodeError as exc:
