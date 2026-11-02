@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import tempfile
 from datetime import datetime, timezone
@@ -19,7 +20,10 @@ from .staging_ett_legacy_recovery import EXPECTED_RAW_COUNT
 from .staging_ett_normalization_core import (
     COLLECTED_UNVERIFIED,
     ETT_NORMALIZER_VERSION,
+    LEGAL_STATUS_UNVERIFIED,
+    SYNTAX_PARSED,
     EttNormalizationError,
+    _parse_rate,
     build_ett_normalization_plan,
     canonical_json,
     sha256_json,
@@ -31,6 +35,9 @@ TARGET_SCHEMA = "tariff_ingest"
 TARGET_TABLE = "ett_normalization_results"
 LEGACY_PACKAGE_KIND = "ETT_LEGACY_CHAPTER29_APPLY_PACKAGE_V1"
 LEGACY_PLAN_KIND = "ETT_LEGACY_CHAPTER29_NORMALIZATION_PLAN"
+LEGACY_APPEND_PACKAGE_KIND = "ETT_LEGACY_CHAPTER29_APPEND5_PACKAGE_V1"
+LEGACY_APPEND_PLAN_KIND = "ETT_LEGACY_CHAPTER29_APPEND5_PLAN_V1"
+LEGACY_APPEND_PARSER_VERSION = "ett-pdftotext-layout-raw-v2-plus-append-v1"
 
 SOURCE_KEYS = {
     "source_id",
@@ -112,6 +119,32 @@ LEGACY_EXTRACTION_KEYS = LEGACY_ORIGINAL_KEYS | {
     "raw_count",
     "unique_count",
 }
+APPEND_ROW_KEYS = {
+    "storage_ordinal",
+    "source_position",
+    "source_line_number",
+    "page_number",
+    "line_number",
+    "hs_code",
+    "description",
+    "description_provenance",
+    "parent_heading_provenance",
+    "supplementary_unit",
+    "duty_text",
+    "raw_line",
+    "row_sha256",
+    "status",
+}
+TEXT_PROVENANCE_KEYS = {"text", "source_lines", "fragments"}
+_APPEND_CODE_RE = re.compile(
+    r"^[ \t]*\+[ \t]+(?P<g1>[0-9]{4})[ \t]+(?P<g2>[0-9]{2})[ \t]+"
+    r"(?P<g3>[0-9]{3})[ \t]+(?P<g4>[0-9])(?P<tail>.*)$"
+)
+_SOURCE_CODE_RE = re.compile(
+    r"^[ \t]*(?:\+[ \t]+)?[0-9]{4}[ \t]+[0-9]{2}[ \t]+"
+    r"[0-9]{3}[ \t]+[0-9](?:[ \t]|$)"
+)
+_COLUMN_SEPARATOR_RE = re.compile(r"[ \t]{2,}")
 
 PACKAGE_SCHEMA = {
     "schema_version": PACKAGE_SCHEMA_VERSION,
@@ -152,6 +185,24 @@ PACKAGE_SCHEMA = {
             "recovery_envelope",
             "artifacts",
         ],
+        "artifacts": {
+            name: sorted(ARTIFACT_KEYS)
+            for name in sorted(LEGACY_ARTIFACT_NAMES)
+        },
+    },
+    "legacy_chapter29_append5_v1": {
+        "kind": LEGACY_APPEND_PACKAGE_KIND,
+        "required_top_level": [
+            "schema_version",
+            "kind",
+            "normalizer_version",
+            "source_object",
+            "recovery_envelope",
+            "append_rows",
+            "artifacts",
+        ],
+        "append_row_fields": sorted(APPEND_ROW_KEYS),
+        "text_provenance_fields": sorted(TEXT_PROVENANCE_KEYS),
         "artifacts": {
             name: sorted(ARTIFACT_KEYS)
             for name in sorted(LEGACY_ARTIFACT_NAMES)
@@ -998,6 +1049,605 @@ def _build_legacy_offline_artifacts(
     return plan, sql
 
 
+def _validate_text_provenance(
+    value: Any,
+    *,
+    label: str,
+    source_lines: list[str],
+) -> dict[str, Any]:
+    provenance = _mapping(value, label)
+    _exact_keys(provenance, TEXT_PROVENANCE_KEYS, label)
+    text = provenance.get("text")
+    lines = provenance.get("source_lines")
+    fragments = provenance.get("fragments")
+    if not isinstance(text, str) or not text:
+        raise EttOfflinePlanError(f"{label}.text must be a nonempty string")
+    if (
+        not isinstance(lines, list)
+        or not isinstance(fragments, list)
+        or not lines
+        or len(lines) != len(fragments)
+    ):
+        raise EttOfflinePlanError(f"{label} line/fragment binding mismatch")
+    for index, (line_number, fragment) in enumerate(
+        zip(lines, fragments), start=1
+    ):
+        _strict_positive_int(line_number, f"{label}.source_lines[{index}]")
+        if line_number > len(source_lines):
+            raise EttOfflinePlanError(f"{label} source line is outside retained text")
+        if not isinstance(fragment, str) or not fragment:
+            raise EttOfflinePlanError(f"{label}.fragments[{index}] must be nonempty")
+        if fragment not in source_lines[line_number - 1]:
+            raise EttOfflinePlanError(f"{label} fragment is not present on source line")
+    if text != " ".join(fragments):
+        raise EttOfflinePlanError(f"{label}.text must equal its ordered fragments")
+    return {
+        "text": text,
+        "source_lines": list(lines),
+        "fragments": list(fragments),
+    }
+
+
+def _append_source_locations(source_text: str) -> tuple[list[str], list[dict[str, int]]]:
+    logical_lines = source_text.splitlines()
+    chunks = source_text.splitlines(keepends=True)
+    if [chunk.splitlines()[0] for chunk in chunks] != logical_lines:
+        raise EttOfflinePlanError("append source splitlines reconstruction mismatch")
+    locations: list[dict[str, int]] = []
+    page_number = 1
+    page_line_number = 1
+    source_position = 0
+    for line, chunk in zip(logical_lines, chunks):
+        if _SOURCE_CODE_RE.match(line) is not None:
+            source_position += 1
+        locations.append(
+            {
+                "page_number": page_number,
+                "line_number": page_line_number,
+                "source_position": source_position if _SOURCE_CODE_RE.match(line) else 0,
+            }
+        )
+        form_feeds = chunk.count("\f")
+        if form_feeds:
+            page_number += form_feeds
+            page_line_number = 1
+        else:
+            page_line_number += 1
+    return logical_lines, locations
+
+
+def _render_legacy_append_sql(plan: Mapping[str, Any]) -> str:
+    source_hex = _json_hex(plan["source_object"])
+    base_runs_hex = _json_hex(plan["base_ingest_runs"])
+    base_raw_hex = _json_hex(plan["base_raw_rows"])
+    base_results_hex = _json_hex(plan["base_results"])
+    append_run_hex = _json_hex(plan["append_ingest_run"])
+    append_raw_hex = _json_hex(plan["append_raw_rows"])
+    append_results_hex = _json_hex(plan["append_results"])
+    columns_hex = _json_hex(
+        [
+            ["source_id", "text", True],
+            ["raw_row_sha256", "text", True],
+            ["ordinal", "integer", True],
+            ["parser_version", "text", True],
+            ["source_revision", "text", True],
+            ["hs_code", "text", True],
+            ["page_number", "integer", True],
+            ["line_number", "integer", True],
+            ["original_description", "text", True],
+            ["original_supplementary_unit", "text", True],
+            ["original_duty_text", "text", True],
+            ["original_raw_line", "text", True],
+            ["syntax_status", "text", True],
+            ["normalized_rate_text", "text", False],
+            ["is_ambiguous", "boolean", True],
+            ["ambiguity_reason", "text", False],
+            ["legal_status", "text", True],
+            ["verified", "boolean", True],
+            ["admitted", "boolean", True],
+            ["result_sha256", "text", True],
+        ]
+    )
+    return f"""-- Generated offline from an exact legacy append package.
+-- Execute only inside an explicit caller-owned transaction against tariff_staging.
+-- This file owns no connection or transaction boundary and contains INSERT only.
+
+DO $ett_append_plan$
+DECLARE
+    expected_source jsonb := convert_from(decode('{source_hex}', 'hex'), 'UTF8')::jsonb;
+    expected_base_runs jsonb := convert_from(decode('{base_runs_hex}', 'hex'), 'UTF8')::jsonb;
+    expected_base_raw jsonb := convert_from(decode('{base_raw_hex}', 'hex'), 'UTF8')::jsonb;
+    expected_base_results jsonb := convert_from(decode('{base_results_hex}', 'hex'), 'UTF8')::jsonb;
+    expected_append_run jsonb := convert_from(decode('{append_run_hex}', 'hex'), 'UTF8')::jsonb;
+    expected_append_raw jsonb := convert_from(decode('{append_raw_hex}', 'hex'), 'UTF8')::jsonb;
+    expected_append_results jsonb := convert_from(decode('{append_results_hex}', 'hex'), 'UTF8')::jsonb;
+    expected_columns jsonb := convert_from(decode('{columns_hex}', 'hex'), 'UTF8')::jsonb;
+    actual_columns jsonb;
+    source_run_count bigint;
+    source_raw_count bigint;
+    source_result_count bigint;
+    inserted_count bigint;
+BEGIN
+    IF current_database() <> 'tariff_staging' THEN
+        RAISE EXCEPTION 'offline plan targets tariff_staging only';
+    END IF;
+    IF to_regclass('tariff_ingest.ett_normalization_results') IS NULL THEN
+        RAISE EXCEPTION 'append normalization target table is missing';
+    END IF;
+    LOCK TABLE tariff_ingest.source_objects,
+               tariff_ingest.ingest_runs,
+               tariff_ingest.ett_collected_rows,
+               tariff_ingest.ett_normalization_results
+        IN SHARE ROW EXCLUSIVE MODE;
+    IF NOT EXISTS (
+        SELECT 1 FROM tariff_ingest.source_objects s
+        WHERE s.source_id = expected_source->>'source_id'
+          AND s.authority = expected_source->>'authority'
+          AND s.dataset = expected_source->>'dataset'
+          AND s.source_url = expected_source->>'source_url'
+          AND s.source_revision = expected_source->>'source_revision'
+          AND s.object_bucket = expected_source->>'object_bucket'
+          AND s.object_key = expected_source->>'object_key'
+          AND s.sha256 = expected_source->>'sha256'
+          AND s.size_bytes = (expected_source->>'size_bytes')::bigint
+          AND s.media_type = expected_source->>'media_type'
+          AND s.captured_at = (expected_source->>'captured_at')::timestamptz
+          AND s.status = expected_source->>'status'
+    ) THEN RAISE EXCEPTION 'source_objects package mismatch'; END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM jsonb_array_elements(expected_base_runs) e
+        WHERE NOT EXISTS (
+            SELECT 1 FROM tariff_ingest.ingest_runs r
+            WHERE r.run_id = e->>'run_id' AND r.source_id = e->>'source_id'
+              AND r.scope = e->'scope' AND r.parser_version = e->>'parser_version'
+              AND r.status = e->>'status'
+              AND r.raw_count = (e->>'raw_count')::integer
+              AND r.unique_count = (e->>'unique_count')::integer
+              AND r.normalized_count = (e->>'normalized_count')::integer
+              AND r.rejected_count = (e->>'rejected_count')::integer
+              AND r.resume_cursor = e->'resume_cursor'
+        )
+    ) THEN RAISE EXCEPTION 'append base ingest_runs mismatch'; END IF;
+    IF EXISTS (
+        SELECT 1 FROM jsonb_array_elements(expected_base_raw) e
+        WHERE NOT EXISTS (
+            SELECT 1 FROM tariff_ingest.ett_collected_rows r
+            WHERE r.source_id = e->>'source_id' AND r.hs_code = e->>'hs_code'
+              AND r.description = e->>'description'
+              AND r.supplementary_unit = e->>'supplementary_unit'
+              AND r.duty_text = e->>'duty_text' AND r.raw_line = e->>'raw_line'
+              AND r.row_sha256 = e->>'row_sha256' AND r.status = e->>'status'
+              AND r.ordinal = (e->>'ordinal')::integer
+        )
+    ) THEN RAISE EXCEPTION 'append base RAW mismatch'; END IF;
+    IF EXISTS (
+        SELECT 1 FROM jsonb_array_elements(expected_base_results) e
+        WHERE NOT EXISTS (
+            SELECT 1 FROM tariff_ingest.ett_normalization_results r
+            WHERE r.source_id = e->>'source_id'
+              AND r.raw_row_sha256 = e->>'raw_row_sha256'
+              AND r.parser_version = e->>'parser_version' AND to_jsonb(r) = e
+        )
+    ) THEN RAISE EXCEPTION 'append base normalization mismatch'; END IF;
+
+    SELECT count(*) INTO source_run_count FROM tariff_ingest.ingest_runs
+      WHERE source_id = expected_source->>'source_id';
+    SELECT count(*) INTO source_raw_count FROM tariff_ingest.ett_collected_rows
+      WHERE source_id = expected_source->>'source_id';
+    SELECT count(*) INTO source_result_count
+      FROM tariff_ingest.ett_normalization_results
+      WHERE source_id = expected_source->>'source_id'
+        AND parser_version = expected_append_results->0->>'parser_version';
+
+    IF source_run_count = 4 AND source_raw_count = 538 AND source_result_count = 538
+       AND EXISTS (
+          SELECT 1 FROM tariff_ingest.ingest_runs r
+          WHERE r.run_id = expected_append_run->>'run_id'
+            AND r.source_id = expected_append_run->>'source_id'
+            AND r.scope = expected_append_run->'scope'
+            AND r.parser_version = expected_append_run->>'parser_version'
+            AND r.status = expected_append_run->>'status'
+            AND r.raw_count = 5 AND r.unique_count = 5
+            AND r.normalized_count = 0 AND r.rejected_count = 0
+            AND r.resume_cursor = expected_append_run->'resume_cursor'
+       )
+       AND NOT EXISTS (
+          SELECT 1 FROM jsonb_array_elements(expected_append_raw) e
+          WHERE NOT EXISTS (
+              SELECT 1 FROM tariff_ingest.ett_collected_rows r
+              WHERE r.source_id = e->>'source_id' AND r.row_sha256 = e->>'row_sha256'
+                AND r.hs_code = e->>'hs_code' AND r.description = e->>'description'
+                AND r.supplementary_unit = e->>'supplementary_unit'
+                AND r.duty_text = e->>'duty_text' AND r.raw_line = e->>'raw_line'
+                AND r.status = e->>'status' AND r.ordinal = (e->>'ordinal')::integer
+          )
+       )
+       AND NOT EXISTS (
+          SELECT 1 FROM jsonb_array_elements(expected_append_results) e
+          WHERE NOT EXISTS (
+              SELECT 1 FROM tariff_ingest.ett_normalization_results r
+              WHERE r.source_id = e->>'source_id'
+                AND r.raw_row_sha256 = e->>'raw_row_sha256'
+                AND r.parser_version = e->>'parser_version' AND to_jsonb(r) = e
+          )
+       ) THEN RETURN;
+    END IF;
+    IF source_run_count <> 3 OR source_raw_count <> 533 OR source_result_count <> 533 THEN
+        RAISE EXCEPTION 'append current state is partial or conflicting';
+    END IF;
+
+    SELECT jsonb_agg(
+        jsonb_build_array(a.attname, pg_catalog.format_type(a.atttypid, a.atttypmod), a.attnotnull)
+        ORDER BY a.attnum
+    ) INTO actual_columns
+    FROM pg_catalog.pg_attribute a
+    WHERE a.attrelid = 'tariff_ingest.ett_normalization_results'::regclass
+      AND a.attnum > 0 AND NOT a.attisdropped;
+    IF actual_columns IS DISTINCT FROM expected_columns THEN
+        RAISE EXCEPTION 'conflicting ett_normalization_results column contract';
+    END IF;
+    IF EXISTS (
+        SELECT 1 FROM pg_catalog.pg_trigger t
+        WHERE t.tgrelid IN (
+            'tariff_ingest.ingest_runs'::regclass,
+            'tariff_ingest.ett_collected_rows'::regclass,
+            'tariff_ingest.ett_normalization_results'::regclass
+        ) AND NOT t.tgisinternal
+    ) OR EXISTS (
+        SELECT 1 FROM pg_catalog.pg_class c
+        WHERE c.oid IN (
+            'tariff_ingest.ingest_runs'::regclass,
+            'tariff_ingest.ett_collected_rows'::regclass,
+            'tariff_ingest.ett_normalization_results'::regclass
+        ) AND (c.relrowsecurity OR c.relforcerowsecurity)
+    ) THEN RAISE EXCEPTION 'append targets have unsupported triggers or RLS'; END IF;
+    IF EXISTS (
+        SELECT 1 FROM tariff_ingest.ingest_runs r
+        WHERE r.run_id = expected_append_run->>'run_id'
+    ) OR EXISTS (
+        SELECT 1 FROM jsonb_array_elements(expected_append_raw) e
+        JOIN tariff_ingest.ett_collected_rows r
+          ON r.source_id = expected_source->>'source_id'
+         AND (r.row_sha256 = e->>'row_sha256' OR r.hs_code = e->>'hs_code'
+              OR r.ordinal = (e->>'ordinal')::integer)
+    ) OR EXISTS (
+        SELECT 1 FROM jsonb_array_elements(expected_append_results) e
+        JOIN tariff_ingest.ett_normalization_results r
+          ON r.source_id = expected_source->>'source_id'
+         AND r.parser_version = e->>'parser_version'
+         AND (r.raw_row_sha256 = e->>'raw_row_sha256'
+              OR r.ordinal = (e->>'ordinal')::integer
+              OR r.result_sha256 = e->>'result_sha256')
+    ) THEN RAISE EXCEPTION 'append identity already exists in conflicting state'; END IF;
+
+    INSERT INTO tariff_ingest.ingest_runs (
+        run_id, source_id, scope, parser_version, status, raw_count, unique_count,
+        normalized_count, rejected_count, resume_cursor
+    ) SELECT x.run_id, x.source_id, x.scope, x.parser_version, x.status,
+             x.raw_count, x.unique_count, x.normalized_count, x.rejected_count,
+             x.resume_cursor
+      FROM jsonb_to_record(expected_append_run) AS x(
+        run_id text, source_id text, scope jsonb, parser_version text, status text,
+        raw_count integer, unique_count integer, normalized_count integer,
+        rejected_count integer, resume_cursor jsonb
+      );
+    GET DIAGNOSTICS inserted_count = ROW_COUNT;
+    IF inserted_count <> 1 THEN RAISE EXCEPTION 'append run insert count mismatch'; END IF;
+
+    INSERT INTO tariff_ingest.ett_collected_rows
+    SELECT * FROM jsonb_to_recordset(expected_append_raw) AS x(
+      source_id text, hs_code text, description text, supplementary_unit text,
+      duty_text text, raw_line text, row_sha256 text, status text, ordinal integer
+    );
+    GET DIAGNOSTICS inserted_count = ROW_COUNT;
+    IF inserted_count <> 5 THEN RAISE EXCEPTION 'append RAW insert count mismatch'; END IF;
+
+    INSERT INTO tariff_ingest.ett_normalization_results (
+        source_id, raw_row_sha256, ordinal, parser_version, source_revision,
+        hs_code, page_number, line_number, original_description,
+        original_supplementary_unit, original_duty_text, original_raw_line,
+        syntax_status, normalized_rate_text, is_ambiguous, ambiguity_reason,
+        legal_status, verified, admitted, result_sha256
+    ) SELECT * FROM jsonb_to_recordset(expected_append_results) AS x(
+        source_id text, raw_row_sha256 text, ordinal integer, parser_version text,
+        source_revision text, hs_code text, page_number integer, line_number integer,
+        original_description text, original_supplementary_unit text,
+        original_duty_text text, original_raw_line text, syntax_status text,
+        normalized_rate_text text, is_ambiguous boolean, ambiguity_reason text,
+        legal_status text, verified boolean, admitted boolean, result_sha256 text
+    );
+    GET DIAGNOSTICS inserted_count = ROW_COUNT;
+    IF inserted_count <> 5 THEN RAISE EXCEPTION 'append normalization insert count mismatch'; END IF;
+
+    IF (SELECT count(*) FROM tariff_ingest.ingest_runs
+        WHERE source_id = expected_source->>'source_id') <> 4
+       OR (SELECT count(*) FROM tariff_ingest.ett_collected_rows
+           WHERE source_id = expected_source->>'source_id') <> 538
+       OR (SELECT count(*) FROM tariff_ingest.ett_normalization_results
+           WHERE source_id = expected_source->>'source_id'
+             AND parser_version = expected_append_results->0->>'parser_version') <> 538
+       OR EXISTS (
+          SELECT 1 FROM jsonb_array_elements(expected_append_results) e
+          WHERE NOT EXISTS (
+              SELECT 1 FROM tariff_ingest.ett_normalization_results r
+              WHERE r.source_id = e->>'source_id'
+                AND r.raw_row_sha256 = e->>'raw_row_sha256'
+                AND r.parser_version = e->>'parser_version'
+                AND r.legal_status = 'UNVERIFIED' AND NOT r.verified AND NOT r.admitted
+                AND to_jsonb(r) = e
+          )
+       ) THEN RAISE EXCEPTION 'append post-insert verification failed'; END IF;
+END
+$ett_append_plan$;
+"""
+
+
+def _build_legacy_append_offline_artifacts(
+    package_dir: Path, package: Mapping[str, Any]
+) -> tuple[dict[str, Any], str]:
+    top_keys = {
+        "schema_version",
+        "kind",
+        "normalizer_version",
+        "source_object",
+        "recovery_envelope",
+        "append_rows",
+        "artifacts",
+    }
+    _exact_keys(package, top_keys, "legacy append package.json")
+    if (
+        type(package.get("schema_version")) is not int
+        or package["schema_version"] != PACKAGE_SCHEMA_VERSION
+        or package.get("kind") != LEGACY_APPEND_PACKAGE_KIND
+        or package.get("normalizer_version") != ETT_NORMALIZER_VERSION
+    ):
+        raise EttOfflinePlanError("legacy append package contract mismatch")
+
+    legacy_package = dict(package)
+    legacy_package.pop("append_rows")
+    legacy_package["kind"] = LEGACY_PACKAGE_KIND
+    base_plan, _ = _build_legacy_offline_artifacts(package_dir, legacy_package)
+    source = base_plan["source_object"]
+    source_text_descriptor = _mapping(package["artifacts"], "artifacts")[
+        "source_text_bytes"
+    ]
+    source_text_bytes, _ = _read_artifact(
+        package_dir, source_text_descriptor, "source_text_bytes"
+    )
+    try:
+        source_text = source_text_bytes.decode("utf-8", errors="strict")
+    except UnicodeDecodeError as exc:
+        raise EttOfflinePlanError("append source text is not strict UTF-8") from exc
+    if "\ufffd" in source_text:
+        raise EttOfflinePlanError("append source text contains replacement characters")
+    logical_lines, locations = _append_source_locations(source_text)
+
+    append_values = package.get("append_rows")
+    if not isinstance(append_values, list) or len(append_values) != 5:
+        raise EttOfflinePlanError("legacy append package must contain exactly five rows")
+    append_raw: list[dict[str, Any]] = []
+    crosswalk: list[dict[str, Any]] = []
+    seen_hs: set[str] = set()
+    seen_hashes: set[str] = set()
+    seen_positions: set[int] = set()
+    base_hs = {row["hs_code"] for row in base_plan["raw_rows"]}
+    base_hashes = {row["row_sha256"] for row in base_plan["raw_rows"]}
+    expected_storage = list(range(EXPECTED_RAW_COUNT + 1, EXPECTED_RAW_COUNT + 6))
+    for index, value in enumerate(append_values, start=1):
+        label = f"append row {index}"
+        item = _mapping(value, label)
+        _exact_keys(item, APPEND_ROW_KEYS, label)
+        storage_ordinal = _strict_positive_int(
+            item.get("storage_ordinal"), f"{label}.storage_ordinal"
+        )
+        if storage_ordinal != expected_storage[index - 1]:
+            raise EttOfflinePlanError("append storage ordinals must be exactly 534 through 538")
+        source_position = _strict_positive_int(
+            item.get("source_position"), f"{label}.source_position"
+        )
+        source_line_number = _strict_positive_int(
+            item.get("source_line_number"), f"{label}.source_line_number"
+        )
+        page_number = _strict_positive_int(
+            item.get("page_number"), f"{label}.page_number"
+        )
+        line_number = _strict_positive_int(
+            item.get("line_number"), f"{label}.line_number"
+        )
+        if source_line_number > len(logical_lines):
+            raise EttOfflinePlanError("append source line is outside retained text")
+        location = locations[source_line_number - 1]
+        if location != {
+            "source_position": source_position,
+            "page_number": page_number,
+            "line_number": line_number,
+        }:
+            raise EttOfflinePlanError("append source position/page/line mismatch")
+        raw_line = item.get("raw_line")
+        if not isinstance(raw_line, str) or raw_line != logical_lines[source_line_number - 1]:
+            raise EttOfflinePlanError("append raw_line does not match retained source text")
+        match = _APPEND_CODE_RE.match(raw_line)
+        if match is None:
+            raise EttOfflinePlanError("append raw_line must retain the literal plus marker")
+        columns = _COLUMN_SEPARATOR_RE.split(match.group("tail").strip(" \t"))
+        if len(columns) != 3 or any(not column for column in columns):
+            raise EttOfflinePlanError("append raw_line column contract mismatch")
+        hs_code = "".join(match.group(name) for name in ("g1", "g2", "g3", "g4"))
+        description, supplementary_unit, duty_text = columns
+        if (
+            item.get("hs_code") != hs_code
+            or item.get("description") != description
+            or item.get("supplementary_unit") != supplementary_unit
+            or item.get("duty_text") != duty_text
+        ):
+            raise EttOfflinePlanError("append parsed columns do not match package fields")
+        row_hash = _sha256_bytes(raw_line.encode("utf-8"))
+        if item.get("row_sha256") != row_hash:
+            raise EttOfflinePlanError("append raw_line SHA mismatch")
+        if item.get("status") != COLLECTED_UNVERIFIED:
+            raise EttOfflinePlanError("append row status mismatch")
+        if (
+            hs_code in seen_hs
+            or row_hash in seen_hashes
+            or source_position in seen_positions
+            or hs_code in base_hs
+            or row_hash in base_hashes
+        ):
+            raise EttOfflinePlanError("append row duplicates base or append identity")
+        seen_hs.add(hs_code)
+        seen_hashes.add(row_hash)
+        seen_positions.add(source_position)
+        description_provenance = _validate_text_provenance(
+            item.get("description_provenance"),
+            label=f"{label}.description_provenance",
+            source_lines=logical_lines,
+        )
+        if description_provenance["fragments"][0] != description:
+            raise EttOfflinePlanError("append description first fragment mismatch")
+        parent_heading = _validate_text_provenance(
+            item.get("parent_heading_provenance"),
+            label=f"{label}.parent_heading_provenance",
+            source_lines=logical_lines,
+        )
+        append_raw.append(
+            {
+                "source_id": source["source_id"],
+                "hs_code": hs_code,
+                "description": description,
+                "supplementary_unit": supplementary_unit,
+                "duty_text": duty_text,
+                "raw_line": raw_line,
+                "row_sha256": row_hash,
+                "status": COLLECTED_UNVERIFIED,
+                "ordinal": storage_ordinal,
+            }
+        )
+        crosswalk.append(
+            {
+                "storage_ordinal": storage_ordinal,
+                "source_position": source_position,
+                "source_line_number": source_line_number,
+                "page_number": page_number,
+                "line_number": line_number,
+                "hs_code": hs_code,
+                "row_sha256": row_hash,
+                "description_provenance": description_provenance,
+                "parent_heading_provenance": parent_heading,
+            }
+        )
+    if [row["source_position"] for row in crosswalk] != sorted(seen_positions):
+        raise EttOfflinePlanError("append rows must follow immutable source position order")
+
+    append_results: list[dict[str, Any]] = []
+    for raw, link in zip(append_raw, crosswalk):
+        syntax_status, rate, ambiguous, reason = _parse_rate(raw["duty_text"])
+        payload = {
+            "source_id": source["source_id"],
+            "raw_row_sha256": raw["row_sha256"],
+            "ordinal": raw["ordinal"],
+            "parser_version": ETT_NORMALIZER_VERSION,
+            "source_revision": source["source_revision"],
+            "hs_code": raw["hs_code"],
+            "page_number": link["page_number"],
+            "line_number": link["line_number"],
+            "original_description": link["description_provenance"]["text"],
+            "original_supplementary_unit": raw["supplementary_unit"],
+            "original_duty_text": raw["duty_text"],
+            "original_raw_line": raw["raw_line"],
+            "syntax_status": syntax_status,
+            "normalized_rate_text": rate,
+            "is_ambiguous": ambiguous,
+            "ambiguity_reason": reason,
+            "legal_status": LEGAL_STATUS_UNVERIFIED,
+            "verified": False,
+            "admitted": False,
+        }
+        result_hash = sha256_json(payload)
+        append_results.append({**payload, "result_sha256": result_hash})
+        link["result_sha256"] = result_hash
+    parsed = sum(row["syntax_status"] == SYNTAX_PARSED for row in append_results)
+    ambiguous = sum(row["is_ambiguous"] for row in append_results)
+    if (parsed, ambiguous) != (3, 2):
+        raise EttOfflinePlanError("append reviewed parser counts must be 3 parsed / 2 ambiguous")
+
+    crosswalk_hash = sha256_json(crosswalk)
+    run_identity = {
+        "source_id": source["source_id"],
+        "source_sha256": source["sha256"],
+        "parser_version": LEGACY_APPEND_PARSER_VERSION,
+        "storage_range": [expected_storage[0], expected_storage[-1]],
+        "crosswalk_sha256": crosswalk_hash,
+    }
+    append_run = {
+        "run_id": f"ett-append:{sha256_json(run_identity)}",
+        "source_id": source["source_id"],
+        "scope": {
+            "chapter": "29",
+            "append_contract": LEGACY_APPEND_PLAN_KIND,
+            "source_identity": run_identity,
+            "stage_counts": {"normalized": 0, "verified": 0, "admitted": 0},
+            "append_crosswalk_sha256": crosswalk_hash,
+            "append_crosswalk": crosswalk,
+        },
+        "parser_version": LEGACY_APPEND_PARSER_VERSION,
+        "status": COLLECTED_UNVERIFIED,
+        "raw_count": 5,
+        "unique_count": 5,
+        "normalized_count": 0,
+        "rejected_count": 0,
+        "resume_cursor": {
+            "next_ordinal": EXPECTED_RAW_COUNT + 6,
+            "raw_count": 5,
+            "complete": True,
+        },
+    }
+    plan: dict[str, Any] = {
+        "schema_version": 1,
+        "kind": LEGACY_APPEND_PLAN_KIND,
+        "target": "tariff_staging.tariff_ingest",
+        "transaction_owner": "CALLER",
+        "execution_performed": False,
+        "source_object": source,
+        "base_ingest_runs": base_plan["ingest_runs"],
+        "base_raw_rows": base_plan["raw_rows"],
+        "base_results": base_plan["rows"],
+        "append_ingest_run": append_run,
+        "append_raw_rows": append_raw,
+        "append_results": append_results,
+        "append_crosswalk": crosswalk,
+        "append_crosswalk_sha256": crosswalk_hash,
+        "normalizer_version": ETT_NORMALIZER_VERSION,
+        "expected_counts": {
+            "before_results": 619,
+            "after_results": 624,
+            "base_raw": 533,
+            "append_raw": 5,
+            "parsed": parsed,
+            "ambiguous": ambiguous,
+            "legal": 0,
+            "verified": 0,
+            "admitted": 0,
+        },
+        "invariants": [
+            "existing source, three runs, 533 RAW rows, and 533 results remain exact",
+            "storage ordinals 534 through 538 never stand for PDF source positions",
+            "fourth-run crosswalk binds storage/source/global/page/line provenance",
+            "multiline descriptions and parent headings retain exact source fragments",
+            "only one run, five RAW rows, and five normalization rows may be inserted",
+            "replay performs zero DML and partial or conflicting state fails closed",
+            "all legal_status values are UNVERIFIED; verified and admitted are false",
+        ],
+    }
+    plan["append_digest"] = sha256_json(
+        {"run": append_run, "raw": append_raw, "results": append_results}
+    )
+    sql = _render_legacy_append_sql(plan)
+    plan["sql_sha256"] = _sha256_bytes(sql.encode("utf-8"))
+    plan["plan_sha256"] = sha256_json(plan)
+    return plan, sql
+
+
 def build_offline_artifacts(package_dir: Path) -> tuple[dict[str, Any], str]:
     """Fully validate an explicit local package before returning plan and SQL."""
 
@@ -1011,6 +1661,8 @@ def build_offline_artifacts(package_dir: Path) -> tuple[dict[str, Any], str]:
         _read_json_bytes(package_path.read_bytes(), "package.json"),
         "package.json",
     )
+    if package.get("kind") == LEGACY_APPEND_PACKAGE_KIND:
+        return _build_legacy_append_offline_artifacts(package_dir, package)
     if package.get("kind") == LEGACY_PACKAGE_KIND:
         return _build_legacy_offline_artifacts(package_dir, package)
     top_keys = {
