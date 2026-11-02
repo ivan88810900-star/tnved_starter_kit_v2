@@ -11,6 +11,8 @@ from pathlib import Path
 from app.services.staging_raw_ingest import (
     AmbiguousEttRowError,
     InvalidUtf8SourceError,
+    PARSER_VERSION,
+    PLUS_PARSER_VERSION,
     StagingRawIngestError,
     prepare_ett_staging_batch,
 )
@@ -42,6 +44,8 @@ class StagingRawIngestTests(unittest.TestCase):
         self.assertEqual(
             row["row_sha256"], hashlib.sha256(raw_line.encode("utf-8")).hexdigest()
         )
+        self.assertEqual(payload["parser_version"], PARSER_VERSION)
+        self.assertIs(payload["allow_leading_plus"], False)
         self.assertEqual(row["status"], "COLLECTED_UNVERIFIED")
         self.assertIs(payload["normalization_performed"], False)
         self.assertIs(payload["legal_admission_performed"], False)
@@ -61,7 +65,10 @@ class StagingRawIngestTests(unittest.TestCase):
             duty="6,563С)",
         )
 
-        payload = prepare_ett_staging_batch((raw_line + "\n").encode("utf-8"))
+        payload = prepare_ett_staging_batch(
+            (raw_line + "\n").encode("utf-8"),
+            allow_leading_plus=True,
+        )
 
         row = payload["batch"]["rows"][0]
         self.assertEqual(row["raw_line"], raw_line)
@@ -71,6 +78,8 @@ class StagingRawIngestTests(unittest.TestCase):
         self.assertEqual(
             row["row_sha256"], hashlib.sha256(raw_line.encode("utf-8")).hexdigest()
         )
+        self.assertEqual(payload["parser_version"], PLUS_PARSER_VERSION)
+        self.assertIs(payload["allow_leading_plus"], True)
 
     def test_chapter30_shape_keeps_82_code_lines_and_16_plus_markers(self) -> None:
         lines = []
@@ -89,6 +98,7 @@ class StagingRawIngestTests(unittest.TestCase):
         payload = prepare_ett_staging_batch(
             ("\n".join(lines) + "\n").encode("utf-8"),
             batch_size=82,
+            allow_leading_plus=True,
         )
         rows = payload["batch"]["rows"]
 
@@ -105,11 +115,62 @@ class StagingRawIngestTests(unittest.TestCase):
             )
         )
 
+    def test_legacy_pin_keeps_533_rows_while_opt_in_exposes_five_candidates(
+        self,
+    ) -> None:
+        unmarked = [
+            _line(f"{2_900_000_000 + ordinal:010d}", f"legacy товар {ordinal}")
+            for ordinal in range(1, 534)
+        ]
+        plus_candidates = [
+            "+ "
+            + _line(
+                f"{2_999_000_000 + ordinal:010d}",
+                f"отдельный кандидат {ordinal}",
+            )
+            for ordinal in range(1, 6)
+        ]
+        mixed = unmarked[:151] + plus_candidates + unmarked[151:]
+        source = ("\n".join(mixed) + "\n").encode("utf-8")
+
+        legacy = prepare_ett_staging_batch(source, batch_size=1000)
+        plus_aware = prepare_ett_staging_batch(
+            source,
+            batch_size=1000,
+            allow_leading_plus=True,
+        )
+
+        self.assertEqual(legacy["parser_version"], PARSER_VERSION)
+        self.assertIs(legacy["allow_leading_plus"], False)
+        self.assertEqual(legacy["totals"]["raw_count"], 533)
+        self.assertEqual(legacy["batch"]["rows"][151]["ordinal"], 152)
+        self.assertEqual(legacy["batch"]["rows"][151]["raw_line"], unmarked[151])
+        self.assertEqual(
+            legacy["batch"]["rows"][151]["row_sha256"],
+            hashlib.sha256(unmarked[151].encode("utf-8")).hexdigest(),
+        )
+        self.assertEqual(plus_aware["parser_version"], PLUS_PARSER_VERSION)
+        self.assertIs(plus_aware["allow_leading_plus"], True)
+        self.assertEqual(plus_aware["totals"]["raw_count"], 538)
+        self.assertEqual(
+            sum(
+                row["raw_line"].startswith("+ ")
+                for row in plus_aware["batch"]["rows"]
+            ),
+            5,
+        )
+        self.assertEqual(plus_aware["batch"]["rows"][156]["ordinal"], 157)
+        self.assertEqual(plus_aware["batch"]["rows"][156]["raw_line"], unmarked[151])
+
     def test_invalid_utf8_is_rejected(self) -> None:
         for source in (b"\xff", b"header\n2901 10 000 1   \xff\n"):
             with self.subTest(source=source):
                 with self.assertRaisesRegex(InvalidUtf8SourceError, "not valid UTF-8"):
                     prepare_ett_staging_batch(source)
+
+    def test_leading_plus_mode_requires_a_real_boolean(self) -> None:
+        with self.assertRaisesRegex(TypeError, "allow_leading_plus must be a boolean"):
+            prepare_ett_staging_batch(_source(1), allow_leading_plus=1)
 
     def test_unicode_replacement_character_is_rejected_as_lossy_provenance(self) -> None:
         source = (_line("2901100001", "испорчено \ufffd") + "\n").encode("utf-8")
@@ -193,19 +254,23 @@ class StagingRawIngestTests(unittest.TestCase):
             prepare_ett_staging_batch(source)
 
     def test_malformed_change_prefix_is_rejected(self) -> None:
-        for prefix in ("* ", "*", "++", "—"):
+        for prefix in ("+3004-prefix", "+\u00a0", "* ", "*", "++ ", "++", "—", "＋ "):
             with self.subTest(prefix=prefix):
+                malformed = (
+                    prefix + _line("3004100006", "неподдерживаемый маркер")
+                    if prefix != "+3004-prefix"
+                    else "+3004 10 000 6   неподдерживаемый маркер            –            5"
+                )
                 source = (
                     _line("3004100005", "валидная строка")
                     + "\n"
-                    + prefix
-                    + _line("3004100006", "неподдерживаемый маркер")
+                    + malformed
                     + "\n"
                 ).encode("utf-8")
                 with self.assertRaisesRegex(
                     AmbiguousEttRowError, "unsupported code prefix"
                 ):
-                    prepare_ett_staging_batch(source)
+                    prepare_ett_staging_batch(source, allow_leading_plus=True)
 
     def test_cursor_may_point_to_exact_completion_but_not_beyond(self) -> None:
         source = _source(2)
@@ -249,6 +314,36 @@ class StagingRawIngestTests(unittest.TestCase):
             self.assertEqual(
                 json.loads(serialized)["batch"]["rows"][0]["hs_code"], "2901100001"
             )
+            self.assertEqual(json.loads(serialized)["parser_version"], PARSER_VERSION)
+
+    def test_cli_plus_mode_uses_the_versioned_parser(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source_path = root / "source.txt"
+            output_path = root / "batch.json"
+            raw_line = "+ " + _line("3004100006", "маркированная строка")
+            source_path.write_bytes((raw_line + "\n").encode("utf-8"))
+            script = Path(__file__).parents[1] / "scripts" / "prepare_ett_staging_batch.py"
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(script),
+                    "--text",
+                    str(source_path),
+                    "--allow-leading-plus",
+                    "--output",
+                    str(output_path),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload["parser_version"], PLUS_PARSER_VERSION)
+            self.assertEqual(payload["batch"]["rows"][0]["raw_line"], raw_line)
 
 
 if __name__ == "__main__":
