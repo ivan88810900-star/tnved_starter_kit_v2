@@ -612,6 +612,93 @@ def main() -> int:
             f"WHERE source_id='{append_source_id}'"
         ) == "533"
 
+        schema_cases = (
+            (
+                "ingest nullability",
+                "ALTER TABLE tariff_ingest.ingest_runs "
+                "ALTER COLUMN status DROP NOT NULL",
+                "append write table column contract mismatch: tariff_ingest.ingest_runs",
+                "ALTER TABLE tariff_ingest.ingest_runs "
+                "ALTER COLUMN status SET NOT NULL",
+            ),
+            (
+                "ingest primary key",
+                "ALTER TABLE tariff_ingest.ingest_runs "
+                "DROP CONSTRAINT ingest_runs_pkey",
+                "append write table constraint contract mismatch: tariff_ingest.ingest_runs",
+                "ALTER TABLE tariff_ingest.ingest_runs ADD PRIMARY KEY (run_id)",
+            ),
+            (
+                "raw column type",
+                "ALTER TABLE tariff_ingest.ett_collected_rows "
+                "ALTER COLUMN description TYPE varchar(200)",
+                "append write table column contract mismatch: tariff_ingest.ett_collected_rows",
+                "ALTER TABLE tariff_ingest.ett_collected_rows "
+                "ALTER COLUMN description TYPE text",
+            ),
+            (
+                "raw unique",
+                "ALTER TABLE tariff_ingest.ett_collected_rows "
+                "DROP CONSTRAINT ett_collected_rows_source_id_hs_code_key",
+                "append write table constraint contract mismatch: tariff_ingest.ett_collected_rows",
+                "ALTER TABLE tariff_ingest.ett_collected_rows "
+                "ADD UNIQUE (source_id, hs_code)",
+            ),
+            (
+                "normalization nullability",
+                "ALTER TABLE tariff_ingest.ett_normalization_results "
+                "ALTER COLUMN admitted DROP NOT NULL",
+                "append write table column contract mismatch: "
+                "tariff_ingest.ett_normalization_results",
+                "ALTER TABLE tariff_ingest.ett_normalization_results "
+                "ALTER COLUMN admitted SET NOT NULL",
+            ),
+            (
+                "normalization foreign key",
+                "ALTER TABLE tariff_ingest.ett_normalization_results "
+                "DROP CONSTRAINT fk_ett_normalization_raw_row",
+                "append write table constraint contract mismatch: "
+                "tariff_ingest.ett_normalization_results",
+                "ALTER TABLE tariff_ingest.ett_normalization_results "
+                "ADD CONSTRAINT fk_ett_normalization_raw_row "
+                "FOREIGN KEY (source_id, raw_row_sha256) "
+                "REFERENCES tariff_ingest.ett_collected_rows "
+                "(source_id, row_sha256)",
+            ),
+        )
+        for label, mutate_schema, expected_error, restore_schema in schema_cases:
+            _psql(sql=mutate_schema)
+            failure = _psql(path=append_apply, succeeds=False)
+            _assert_error(failure, expected_error)
+            _psql(sql=restore_schema)
+            assert _scalar(
+                "SELECT count(*) FROM tariff_ingest.ett_normalization_results"
+            ) == "619", label
+
+        _psql(
+            sql="ALTER TABLE tariff_ingest.ett_collected_rows "
+            "ENABLE ROW LEVEL SECURITY"
+        )
+        failure = _psql(path=append_apply, succeeds=False)
+        _assert_error(failure, "append targets have unsupported triggers or RLS")
+        _psql(
+            sql="ALTER TABLE tariff_ingest.ett_collected_rows "
+            "DISABLE ROW LEVEL SECURITY"
+        )
+        _psql(
+            sql="CREATE FUNCTION tariff_ingest.reject_append_run() RETURNS trigger "
+            "LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$; "
+            "CREATE TRIGGER reject_append_run BEFORE INSERT "
+            "ON tariff_ingest.ingest_runs FOR EACH ROW "
+            "EXECUTE FUNCTION tariff_ingest.reject_append_run()"
+        )
+        failure = _psql(path=append_apply, succeeds=False)
+        _assert_error(failure, "append targets have unsupported triggers or RLS")
+        _psql(
+            sql="DROP TRIGGER reject_append_run ON tariff_ingest.ingest_runs; "
+            "DROP FUNCTION tariff_ingest.reject_append_run()"
+        )
+
         _psql(path=append_apply, rollback=True)
         assert _scalar(
             "SELECT count(*) FROM tariff_ingest.ett_normalization_results"
