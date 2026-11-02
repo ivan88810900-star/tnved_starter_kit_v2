@@ -45,6 +45,65 @@ class StagingRawIngestTests(unittest.TestCase):
         self.assertEqual(row["status"], "COLLECTED_UNVERIFIED")
         self.assertIs(payload["normalization_performed"], False)
         self.assertIs(payload["legal_admission_performed"], False)
+        self.assertEqual(
+            payload["completeness"],
+            {
+                "status": "BLOCKED",
+                "source_provenance_verified": False,
+                "multiline_continuations_collected": False,
+            },
+        )
+
+    def test_literal_plus_prefix_is_preserved_and_hashed_exactly(self) -> None:
+        raw_line = "+ " + _line(
+            "3004100006",
+            "– – – – содержащие в качестве",
+            duty="6,563С)",
+        )
+
+        payload = prepare_ett_staging_batch((raw_line + "\n").encode("utf-8"))
+
+        row = payload["batch"]["rows"][0]
+        self.assertEqual(row["raw_line"], raw_line)
+        self.assertEqual(row["hs_code"], "3004100006")
+        self.assertEqual(row["supplementary_unit"], "–")
+        self.assertEqual(row["duty_text"], "6,563С)")
+        self.assertEqual(
+            row["row_sha256"], hashlib.sha256(raw_line.encode("utf-8")).hexdigest()
+        )
+
+    def test_chapter30_shape_keeps_82_code_lines_and_16_plus_markers(self) -> None:
+        lines = []
+        for ordinal in range(1, 83):
+            duty = "6,563С)" if ordinal <= 6 else "3"
+            prefix = "+ " if ordinal <= 16 else ""
+            lines.append(
+                prefix
+                + _line(
+                    f"{3_000_000_000 + ordinal:010d}",
+                    f"фармацевтическая позиция {ordinal}",
+                    duty=duty,
+                )
+            )
+
+        payload = prepare_ett_staging_batch(
+            ("\n".join(lines) + "\n").encode("utf-8"),
+            batch_size=82,
+        )
+        rows = payload["batch"]["rows"]
+
+        self.assertEqual(payload["totals"]["raw_count"], 82)
+        self.assertEqual(payload["totals"]["unique_count"], 82)
+        self.assertEqual(sum(row["raw_line"].startswith("+ ") for row in rows), 16)
+        self.assertEqual(sum(row["duty_text"].endswith("63С)") for row in rows), 6)
+        self.assertTrue(all(row["supplementary_unit"] == "–" for row in rows))
+        self.assertTrue(
+            all(
+                row["row_sha256"]
+                == hashlib.sha256(row["raw_line"].encode("utf-8")).hexdigest()
+                for row in rows
+            )
+        )
 
     def test_invalid_utf8_is_rejected(self) -> None:
         for source in (b"\xff", b"header\n2901 10 000 1   \xff\n"):
@@ -133,6 +192,13 @@ class StagingRawIngestTests(unittest.TestCase):
         with self.assertRaisesRegex(AmbiguousEttRowError, "expected description"):
             prepare_ett_staging_batch(source)
 
+    def test_malformed_change_prefix_is_rejected(self) -> None:
+        source = ("* " + _line("3004100006", "неподдерживаемый маркер") + "\n").encode(
+            "utf-8"
+        )
+        with self.assertRaisesRegex(StagingRawIngestError, "no exact 10-digit"):
+            prepare_ett_staging_batch(source)
+
     def test_cursor_may_point_to_exact_completion_but_not_beyond(self) -> None:
         source = _source(2)
         complete = prepare_ett_staging_batch(source, start_ordinal=3, batch_size=1)
@@ -179,3 +245,4 @@ class StagingRawIngestTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
