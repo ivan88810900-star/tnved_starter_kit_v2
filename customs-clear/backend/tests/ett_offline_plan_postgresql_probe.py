@@ -17,9 +17,9 @@ if str(BACKEND_ROOT) not in sys.path:
 from app.services.staging_ett_normalization_core import sha256_json
 from app.services.staging_ett_offline_plan import _render_sql, build_offline_artifacts
 from tests.test_ett_offline_plan_runner import (
-    _build_legacy_append_package,
     _build_legacy_package,
     _build_package,
+    _build_synthetic_append_plan,
 )
 
 
@@ -583,8 +583,7 @@ def main() -> int:
         assert _scalar(fingerprint_sql) == before_replay
 
         append_package_dir = root / "legacy-append-package"
-        _build_legacy_append_package(append_package_dir)
-        append_plan, append_sql = build_offline_artifacts(append_package_dir)
+        append_plan, append_sql = _build_synthetic_append_plan(append_package_dir)
         append_source_id = append_plan["source_object"]["source_id"]
         append_base_plan = {
             "source_object": append_plan["source_object"],
