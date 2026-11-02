@@ -16,7 +16,7 @@ if str(BACKEND_ROOT) not in sys.path:
 
 from app.services.staging_ett_normalization_core import sha256_json
 from app.services.staging_ett_offline_plan import _render_sql, build_offline_artifacts
-from tests.test_ett_offline_plan_runner import _build_package
+from tests.test_ett_offline_plan_runner import _build_legacy_package, _build_package
 
 
 DATABASE = "tariff_staging"
@@ -145,6 +145,65 @@ SELECT * FROM jsonb_to_recordset(
 ) AS x(
   source_id text, hs_code text, description text, supplementary_unit text,
   duty_text text, raw_line text, row_sha256 text, status text, ordinal integer
+);
+"""
+
+
+def _setup_legacy_sql(plan) -> str:
+    source_hex = _hex_json(plan["source_object"])
+    runs_hex = _hex_json(plan["ingest_runs"])
+    raw_hex = _hex_json(plan["raw_rows"])
+    return f"""
+WITH d AS (
+  SELECT convert_from(decode('{source_hex}', 'hex'), 'UTF8')::jsonb AS j
+)
+INSERT INTO tariff_ingest.source_objects
+SELECT j->>'source_id', j->>'authority', j->>'dataset', j->>'source_url',
+       j->>'source_revision', j->>'object_bucket', j->>'object_key', j->>'sha256',
+       (j->>'size_bytes')::bigint, j->>'media_type',
+       (j->>'captured_at')::timestamptz, j->>'status' FROM d;
+INSERT INTO tariff_ingest.ingest_runs (
+  run_id, source_id, scope, parser_version, status, raw_count, unique_count,
+  normalized_count, rejected_count, resume_cursor
+)
+SELECT x.run_id, x.source_id, x.scope, x.parser_version, x.status, x.raw_count,
+       x.unique_count, x.normalized_count, x.rejected_count, x.resume_cursor
+FROM jsonb_to_recordset(
+  convert_from(decode('{runs_hex}', 'hex'), 'UTF8')::jsonb
+) AS x(
+  run_id text, source_id text, scope jsonb, parser_version text, status text,
+  raw_count integer, unique_count integer, normalized_count integer,
+  rejected_count integer, resume_cursor jsonb
+);
+INSERT INTO tariff_ingest.ett_collected_rows
+SELECT * FROM jsonb_to_recordset(
+  convert_from(decode('{raw_hex}', 'hex'), 'UTF8')::jsonb
+) AS x(
+  source_id text, hs_code text, description text, supplementary_unit text,
+  duty_text text, raw_line text, row_sha256 text, status text, ordinal integer
+);
+"""
+
+
+def _result_insert_sql(rows) -> str:
+    rows_hex = _hex_json(rows)
+    return f"""
+INSERT INTO tariff_ingest.ett_normalization_results (
+  source_id, raw_row_sha256, ordinal, parser_version, source_revision,
+  hs_code, page_number, line_number, original_description,
+  original_supplementary_unit, original_duty_text, original_raw_line,
+  syntax_status, normalized_rate_text, is_ambiguous, ambiguity_reason,
+  legal_status, verified, admitted, result_sha256
+)
+SELECT * FROM jsonb_to_recordset(
+  convert_from(decode('{rows_hex}', 'hex'), 'UTF8')::jsonb
+) AS x(
+  source_id text, raw_row_sha256 text, ordinal integer, parser_version text,
+  source_revision text, hs_code text, page_number integer, line_number integer,
+  original_description text, original_supplementary_unit text,
+  original_duty_text text, original_raw_line text, syntax_status text,
+  normalized_rate_text text, is_ambiguous boolean, ambiguity_reason text,
+  legal_status text, verified boolean, admitted boolean, result_sha256 text
 );
 """
 
@@ -307,6 +366,186 @@ def main() -> int:
         _psql(path=apply_path)
         assert _scalar(fingerprint_sql) == before_replay
 
+        legacy_package_dir = root / "legacy-package"
+        _build_legacy_package(legacy_package_dir)
+        legacy_plan, legacy_sql = build_offline_artifacts(legacy_package_dir)
+        legacy_setup = root / "legacy-setup.sql"
+        legacy_setup.write_text(_setup_legacy_sql(legacy_plan), encoding="utf-8")
+        _psql(path=legacy_setup)
+        legacy_apply = root / "legacy-apply.sql"
+        legacy_apply.write_text(legacy_sql, encoding="utf-8")
+        legacy_source_id = legacy_plan["source_object"]["source_id"]
+        _psql(sql="DROP TABLE tariff_ingest.ett_normalization_results")
+        missing_target = _psql(path=legacy_apply, succeeds=False)
+        _assert_error(
+            missing_target, "legacy normalization target table is missing"
+        )
+        assert _scalar(
+            "SELECT to_regclass('tariff_ingest.ett_normalization_results')"
+        ) == ""
+        _psql(path=apply_path)
+        assert _scalar(
+            "SELECT count(*) FROM tariff_ingest.ett_normalization_results"
+        ) == "86"
+        before_replay = _scalar(fingerprint_sql)
+        staging_fingerprint_sql = (
+            "SELECT md5(string_agg(v, ',' ORDER BY v)) FROM ("
+            "SELECT 'source:' || xmin::text || ':' || to_jsonb(s)::text AS v "
+            "FROM tariff_ingest.source_objects s "
+            f"WHERE source_id='{legacy_source_id}' UNION ALL "
+            "SELECT 'run:' || xmin::text || ':' || to_jsonb(r)::text "
+            "FROM tariff_ingest.ingest_runs r "
+            f"WHERE source_id='{legacy_source_id}' UNION ALL "
+            "SELECT 'raw:' || xmin::text || ':' || to_jsonb(r)::text "
+            "FROM tariff_ingest.ett_collected_rows r "
+            f"WHERE source_id='{legacy_source_id}') x"
+        )
+        staging_before = _scalar(staging_fingerprint_sql)
+
+        original_legacy_url = legacy_plan["source_object"]["source_url"].replace(
+            "'", "''"
+        )
+        _psql(
+            sql="UPDATE tariff_ingest.source_objects "
+            "SET source_url='https://example.invalid/corrupt' "
+            f"WHERE source_id='{legacy_source_id}'"
+        )
+        failure = _psql(path=legacy_apply, succeeds=False)
+        _assert_error(failure, "source_objects package mismatch")
+        _psql(
+            sql="UPDATE tariff_ingest.source_objects "
+            f"SET source_url='{original_legacy_url}' "
+            f"WHERE source_id='{legacy_source_id}'"
+        )
+
+        first_run = legacy_plan["ingest_runs"][0]["run_id"]
+        _psql(
+            sql="UPDATE tariff_ingest.ingest_runs SET status='CORRUPT' "
+            f"WHERE run_id='{first_run}'"
+        )
+        failure = _psql(path=legacy_apply, succeeds=False)
+        _assert_error(failure, "legacy ingest_runs package mismatch")
+        _psql(
+            sql="UPDATE tariff_ingest.ingest_runs "
+            "SET status='COLLECTED_UNVERIFIED' "
+            f"WHERE run_id='{first_run}'"
+        )
+
+        first_description = legacy_plan["raw_rows"][0]["description"].replace(
+            "'", "''"
+        )
+        _psql(
+            sql="UPDATE tariff_ingest.ett_collected_rows SET description='corrupt' "
+            f"WHERE source_id='{legacy_source_id}' AND ordinal=1"
+        )
+        failure = _psql(path=legacy_apply, succeeds=False)
+        _assert_error(failure, "ett_collected_rows package mismatch")
+        _psql(
+            sql="UPDATE tariff_ingest.ett_collected_rows "
+            f"SET description='{first_description}' "
+            f"WHERE source_id='{legacy_source_id}' AND ordinal=1"
+        )
+        staging_before = _scalar(staging_fingerprint_sql)
+
+        partial = copy.deepcopy(legacy_plan["rows"][0])
+        partial["original_duty_text"] = "corrupt"
+        _psql(sql=_result_insert_sql([partial]))
+        partial_fingerprint = _scalar(
+            "SELECT xmin::text || ':' || result_sha256 "
+            "FROM tariff_ingest.ett_normalization_results "
+            f"WHERE source_id='{legacy_source_id}'"
+        )
+        failure = _psql(path=legacy_apply, succeeds=False)
+        _assert_error(failure, "conflicting existing normalization version")
+        assert _scalar(
+            "SELECT xmin::text || ':' || result_sha256 "
+            "FROM tariff_ingest.ett_normalization_results "
+            f"WHERE source_id='{legacy_source_id}'"
+        ) == partial_fingerprint
+        _psql(
+            sql="DELETE FROM tariff_ingest.ett_normalization_results "
+            f"WHERE source_id='{legacy_source_id}'"
+        )
+
+        _psql(path=legacy_apply, rollback=True)
+        assert _scalar(
+            "SELECT count(*) FROM tariff_ingest.ett_normalization_results"
+        ) == "86"
+        _psql(path=legacy_apply)
+        assert _scalar(
+            "SELECT count(*) FROM tariff_ingest.ett_normalization_results"
+        ) == "619"
+        assert _scalar(
+            "SELECT count(*) FILTER (WHERE syntax_status='PARSED'), "
+            "count(*) FILTER (WHERE is_ambiguous), "
+            "count(*) FILTER (WHERE legal_status<>'UNVERIFIED'), "
+            "count(*) FILTER (WHERE verified), count(*) FILTER (WHERE admitted) "
+            "FROM tariff_ingest.ett_normalization_results"
+        ) == "444|175|0|0|0"
+        legacy_stored = json.loads(
+            _scalar(
+                "SELECT jsonb_agg(to_jsonb(r) ORDER BY ordinal)::text "
+                "FROM tariff_ingest.ett_normalization_results r "
+                f"WHERE source_id='{legacy_source_id}'"
+            )
+        )
+        assert sha256_json(legacy_stored) == legacy_plan["normalization_digest"]
+        legacy_fingerprint_sql = (
+            "SELECT md5(string_agg(xmin::text || ':' || result_sha256, ',' "
+            "ORDER BY ordinal)) FROM tariff_ingest.ett_normalization_results "
+            f"WHERE source_id='{legacy_source_id}' "
+            f"AND parser_version='{legacy_plan['normalizer_version']}'"
+        )
+        legacy_before_replay = _scalar(legacy_fingerprint_sql)
+        _psql(path=legacy_apply)
+        assert _scalar(legacy_fingerprint_sql) == legacy_before_replay
+        assert _scalar(fingerprint_sql) == before_replay
+        assert _scalar(staging_fingerprint_sql) == staging_before
+
+        target_holder = subprocess.Popen(
+            [
+                "sudo", "-u", "postgres", "psql", "-X",
+                "--set", "ON_ERROR_STOP=1", "--dbname", DATABASE,
+                "--command",
+                "BEGIN; LOCK TABLE tariff_ingest.ett_normalization_results "
+                "IN ROW EXCLUSIVE MODE; SELECT pg_sleep(3); COMMIT;",
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        for _ in range(30):
+            if _scalar(
+                "SELECT count(*) FROM pg_locks WHERE relation="
+                "'tariff_ingest.ett_normalization_results'::regclass "
+                "AND mode='RowExclusiveLock' AND granted"
+            ) == "1":
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError("target concurrent writer lock was not observed")
+        locked_legacy_apply = root / "legacy-apply-locked.sql"
+        locked_legacy_apply.write_text(
+            "SET lock_timeout='200ms';\n" + legacy_sql, encoding="utf-8"
+        )
+        failure = _psql(path=locked_legacy_apply, succeeds=False)
+        _assert_error(failure, "lock timeout")
+        holder_stdout, holder_stderr = target_holder.communicate(timeout=10)
+        assert target_holder.returncode == 0, holder_stdout + holder_stderr
+        assert _scalar(legacy_fingerprint_sql) == legacy_before_replay
+
+        _psql(
+            sql="DELETE FROM tariff_ingest.ett_normalization_results "
+            f"WHERE source_id='{legacy_source_id}'; "
+            "DELETE FROM tariff_ingest.ett_collected_rows "
+            f"WHERE source_id='{legacy_source_id}'; "
+            "DELETE FROM tariff_ingest.ingest_runs "
+            f"WHERE source_id='{legacy_source_id}'; "
+            "DELETE FROM tariff_ingest.source_objects "
+            f"WHERE source_id='{legacy_source_id}'"
+        )
+        assert _scalar(fingerprint_sql) == before_replay
+
         _psql(
             sql="UPDATE tariff_ingest.ett_normalization_results "
             "SET original_duty_text='corrupt' WHERE ordinal=1"
@@ -403,4 +642,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
