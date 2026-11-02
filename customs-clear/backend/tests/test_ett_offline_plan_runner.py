@@ -232,19 +232,19 @@ def _build_legacy_package(root: Path, *, append_candidates: bool = False) -> dic
                 duty = "5" if candidate_number <= 2 else (
                     "0" if candidate_number == 3 else "563С)"
                 )
-                context = f"parent heading {candidate_number}"
                 continuation = f"continuation {candidate_number}"
                 raw_line = "+ " + _historical_line(
                     hs_code, description, "–", duty
                 )
-                mixed.extend([context, raw_line, continuation])
+                mixed.extend([raw_line, continuation])
                 candidate_specs.append(
                     {
                         "hs_code": hs_code,
                         "description": description,
                         "duty_text": duty,
                         "raw_line": raw_line,
-                        "context": context,
+                        "parent_raw_line": line,
+                        "parent_description": f"description {base_ordinal}",
                         "continuation": continuation,
                     }
                 )
@@ -321,7 +321,7 @@ def _build_legacy_package(root: Path, *, append_candidates: bool = False) -> dic
         append_rows = []
         for offset, spec in enumerate(candidate_specs, start=1):
             raw_index = logical_lines.index(spec["raw_line"])
-            context_index = logical_lines.index(spec["context"])
+            parent_index = logical_lines.index(spec["parent_raw_line"])
             continuation_index = logical_lines.index(spec["continuation"])
             position, page_number, line_number = locations[raw_index]
             append_rows.append(
@@ -339,9 +339,9 @@ def _build_legacy_package(root: Path, *, append_candidates: bool = False) -> dic
                         "fragments": [spec["description"], spec["continuation"]],
                     },
                     "parent_heading_provenance": {
-                        "text": spec["context"],
-                        "source_lines": [context_index + 1],
-                        "fragments": [spec["context"]],
+                        "text": spec["parent_description"],
+                        "source_lines": [parent_index + 1],
+                        "fragments": [spec["parent_description"]],
                     },
                     "supplementary_unit": "–",
                     "duty_text": spec["duty_text"],
@@ -696,6 +696,54 @@ class OfflinePlanRunnerTests(unittest.TestCase):
                 package_dir = Path(temporary) / "package"
                 package = _build_legacy_append_package(package_dir)
                 mutate(package["append_rows"][0])
+                _rewrite_package(package_dir, package)
+                with self.assertRaisesRegex(EttOfflinePlanError, error):
+                    build_offline_artifacts(package_dir)
+
+    def test_legacy_append5_rejects_semantically_rebound_context(self):
+        def drop_continuation(package):
+            provenance = package["append_rows"][0]["description_provenance"]
+            provenance["source_lines"] = provenance["source_lines"][:1]
+            provenance["fragments"] = provenance["fragments"][:1]
+            provenance["text"] = provenance["fragments"][0]
+
+        def substitute_first_parent_for_fifth(package):
+            package["append_rows"][4]["parent_heading_provenance"] = json.loads(
+                json.dumps(
+                    package["append_rows"][0]["parent_heading_provenance"],
+                    ensure_ascii=False,
+                )
+            )
+
+        def substitute_fifth_continuation_for_first(package):
+            first = package["append_rows"][0]["description_provenance"]
+            fifth = package["append_rows"][4]["description_provenance"]
+            first["source_lines"][1] = fifth["source_lines"][1]
+            first["fragments"][1] = fifth["fragments"][1]
+            first["text"] = " ".join(first["fragments"])
+
+        cases = (
+            (
+                "missing continuation",
+                drop_continuation,
+                "description provenance is incomplete or not source-adjacent",
+            ),
+            (
+                "wrong parent from first candidate",
+                substitute_first_parent_for_fifth,
+                "parent provenance does not match the bounded structural parent",
+            ),
+            (
+                "continuation from fifth candidate",
+                substitute_fifth_continuation_for_first,
+                "description provenance is incomplete or not source-adjacent",
+            ),
+        )
+        for label, mutate, error in cases:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
+                package_dir = Path(temporary) / "package"
+                package = _build_legacy_append_package(package_dir)
+                mutate(package)
                 _rewrite_package(package_dir, package)
                 with self.assertRaisesRegex(EttOfflinePlanError, error):
                     build_offline_artifacts(package_dir)
