@@ -1,3 +1,13 @@
+# Cycle 430 checkpoint — chapter-29 normalization accepted; staging baseline 619 (2026-11-02 15:03 UTC)
+
+- Sanitized acceptance evidence records the completed, independently reviewed chapter-29 operation from exact candidate `957ffae94303499455e3de89ae9309fbfdb97cc2` and exact-head CI run `41460830507`; no private source rows, exports, links, credentials or paths are published.
+- One atomic insert added 533 technical normalization results. Verified readback baseline is **619 total / 444 PARSED / 175 AMBIGUOUS / 0 verified / 0 admitted**. The replay produced INSERT/UPDATE/DELETE = 0 and preserved every row and `xmin`.
+- RAW rows, source/run identities and the pre-existing 86 results were unchanged. The one-time chapter-29 write authorization is consumed; cycle 430 performed no database operation.
+- Evidence: `.ai/orchestration/evidence/cycle430_chapter29_normalization_acceptance.json`.
+- Next official independent batch inventory: EEC ETT chapter 30, current public revision `2026-03-08` (`ru.30_2022_08.03.2026.pdf`, 14 pages). `main` still indexes the superseded `2024-07-01` URL, and the accepted staging inventory contains no chapter-30 RAW.
+- Existing path only: `staging_raw_ingest.prepare_ett_staging_batch` -> `staging_ett_ingest.ingest_ett_rows` -> canonical single-run `staging_ett_offline_plan.build_offline_artifacts`. Do not reuse the chapter-29 legacy three-run branch. The raw DB loader currently caps one immutable source at 86 rows while normalization accepts up to 533; establish the exact chapter-30 row count before deciding whether a reviewed constant/test-only widening is necessary.
+- Minimal next step: parent operator obtains and hash-verifies the current public chapter-30 bytes, produces the deterministic extraction/package and independent QA evidence without DB writes. No merge, deploy, enforcement, admission, new table or architecture is authorized.
+
 # Cycle 421 checkpoint — PR #265 strict JSON numeric aliases rejected (2026-11-01 16:24 UTC)
 
 - Restored GitHub truth before work: protected `main` remains `e526dfbdb5a31b01bf6f743da0288b88f916de0c`; draft PR #265 was the newest main-based candidate and had no review threads or submitted GitHub reviews.
