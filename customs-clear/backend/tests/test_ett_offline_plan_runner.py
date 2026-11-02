@@ -227,8 +227,16 @@ def _build_legacy_package(root: Path, *, append_candidates: bool = False) -> dic
             mixed.append(line)
             if base_ordinal in candidate_after:
                 candidate_number += 1
-                hs_code = f"2999{candidate_number:06d}"
-                description = f"– append candidate {candidate_number}"
+                hs_code = (
+                    "2999000000"
+                    if candidate_number == 2
+                    else f"2999{candidate_number:06d}"
+                )
+                description = (
+                    "– append standalone candidate 2"
+                    if candidate_number == 2
+                    else f"– append candidate {candidate_number}"
+                )
                 duty = "5" if candidate_number <= 2 else (
                     "0" if candidate_number == 3 else "563С)"
                 )
@@ -339,9 +347,9 @@ def _build_legacy_package(root: Path, *, append_candidates: bool = False) -> dic
                         "fragments": [spec["description"], spec["continuation"]],
                     },
                     "parent_heading_provenance": {
-                        "text": spec["parent_description"],
-                        "source_lines": [parent_index + 1],
-                        "fragments": [spec["parent_description"]],
+                        "text": "" if offset == 2 else spec["parent_description"],
+                        "source_lines": [] if offset == 2 else [parent_index + 1],
+                        "fragments": [] if offset == 2 else [spec["parent_description"]],
                     },
                     "supplementary_unit": "–",
                     "duty_text": spec["duty_text"],
@@ -626,12 +634,20 @@ class OfflinePlanRunnerTests(unittest.TestCase):
             sha256_json(plan["append_crosswalk"]),
             plan["append_crosswalk_sha256"],
         )
-        for result, link in zip(plan["append_results"], plan["append_crosswalk"]):
+        for index, (result, link) in enumerate(
+            zip(plan["append_results"], plan["append_crosswalk"]), start=1
+        ):
             self.assertEqual(
                 result["original_description"],
                 link["description_provenance"]["text"],
             )
-            self.assertTrue(link["parent_heading_provenance"]["text"])
+            if index == 2:
+                self.assertEqual(
+                    link["parent_heading_provenance"],
+                    {"text": "", "source_lines": [], "fragments": []},
+                )
+            else:
+                self.assertTrue(link["parent_heading_provenance"]["text"])
             self.assertEqual(result["legal_status"], "UNVERIFIED")
             self.assertFalse(result["verified"])
             self.assertFalse(result["admitted"])
@@ -650,6 +666,17 @@ class OfflinePlanRunnerTests(unittest.TestCase):
         )
         self.assertIn("IN SHARE ROW EXCLUSIVE MODE", sql)
         self.assertIn("append current state is partial or conflicting", sql)
+        self.assertIn("expected_table_contracts", sql)
+        self.assertIn("append write table column contract mismatch", sql)
+        self.assertIn("append write table constraint contract mismatch", sql)
+        self.assertRegex(
+            sql,
+            r"INSERT INTO tariff_ingest\.ett_collected_rows \(\s*source_id, hs_code,",
+        )
+        self.assertRegex(
+            sql,
+            r"INSERT INTO tariff_ingest\.ingest_runs \(\s*run_id, source_id,",
+        )
         self.assertNotRegex(
             sql,
             r"(?im)^\s*(UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b",
@@ -737,6 +764,39 @@ class OfflinePlanRunnerTests(unittest.TestCase):
                 "continuation from fifth candidate",
                 substitute_fifth_continuation_for_first,
                 "description provenance is incomplete or not source-adjacent",
+            ),
+        )
+        for label, mutate, error in cases:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
+                package_dir = Path(temporary) / "package"
+                package = _build_legacy_append_package(package_dir)
+                mutate(package)
+                _rewrite_package(package_dir, package)
+                with self.assertRaisesRegex(EttOfflinePlanError, error):
+                    build_offline_artifacts(package_dir)
+
+    def test_legacy_append5_no_parent_is_limited_to_standalone_root(self):
+        cases = (
+            (
+                "invented parent for standalone root",
+                lambda package: package["append_rows"][1].__setitem__(
+                    "parent_heading_provenance",
+                    json.loads(
+                        json.dumps(
+                            package["append_rows"][0]["parent_heading_provenance"],
+                            ensure_ascii=False,
+                        )
+                    ),
+                ),
+                "standalone root must use the explicit no-parent",
+            ),
+            (
+                "missing parent for structural child",
+                lambda package: package["append_rows"][0].__setitem__(
+                    "parent_heading_provenance",
+                    {"text": "", "source_lines": [], "fragments": []},
+                ),
+                "cannot be empty for a structural child",
             ),
         )
         for label, mutate, error in cases:
