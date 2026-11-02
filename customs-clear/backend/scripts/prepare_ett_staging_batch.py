@@ -26,6 +26,11 @@ def _build_parser() -> argparse.ArgumentParser:
     inputs.add_argument("--text", type=Path, help="Existing pdftotext -layout UTF-8 file")
     parser.add_argument("--start-ordinal", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=100)
+    parser.add_argument(
+        "--allow-leading-plus",
+        action="store_true",
+        help="use the versioned parser that admits literal '+ ' row markers",
+    )
     parser.add_argument("--output", type=Path, help="JSON output path (default: stdout)")
     return parser
 
@@ -64,6 +69,7 @@ def main(argv: list[str] | None = None) -> int:
             source_bytes,
             start_ordinal=args.start_ordinal,
             batch_size=args.batch_size,
+            allow_leading_plus=args.allow_leading_plus,
         )
         serialized = json.dumps(
             payload,
@@ -83,3 +89,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
