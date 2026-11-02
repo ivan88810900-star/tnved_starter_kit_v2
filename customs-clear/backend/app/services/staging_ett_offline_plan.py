@@ -225,10 +225,29 @@ def _sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise EttOfflinePlanError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _reject_json_constant(value: str) -> None:
+    raise EttOfflinePlanError(f"non-finite JSON number is not allowed: {value}")
+
+
 def _read_json_bytes(value: bytes, label: str) -> Any:
     try:
         decoded = value.decode("utf-8")
-        parsed = json.loads(decoded)
+        parsed = json.loads(
+            decoded,
+            object_pairs_hook=_unique_json_object,
+            parse_constant=_reject_json_constant,
+        )
+    except EttOfflinePlanError:
+        raise
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise EttOfflinePlanError(f"{label} must be canonical UTF-8 JSON") from exc
     return parsed
