@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from app.services.staging_ett_normalization_core import (
@@ -822,12 +823,17 @@ class OfflinePlanRunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             package_dir = Path(temporary) / "package"
             _build_legacy_append_package(package_dir)
-            with self.assertRaisesRegex(
-                EttOfflinePlanError, "non-authoritative PDF SHA-256"
-            ):
-                build_offline_artifacts(package_dir)
+            with mock.patch(
+                "app.services.staging_ett_offline_plan._build_legacy_offline_artifacts"
+            ) as legacy_builder:
+                with self.assertRaisesRegex(
+                    EttOfflinePlanError, "non-authoritative PDF SHA-256"
+                ):
+                    build_offline_artifacts(package_dir)
+                legacy_builder.assert_not_called()
 
         _validate_legacy_append_digests(
+            LEGACY_APPEND_SOURCE_SHA256,
             LEGACY_APPEND_SOURCE_SHA256,
             LEGACY_APPEND_SOURCE_TEXT_SHA256,
             LEGACY_APPEND_SOURCE_TEXT_SHA256,
@@ -835,14 +841,23 @@ class OfflinePlanRunnerTests(unittest.TestCase):
         with self.assertRaisesRegex(EttOfflinePlanError, "layout SHA-256"):
             _validate_legacy_append_digests(
                 LEGACY_APPEND_SOURCE_SHA256,
+                LEGACY_APPEND_SOURCE_SHA256,
                 "0" * 64,
                 LEGACY_APPEND_SOURCE_TEXT_SHA256,
             )
         with self.assertRaisesRegex(EttOfflinePlanError, "layout SHA-256"):
             _validate_legacy_append_digests(
                 LEGACY_APPEND_SOURCE_SHA256,
+                LEGACY_APPEND_SOURCE_SHA256,
                 LEGACY_APPEND_SOURCE_TEXT_SHA256,
                 "0" * 64,
+            )
+        with self.assertRaisesRegex(EttOfflinePlanError, "PDF SHA-256"):
+            _validate_legacy_append_digests(
+                LEGACY_APPEND_SOURCE_SHA256,
+                "0" * 64,
+                LEGACY_APPEND_SOURCE_TEXT_SHA256,
+                LEGACY_APPEND_SOURCE_TEXT_SHA256,
             )
 
     @staticmethod
