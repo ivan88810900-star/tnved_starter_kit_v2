@@ -2,8 +2,8 @@
   "schema_version": 1,
   "cycle": 431,
   "task_id": "TARIFF-ETT-CHAPTER30-OFFLINE-RAW-PACKAGE-20261102",
-  "recorded_at": "2026-11-02T15:30:00Z",
-  "status": "CODE_CANDIDATE_READY_SOURCE_PACKAGE_BLOCKED",
+  "recorded_at": "2026-11-02T15:38:00Z",
+  "status": "VERSIONED_CODE_CANDIDATE_READY_SOURCE_PACKAGE_BLOCKED",
   "source_identity": {
     "authority": "EEC",
     "dataset": "EEC-ETT",
@@ -124,11 +124,12 @@
       "The retained repository blob lacks reviewed origin provenance.",
       "The immutable RAW extractor intentionally does not collect multiline description continuations."
     ],
-    "consequence": "No complete official RAW package or factual official row count is claimed. The code candidate only closes literal-marker loss.",
+    "consequence": "No complete official RAW package or factual official chapter30 row count is claimed. The code candidate only provides versioned leading-plus handling.",
     "next_gate": [
-      "Parent independently verifies official bytes or reviewed retained-blob provenance.",
-      "Parent reviews exact code candidate cb06fd72986a94a66fb4590a77edd84e6395ce31.",
-      "Define a reviewed byte-preserving continuation contract before any package or database write."
+      "Independent parent QA of exact code candidate aefbff907c390c42b3e2f3ba4d9166ece86914cb.",
+      "Parent independently verifies official chapter30 bytes or reviewed retained-blob provenance.",
+      "Define a reviewed byte-preserving continuation contract before any package or database write.",
+      "Handle the five chapter29 plus candidates only under a separately authorized QA scope."
     ],
     "implementation_performed": true,
     "pull_request_created": false
@@ -138,10 +139,13 @@
     "no_merge_deploy_enforcement_or_admission": true,
     "task_board_touched": false,
     "no_private_prior_batch_data_used": true,
-    "next_gate": "Parent code QA plus verified official bytes and a reviewed byte-preserving continuation contract; database writes remain HOLD.",
+    "next_gate": "Parent exact-head code QA; official bytes, multiline completeness and any additional chapter29 candidates remain separate blockers/scopes.",
     "http_403_not_retried_after_instruction": true,
     "repository_snapshot_inventory_only": true,
-    "parent_verified_bytes_available": false
+    "parent_verified_bytes_available": false,
+    "database_write_performed": false,
+    "accepted_legacy_533_changed": false,
+    "complete_chapter29_claim": false
   },
   "existing_continuation_inventory": {
     "compatible_immutable_raw_loader_found": false,
@@ -160,36 +164,99 @@
   "code_candidate": {
     "pr": 256,
     "branch": "agent/product-ntm-regressions-v1",
-    "parent_sha": "6b5b635240b6549eaf55214401c30b268ffcbc0e",
-    "exact_head_sha": "cb06fd72986a94a66fb4590a77edd84e6395ce31",
+    "baseline_sha": "6b5b635240b6549eaf55214401c30b268ffcbc0e",
+    "exact_head_sha": "aefbff907c390c42b3e2f3ba4d9166ece86914cb",
     "changed_paths": [
       "customs-clear/backend/app/services/staging_raw_ingest.py",
-      "customs-clear/backend/tests/test_staging_raw_ingest.py"
+      "customs-clear/backend/scripts/prepare_ett_staging_batch.py",
+      "customs-clear/backend/tests/test_staging_raw_ingest.py",
+      ".github/workflows/tariff-agent-safety.yml"
     ],
-    "behavior": [
-      "accepts only optional literal '+' plus horizontal whitespace before the exact 4-2-3-1 code",
-      "preserves raw_line and SHA-256 including the literal '+'",
-      "rejects unsupported adjacent or spaced punctuation prefixes in mixed input",
-      "emits explicit completeness BLOCKED, source_provenance_verified=false and multiline_continuations_collected=false"
-    ],
+    "parser_contracts": {
+      "legacy_default": {
+        "parser_version": "ett-pdftotext-layout-raw-v1",
+        "opt_in_required": false,
+        "behavior": "Original unmarked-only parser behavior and exact ten-key payload shape are preserved.",
+        "synthetic_legacy_envelope": {
+          "rows": 533,
+          "ordinal_152": 152,
+          "payload_exactly_equal_to_baseline": true
+        },
+        "database_or_accepted_history_changed": false
+      },
+      "plus_aware_opt_in": {
+        "parser_version": "ett-pdftotext-layout-raw-v2-plus",
+        "cli_flag": "--allow-leading-plus",
+        "behavior": "Admits only literal '+' followed by ASCII horizontal whitespace; preserves '+' in raw_line and SHA-256.",
+        "completeness": {
+          "status": "BLOCKED",
+          "source_provenance_verified": false,
+          "multiline_continuations_collected": false
+        }
+      }
+    },
+    "malformed_prefix_gate": {
+      "mode": "plus-aware opt-in only",
+      "rejected_examples": [
+        "+3004...",
+        "+NBSP3004...",
+        "* 3004...",
+        "*3004...",
+        "++ 3004...",
+        "++3004...",
+        "—3004...",
+        "fullwidth-plus 3004..."
+      ],
+      "mixed_valid_input_fails_closed": true
+    },
     "author_validation": {
-      "unit_tests": "14 PASS",
+      "focused_tests": "17 PASS",
       "py_compile": "PASS",
-      "retained_snapshot_diagnostic": "82 rows / 16 literal-plus / 6 literal-plus duty texts ending 63С) / all units dash; diagnostic only"
+      "legacy_payload_comparison": "default v1 payload exactly equals baseline implementation on the same synthetic 533+5 source",
+      "retained_snapshot_diagnostics_only": "v1 66 / v2-plus 82 for chapter30 retained copy; not an accepted official count"
     },
     "independent_a5": {
       "conclusion": "PASS",
       "findings": 0,
-      "unit_tests": "14 PASS",
-      "adversarial_prefix_cases": "15/15 PASS"
+      "exact_head_sha": "aefbff907c390c42b3e2f3ba4d9166ece86914cb",
+      "focused_tests": "17 PASS",
+      "workflow_command": "17 PASS",
+      "verification": "v1 exact key set/count/ordinal/raw hash; v2 opt-in fields/count; malformed prefix matrix; CLI selection"
     },
     "exact_head_ci": {
-      "run_id": 41471869243,
+      "run_id": 41473174384,
+      "job_id": 125371922951,
       "workflow": "Tariff agent safety",
       "job": "offline-safety",
       "conclusion": "success",
-      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41471869243"
+      "extractor_tests": "17 PASS",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41473174384"
     },
     "readiness": "READY_FOR_PARENT_CODE_QA_ONLY"
-  }
+  },
+  "legacy_chapter29_boundary": {
+    "accepted_historical_rows": 533,
+    "accepted_history_changed": false,
+    "database_changed": false,
+    "parser_version_remains": "ett-pdftotext-layout-raw-v1",
+    "complete_chapter29_claim": false,
+    "plus_aware_diagnostic_count_on_verified_old_pdf": 538,
+    "additional_candidate_rows": 5,
+    "additional_candidates_authorized_for_current_load": false,
+    "disposition": "The five additional candidates require a separate future QA scope and must not be silently added to the accepted 533-row history."
+  },
+  "qa_findings_resolved": [
+    {
+      "finding": "Generic plus parsing changed verified chapter29 from 533 to 538 under the legacy parser version.",
+      "resolution": "Leading-plus admission is explicit opt-in under ett-pdftotext-layout-raw-v2-plus; v1 output is exact-baseline compatible."
+    },
+    {
+      "finding": "Malformed +3004 and +NBSP3004 rows could be silently dropped among valid rows.",
+      "resolution": "Plus-aware mode detects adjacent/non-ASCII whitespace and unsupported punctuation prefixes and fails closed; negative regressions run in exact CI."
+    },
+    {
+      "finding": "Prior safety CI did not execute extractor tests.",
+      "resolution": "Existing tariff-agent-safety workflow now runs the exact 17-test extractor suite; run 41473174384 passed."
+    }
+  ]
 }
