@@ -38,6 +38,51 @@ LEGACY_PLAN_KIND = "ETT_LEGACY_CHAPTER29_NORMALIZATION_PLAN"
 LEGACY_APPEND_PACKAGE_KIND = "ETT_LEGACY_CHAPTER29_APPEND5_PACKAGE_V1"
 LEGACY_APPEND_PLAN_KIND = "ETT_LEGACY_CHAPTER29_APPEND5_PLAN_V1"
 LEGACY_APPEND_PARSER_VERSION = "ett-pdftotext-layout-raw-v2-plus-append-v1"
+LEGACY_APPEND_SOURCE_SHA256 = (
+    "418666f5fc61db171a9d0bbcf068753504cd29ff04f0f4ac62d4e1147980b51a"
+)
+LEGACY_APPEND_SOURCE_TEXT_SHA256 = (
+    "8555367965aabc91d0d9a7c288b8a89c24ea4771ab118ef6d4f5bd46421e0a5d"
+)
+LEGACY_APPEND_FIXED_ROWS = (
+    {
+        "storage_ordinal": 534, "hs_code": "2909600000", "source_line_number": 728,
+        "source_position": 152, "page_number": 16, "line_number": 17,
+        "description_lines": tuple(range(728, 733)),
+        "parent_lines": tuple(range(630, 639)), "duty_text": "5",
+        "row_sha256": "d7a650e9997ff8d318e09107f08fb5a457577453aa5ab306ae555c52a1a59dcf",
+    },
+    {
+        "storage_ordinal": 535, "hs_code": "2911000000", "source_line_number": 747,
+        "source_position": 159, "page_number": 16, "line_number": 36,
+        "description_lines": tuple(range(747, 754)), "parent_lines": (),
+        "duty_text": "5",
+        "row_sha256": "ffa4e934873c19492f84719af4dc9a85be52c3bf0bfa1f51a8181cab0295a555",
+    },
+    {
+        "storage_ordinal": 536, "hs_code": "2932990000", "source_line_number": 1803,
+        "source_position": 408, "page_number": 38, "line_number": 12,
+        "description_lines": (1803,), "parent_lines": (1738, 1739, 1740, 1782),
+        "duty_text": "0",
+        "row_sha256": "6a04bb94a3974c91d4b9781044c41fc06b55463dcb1db33901dc32f6421cb432",
+    },
+    {
+        "storage_ordinal": 537, "hs_code": "2939490000", "source_line_number": 2308,
+        "source_position": 513, "page_number": 48, "line_number": 20,
+        "description_lines": (2308,),
+        "parent_lines": (2265, 2266, 2267, 2268, 2285, 2286, 2287),
+        "duty_text": "563С)",
+        "row_sha256": "a15fbfeb7f475750511caad246602855fe44f4e4367fab4c39659ae8ee70a552",
+    },
+    {
+        "storage_ordinal": 538, "hs_code": "2939790000", "source_line_number": 2326,
+        "source_position": 521, "page_number": 48, "line_number": 38,
+        "description_lines": (2326,),
+        "parent_lines": (2265, 2266, 2267, 2268, 2322, 2323),
+        "duty_text": "563С)",
+        "row_sha256": "d8c1e205d234125d568b32461a07bd03d91a63f22e5c8f3234649261bbd43cf7",
+    },
+)
 
 SOURCE_KEYS = {
     "source_id",
@@ -144,15 +189,7 @@ _SOURCE_CODE_RE = re.compile(
     r"^[ \t]*(?:\+[ \t]+)?[0-9]{4}[ \t]+[0-9]{2}[ \t]+"
     r"[0-9]{3}[ \t]+[0-9](?:[ \t]|$)"
 )
-_STRUCTURAL_SOURCE_ROW_RE = re.compile(
-    r"^[ \t]*(?:\+[ \t]+)?(?P<g1>[0-9]{4})[ \t]+(?P<g2>[0-9]{2})[ \t]+"
-    r"(?P<g3>[0-9]{3})[ \t]+(?P<g4>[0-9])(?P<tail>.*)$"
-)
 _COLUMN_SEPARATOR_RE = re.compile(r"[ \t]{2,}")
-_DESCRIPTION_LEVEL_RE = re.compile(r"^(?P<marks>(?:[-\u2013\u2014][ \t]+)+)")
-_MAX_APPEND_DESCRIPTION_LINES = 12
-_MAX_APPEND_PARENT_SOURCE_LINES = 512
-_MAX_APPEND_PARENT_ROWS = 128
 
 PACKAGE_SCHEMA = {
     "schema_version": PACKAGE_SCHEMA_VERSION,
@@ -200,6 +237,15 @@ PACKAGE_SCHEMA = {
     },
     "legacy_chapter29_append5_v1": {
         "kind": LEGACY_APPEND_PACKAGE_KIND,
+        "source_sha256": LEGACY_APPEND_SOURCE_SHA256,
+        "source_text_sha256": LEGACY_APPEND_SOURCE_TEXT_SHA256,
+        "fixed_rows": [
+            {
+                key: list(value) if isinstance(value, tuple) else value
+                for key, value in row.items()
+            }
+            for row in LEGACY_APPEND_FIXED_ROWS
+        ],
         "required_top_level": [
             "schema_version",
             "kind",
@@ -212,8 +258,8 @@ PACKAGE_SCHEMA = {
         "append_row_fields": sorted(APPEND_ROW_KEYS),
         "text_provenance_fields": sorted(TEXT_PROVENANCE_KEYS),
         "parent_heading_modes": {
-            "structural_child": "exact nonempty bounded structural parent",
-            "standalone_four_digit_root": {
+            "fixed_source_spans": "exact reconstructed physical rows from the reviewed layout",
+            "hs_2911000000_standalone": {
                 "text": "",
                 "source_lines": [],
                 "fragments": [],
@@ -1139,75 +1185,108 @@ def _append_source_locations(source_text: str) -> tuple[list[str], list[dict[str
     return logical_lines, locations
 
 
-def _structural_source_row(line: str) -> dict[str, Any] | None:
-    match = _STRUCTURAL_SOURCE_ROW_RE.match(line)
+def _fixed_append_source_row(
+    source_lines: list[str], contract: Mapping[str, Any]
+) -> dict[str, Any]:
+    source_line_number = contract["source_line_number"]
+    referenced_lines = tuple(contract["description_lines"]) + tuple(
+        contract["parent_lines"]
+    )
+    if not referenced_lines or max(referenced_lines) > len(source_lines):
+        raise EttOfflinePlanError("fixed append span is outside exact source text")
+    if tuple(contract["description_lines"])[0] != source_line_number:
+        raise EttOfflinePlanError("fixed append description span is not row-anchored")
+    raw_line = source_lines[source_line_number - 1]
+    match = _APPEND_CODE_RE.match(raw_line)
     if match is None:
-        return None
+        raise EttOfflinePlanError("fixed append row does not retain its plus marker")
     columns = _COLUMN_SEPARATOR_RE.split(match.group("tail").strip(" \t"))
     if len(columns) != 3 or any(not column for column in columns):
-        return None
+        raise EttOfflinePlanError("fixed append row is not three-column product data")
     description, supplementary_unit, duty_text = columns
-    level_match = _DESCRIPTION_LEVEL_RE.match(description)
-    level = 0
-    if level_match is not None:
-        level = len(re.findall(r"[-\u2013\u2014]", level_match.group("marks")))
+    hs_code = "".join(match.group(name) for name in ("g1", "g2", "g3", "g4"))
+    row_hash = _sha256_bytes(raw_line.encode("utf-8"))
+    if (
+        hs_code != contract["hs_code"]
+        or supplementary_unit != "–"
+        or duty_text != contract["duty_text"]
+        or row_hash != contract["row_sha256"]
+    ):
+        raise EttOfflinePlanError("fixed append row identity/columns/hash mismatch")
+    description_lines = list(contract["description_lines"])
+    description_fragments = [description]
+    description_fragments.extend(
+        source_lines[line_number - 1].strip()
+        for line_number in description_lines[1:]
+    )
+    if any(not fragment for fragment in description_fragments):
+        raise EttOfflinePlanError("fixed append description contains an empty fragment")
+    parent_lines = list(contract["parent_lines"])
+    parent_fragments = [
+        source_lines[line_number - 1].strip() for line_number in parent_lines
+    ]
+    if any(not fragment for fragment in parent_fragments):
+        raise EttOfflinePlanError("fixed append parent contains an empty physical row")
     return {
-        "hs_code": "".join(match.group(name) for name in ("g1", "g2", "g3", "g4")),
+        "raw_line": raw_line,
+        "row_sha256": row_hash,
+        "hs_code": hs_code,
         "description": description,
         "supplementary_unit": supplementary_unit,
         "duty_text": duty_text,
-        "level": level,
+        "description_provenance": {
+            "text": " ".join(description_fragments),
+            "source_lines": description_lines,
+            "fragments": description_fragments,
+        },
+        "parent_heading_provenance": {
+            "text": " ".join(parent_fragments),
+            "source_lines": parent_lines,
+            "fragments": parent_fragments,
+        },
     }
 
 
-def _authoritative_description_provenance(
-    source_lines: list[str], source_line_number: int
-) -> dict[str, Any]:
-    row = _structural_source_row(source_lines[source_line_number - 1])
-    if row is None:
-        raise EttOfflinePlanError("append authoritative description row is malformed")
-    bound = min(
-        len(source_lines),
-        source_line_number + _MAX_APPEND_DESCRIPTION_LINES - 1,
+def _validate_legacy_append_digests(
+    pdf_sha256: Any, declared_text_sha256: Any, observed_text_sha256: str
+) -> None:
+    if pdf_sha256 != LEGACY_APPEND_SOURCE_SHA256:
+        raise EttOfflinePlanError("legacy append rejects non-authoritative PDF SHA-256")
+    if (
+        declared_text_sha256 != LEGACY_APPEND_SOURCE_TEXT_SHA256
+        or observed_text_sha256 != LEGACY_APPEND_SOURCE_TEXT_SHA256
+    ):
+        raise EttOfflinePlanError("legacy append rejects non-authoritative layout SHA-256")
+
+
+def _validate_fixed_append_provenance(
+    item: Mapping[str, Any],
+    recovered: Mapping[str, Any],
+    *,
+    label: str,
+    source_lines: list[str],
+    parent_is_empty: bool,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    description = _validate_text_provenance(
+        item.get("description_provenance"),
+        label=f"{label}.description_provenance",
+        source_lines=source_lines,
     )
-    lines = [source_line_number]
-    fragments = [row["description"]]
-    cursor = source_line_number
-    while cursor < len(source_lines):
-        candidate = source_lines[cursor]
-        if _SOURCE_CODE_RE.match(candidate) is not None:
-            break
-        if cursor + 1 > bound:
-            raise EttOfflinePlanError("append description exceeds bounded source span")
-        fragment = candidate.strip()
-        if fragment:
-            lines.append(cursor + 1)
-            fragments.append(fragment)
-        cursor += 1
-    return {
-        "text": " ".join(fragments),
-        "source_lines": lines,
-        "fragments": fragments,
-    }
-
-
-def _authoritative_parent_provenance(
-    source_lines: list[str], source_line_number: int, child_level: int
-) -> dict[str, Any]:
-    if child_level < 1:
-        raise EttOfflinePlanError("append row has no structural parent level")
-    lower_bound = max(0, source_line_number - 1 - _MAX_APPEND_PARENT_SOURCE_LINES)
-    observed_rows = 0
-    for index in range(source_line_number - 2, lower_bound - 1, -1):
-        candidate = _structural_source_row(source_lines[index])
-        if candidate is None:
-            continue
-        observed_rows += 1
-        if observed_rows > _MAX_APPEND_PARENT_ROWS:
-            break
-        if candidate["level"] < child_level:
-            return _authoritative_description_provenance(source_lines, index + 1)
-    raise EttOfflinePlanError("append structural parent is absent from bounded source span")
+    if description != recovered["description_provenance"]:
+        raise EttOfflinePlanError(
+            "append description provenance does not match fixed source span"
+        )
+    parent = _validate_text_provenance(
+        item.get("parent_heading_provenance"),
+        label=f"{label}.parent_heading_provenance",
+        source_lines=source_lines,
+        allow_empty=parent_is_empty,
+    )
+    if parent != recovered["parent_heading_provenance"]:
+        raise EttOfflinePlanError(
+            "append parent provenance does not match fixed source span"
+        )
+    return description, parent
 
 
 def _render_legacy_append_sql(plan: Mapping[str, Any]) -> str:
@@ -1645,6 +1724,11 @@ def _build_legacy_append_offline_artifacts(
     source_text_bytes, _ = _read_artifact(
         package_dir, source_text_descriptor, "source_text_bytes"
     )
+    _validate_legacy_append_digests(
+        source["sha256"],
+        source_text_descriptor.get("sha256"),
+        _sha256_bytes(source_text_bytes),
+    )
     try:
         source_text = source_text_bytes.decode("utf-8", errors="strict")
     except UnicodeDecodeError as exc:
@@ -1657,9 +1741,10 @@ def _build_legacy_append_offline_artifacts(
         for index, line in enumerate(logical_lines, start=1)
         if _APPEND_CODE_RE.match(line) is not None
     ]
-    if len(authoritative_plus_lines) != 5:
+    fixed_plus_lines = [row["source_line_number"] for row in LEGACY_APPEND_FIXED_ROWS]
+    if authoritative_plus_lines != fixed_plus_lines:
         raise EttOfflinePlanError(
-            "retained source must contain exactly five authoritative plus rows"
+            "retained source plus rows do not match the fixed append contract"
         )
 
     append_values = package.get("append_rows")
@@ -1667,21 +1752,20 @@ def _build_legacy_append_offline_artifacts(
         raise EttOfflinePlanError("legacy append package must contain exactly five rows")
     append_raw: list[dict[str, Any]] = []
     crosswalk: list[dict[str, Any]] = []
-    seen_hs: set[str] = set()
-    seen_hashes: set[str] = set()
-    seen_positions: set[int] = set()
     base_hs = {row["hs_code"] for row in base_plan["raw_rows"]}
     base_hashes = {row["row_sha256"] for row in base_plan["raw_rows"]}
-    expected_storage = list(range(EXPECTED_RAW_COUNT + 1, EXPECTED_RAW_COUNT + 6))
-    for index, value in enumerate(append_values, start=1):
+    expected_storage = [row["storage_ordinal"] for row in LEGACY_APPEND_FIXED_ROWS]
+    for index, (value, fixed) in enumerate(
+        zip(append_values, LEGACY_APPEND_FIXED_ROWS), start=1
+    ):
         label = f"append row {index}"
         item = _mapping(value, label)
         _exact_keys(item, APPEND_ROW_KEYS, label)
         storage_ordinal = _strict_positive_int(
             item.get("storage_ordinal"), f"{label}.storage_ordinal"
         )
-        if storage_ordinal != expected_storage[index - 1]:
-            raise EttOfflinePlanError("append storage ordinals must be exactly 534 through 538")
+        if storage_ordinal != fixed["storage_ordinal"]:
+            raise EttOfflinePlanError("append storage ordinal violates fixed contract")
         source_position = _strict_positive_int(
             item.get("source_position"), f"{label}.source_position"
         )
@@ -1694,8 +1778,13 @@ def _build_legacy_append_offline_artifacts(
         line_number = _strict_positive_int(
             item.get("line_number"), f"{label}.line_number"
         )
-        if source_line_number > len(logical_lines):
-            raise EttOfflinePlanError("append source line is outside retained text")
+        if (
+            source_position != fixed["source_position"]
+            or source_line_number != fixed["source_line_number"]
+            or page_number != fixed["page_number"]
+            or line_number != fixed["line_number"]
+        ):
+            raise EttOfflinePlanError("append coordinates violate fixed contract")
         location = locations[source_line_number - 1]
         if location != {
             "source_position": source_position,
@@ -1703,83 +1792,32 @@ def _build_legacy_append_offline_artifacts(
             "line_number": line_number,
         }:
             raise EttOfflinePlanError("append source position/page/line mismatch")
-        raw_line = item.get("raw_line")
-        if not isinstance(raw_line, str) or raw_line != logical_lines[source_line_number - 1]:
-            raise EttOfflinePlanError("append raw_line does not match retained source text")
-        match = _APPEND_CODE_RE.match(raw_line)
-        if match is None:
-            raise EttOfflinePlanError("append raw_line must retain the literal plus marker")
-        columns = _COLUMN_SEPARATOR_RE.split(match.group("tail").strip(" \t"))
-        if len(columns) != 3 or any(not column for column in columns):
-            raise EttOfflinePlanError("append raw_line column contract mismatch")
-        hs_code = "".join(match.group(name) for name in ("g1", "g2", "g3", "g4"))
-        description, supplementary_unit, duty_text = columns
-        if (
-            item.get("hs_code") != hs_code
-            or item.get("description") != description
-            or item.get("supplementary_unit") != supplementary_unit
-            or item.get("duty_text") != duty_text
+        recovered = _fixed_append_source_row(logical_lines, fixed)
+        raw_line = recovered["raw_line"]
+        row_hash = recovered["row_sha256"]
+        hs_code = recovered["hs_code"]
+        description = recovered["description"]
+        supplementary_unit = recovered["supplementary_unit"]
+        duty_text = recovered["duty_text"]
+        for field in (
+            "raw_line", "row_sha256", "hs_code", "description",
+            "supplementary_unit", "duty_text",
         ):
-            raise EttOfflinePlanError("append parsed columns do not match package fields")
-        row_hash = _sha256_bytes(raw_line.encode("utf-8"))
-        if item.get("row_sha256") != row_hash:
-            raise EttOfflinePlanError("append raw_line SHA mismatch")
+            if item.get(field) != recovered[field]:
+                raise EttOfflinePlanError(
+                    f"append {field} does not match fixed-source reconstruction"
+                )
         if item.get("status") != COLLECTED_UNVERIFIED:
             raise EttOfflinePlanError("append row status mismatch")
-        if (
-            hs_code in seen_hs
-            or row_hash in seen_hashes
-            or source_position in seen_positions
-            or hs_code in base_hs
-            or row_hash in base_hashes
-        ):
+        if hs_code in base_hs or row_hash in base_hashes:
             raise EttOfflinePlanError("append row duplicates base or append identity")
-        seen_hs.add(hs_code)
-        seen_hashes.add(row_hash)
-        seen_positions.add(source_position)
-        description_provenance = _validate_text_provenance(
-            item.get("description_provenance"),
-            label=f"{label}.description_provenance",
+        description_provenance, parent_heading = _validate_fixed_append_provenance(
+            item,
+            recovered,
+            label=label,
             source_lines=logical_lines,
+            parent_is_empty=not fixed["parent_lines"],
         )
-        authoritative_description = _authoritative_description_provenance(
-            logical_lines, source_line_number
-        )
-        if description_provenance != authoritative_description:
-            raise EttOfflinePlanError(
-                "append description provenance is incomplete or not source-adjacent"
-            )
-        structural_row = _structural_source_row(raw_line)
-        if structural_row is None:
-            raise EttOfflinePlanError("append structural source row is malformed")
-        semantic_description = _DESCRIPTION_LEVEL_RE.sub(
-            "", structural_row["description"], count=1
-        ).strip().casefold().rstrip(":")
-        if semantic_description == "прочие" and structural_row["level"] < 1:
-            raise EttOfflinePlanError(
-                "append residual description lacks a structural parent level"
-            )
-        standalone_root = hs_code[4:] == "000000"
-        parent_heading = _validate_text_provenance(
-            item.get("parent_heading_provenance"),
-            label=f"{label}.parent_heading_provenance",
-            source_lines=logical_lines,
-            allow_empty=standalone_root,
-        )
-        if not standalone_root:
-            authoritative_parent = _authoritative_parent_provenance(
-                logical_lines,
-                source_line_number,
-                structural_row["level"],
-            )
-            if parent_heading != authoritative_parent:
-                raise EttOfflinePlanError(
-                    "append parent provenance does not match the bounded structural parent"
-                )
-        elif parent_heading != {"text": "", "source_lines": [], "fragments": []}:
-            raise EttOfflinePlanError(
-                "append standalone root must use the explicit no-parent provenance"
-            )
         append_raw.append(
             {
                 "source_id": source["source_id"],
@@ -1806,9 +1844,7 @@ def _build_legacy_append_offline_artifacts(
                 "parent_heading_provenance": parent_heading,
             }
         )
-    if [row["source_position"] for row in crosswalk] != sorted(seen_positions):
-        raise EttOfflinePlanError("append rows must follow immutable source position order")
-    if [row["source_line_number"] for row in crosswalk] != authoritative_plus_lines:
+    if [row["source_line_number"] for row in crosswalk] != fixed_plus_lines:
         raise EttOfflinePlanError(
             "append rows do not cover the complete authoritative plus sequence"
         )
@@ -1907,8 +1943,8 @@ def _build_legacy_append_offline_artifacts(
             "existing source, three runs, 533 RAW rows, and 533 results remain exact",
             "storage ordinals 534 through 538 never stand for PDF source positions",
             "fourth-run crosswalk binds storage/source/global/page/line provenance",
-            "multiline descriptions and parent headings retain exact source fragments",
-            "only a four-digit standalone root code may use explicit empty parent provenance",
+            "multiline descriptions and parent headings equal the fixed reviewed source spans",
+            "only HS 2911000000 uses the reviewed explicit empty parent provenance",
             "only one run, five RAW rows, and five normalization rows may be inserted",
             "replay performs zero DML and partial or conflicting state fails closed",
             "all legal_status values are UNVERIFIED; verified and admitted are false",
