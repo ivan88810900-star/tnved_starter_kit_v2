@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "cycle": 429,
+  "task_id": "TARIFF-ETT-LEGACY533-LOADER-20261102",
+  "executor": "/root/scheduled-cycle429-20261101T221422Z",
+  "completed_at": "2026-11-02T14:22:20Z",
+  "lease": {
+    "generation": 429,
+    "holder": "/root/scheduled-cycle429-20261101T221422Z"
+  },
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+  "result": {
+    "status": "DRAFT_EXACT_HEAD_CI_A5_PASS_PARENT_QA_HOLD",
+    "pull_request": 269,
+    "head_branch": "agent/ett-legacy-normalization-preview-cli-v1",
+    "head_sha": "957ffae94303499455e3de89ae9309fbfdb97cc2",
+    "base_branch": "agent/ett-legacy-normalization-preview-v1",
+    "base_sha": "ec51b53d0d266ff146870fc5c17b944023e97264",
+    "changed_files": [
+      "customs-clear/backend/app/services/staging_ett_offline_plan.py",
+      "customs-clear/backend/tests/test_ett_offline_plan_runner.py",
+      "customs-clear/backend/tests/ett_offline_plan_postgresql_probe.py",
+      "customs-clear/backend/scripts/ETT_OFFLINE_PLAN.md"
+    ]
+  },
+  "verification": {
+    "dependency_free": {
+      "status": "PASS",
+      "tests": 51,
+      "job_id": 125329494908
+    },
+    "postgresql_disposable": {
+      "status": "PASS",
+      "job_id": 125329494423,
+      "coexistence_total": 619,
+      "legacy_rows": 533,
+      "legacy_parsed": 363,
+      "legacy_ambiguous": 170,
+      "legal": 0
+    },
+    "push_workflow": {
+      "status": "SUCCESS",
+      "run_id": 41460830507
+    },
+    "pull_request_workflow": {
+      "status": "SUCCESS",
+      "run_id": 41460839048
+    },
+    "safety_workflow": {
+      "status": "SUCCESS",
+      "run_id": 41460830551
+    },
+    "independent_a5": {
+      "status": "PASS",
+      "candidate_sha": "957ffae94303499455e3de89ae9309fbfdb97cc2",
+      "findings": []
+    }
+  },
+  "repaired_finding": {
+    "prior_candidate": "63683c06769636a1df06536877aea968ef6f6cd1",
+    "finding": "loader JSON boundary accepted duplicate object keys and non-finite constants",
+    "resolution": "strict duplicate-key and non-finite rejection with focused regressions",
+    "prior_readiness_invalidated": true
+  },
+  "boundaries": {
+    "private_bytes_accessed": false,
+    "real_database_accessed": false,
+    "sql_applied": false,
+    "migration_created": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "enforcement_changed": false,
+    "a6_dispatched": false,
+    "board_or_projection_changed": false,
+    "permissions_or_secrets_changed": false
+  },
+  "next_gate": "Independent parent QA PASS bound to exact head 957ffae94303499455e3de89ae9309fbfdb97cc2 before any separately authorized real staging operation."
+}
