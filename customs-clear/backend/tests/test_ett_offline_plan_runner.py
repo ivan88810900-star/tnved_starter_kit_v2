@@ -17,6 +17,7 @@ from app.services.staging_ett_normalization_core import (
 )
 from app.services.staging_ett_offline_plan import (
     EttOfflinePlanError,
+    LEGACY_APPEND_PACKAGE_KIND,
     LEGACY_PACKAGE_KIND,
     build_offline_artifacts,
     write_offline_artifacts,
@@ -201,7 +202,7 @@ def _build_package(
     return package
 
 
-def _build_legacy_package(root: Path) -> dict:
+def _build_legacy_package(root: Path, *, append_candidates: bool = False) -> dict:
     root.mkdir()
     fixture = _legacy_fixture()
     for ordinal, row in enumerate(fixture["raw_rows"], start=1):
@@ -217,11 +218,44 @@ def _build_legacy_package(root: Path) -> dict:
             row["raw_line"].encode("utf-8")
         ).hexdigest()
     lines = [row["raw_line"] for row in fixture["raw_rows"]]
+    candidate_specs = []
+    if append_candidates:
+        mixed = []
+        candidate_after = {50, 100, 200, 300, 400}
+        candidate_number = 0
+        for base_ordinal, line in enumerate(lines, start=1):
+            mixed.append(line)
+            if base_ordinal in candidate_after:
+                candidate_number += 1
+                hs_code = f"2999{candidate_number:06d}"
+                description = f"– append candidate {candidate_number}"
+                duty = "5" if candidate_number <= 2 else (
+                    "0" if candidate_number == 3 else "563С)"
+                )
+                context = f"parent heading {candidate_number}"
+                continuation = f"continuation {candidate_number}"
+                raw_line = "+ " + _historical_line(
+                    hs_code, description, "–", duty
+                )
+                mixed.extend([context, raw_line, continuation])
+                candidate_specs.append(
+                    {
+                        "hs_code": hs_code,
+                        "description": description,
+                        "duty_text": duty,
+                        "raw_line": raw_line,
+                        "context": context,
+                        "continuation": continuation,
+                    }
+                )
+        lines = mixed
+    first_cut = len(lines) // 3
+    second_cut = first_cut * 2
     fixture["source_text_bytes"] = "\n\f".join(
         [
-            "\n".join(lines[:200]),
-            "\n".join(lines[200:400]),
-            "\n".join(lines[400:]),
+            "\n".join(lines[:first_cut]),
+            "\n".join(lines[first_cut:second_cut]),
+            "\n".join(lines[second_cut:]),
         ]
     ).encode("utf-8")
     source_text_sha = hashlib.sha256(fixture["source_text_bytes"]).hexdigest()
@@ -267,7 +301,65 @@ def _build_legacy_package(root: Path) -> dict:
         },
     }
     _write_canonical(root / "package.json", package)
+    if append_candidates:
+        source_text = fixture["source_text_bytes"].decode("utf-8")
+        logical_lines = source_text.splitlines()
+        chunks = source_text.splitlines(keepends=True)
+        page = 1
+        page_line = 1
+        source_position = 0
+        locations = []
+        for line, chunk in zip(logical_lines, chunks):
+            if line.lstrip().startswith("+") or line.lstrip()[:4].isdigit():
+                source_position += 1
+            locations.append((source_position, page, page_line))
+            if "\f" in chunk:
+                page += chunk.count("\f")
+                page_line = 1
+            else:
+                page_line += 1
+        append_rows = []
+        for offset, spec in enumerate(candidate_specs, start=1):
+            raw_index = logical_lines.index(spec["raw_line"])
+            context_index = logical_lines.index(spec["context"])
+            continuation_index = logical_lines.index(spec["continuation"])
+            position, page_number, line_number = locations[raw_index]
+            append_rows.append(
+                {
+                    "storage_ordinal": 533 + offset,
+                    "source_position": position,
+                    "source_line_number": raw_index + 1,
+                    "page_number": page_number,
+                    "line_number": line_number,
+                    "hs_code": spec["hs_code"],
+                    "description": spec["description"],
+                    "description_provenance": {
+                        "text": f"{spec['description']} {spec['continuation']}",
+                        "source_lines": [raw_index + 1, continuation_index + 1],
+                        "fragments": [spec["description"], spec["continuation"]],
+                    },
+                    "parent_heading_provenance": {
+                        "text": spec["context"],
+                        "source_lines": [context_index + 1],
+                        "fragments": [spec["context"]],
+                    },
+                    "supplementary_unit": "–",
+                    "duty_text": spec["duty_text"],
+                    "raw_line": spec["raw_line"],
+                    "row_sha256": hashlib.sha256(
+                        spec["raw_line"].encode("utf-8")
+                    ).hexdigest(),
+                    "status": COLLECTED_UNVERIFIED,
+                }
+            )
+        package["kind"] = LEGACY_APPEND_PACKAGE_KIND
+        package["append_rows"] = append_rows
+        _write_canonical(root / "package.json", package)
     return package
+
+
+def _build_legacy_append_package(root: Path) -> dict:
+    return _build_legacy_package(root, append_candidates=True)
 
 
 def _rewrite_package(root: Path, package: dict) -> None:
@@ -487,6 +579,126 @@ class OfflinePlanRunnerTests(unittest.TestCase):
             sql,
             r"(?im)^\s*(START\s+TRANSACTION|BEGIN\s*;|COMMIT|ROLLBACK|\\connect)\b",
         )
+
+    def test_legacy_append5_contract_is_insert_only_and_provenance_bound(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            package_dir = Path(temporary) / "package"
+            _build_legacy_append_package(package_dir)
+            plan, sql = build_offline_artifacts(package_dir)
+
+        self.assertEqual(plan["kind"], "ETT_LEGACY_CHAPTER29_APPEND5_PLAN_V1")
+        self.assertEqual(
+            plan["expected_counts"],
+            {
+                "before_results": 619,
+                "after_results": 624,
+                "base_raw": 533,
+                "append_raw": 5,
+                "parsed": 3,
+                "ambiguous": 2,
+                "legal": 0,
+                "verified": 0,
+                "admitted": 0,
+            },
+        )
+        self.assertEqual(len(plan["base_ingest_runs"]), 3)
+        self.assertEqual(len(plan["base_raw_rows"]), 533)
+        self.assertEqual(len(plan["base_results"]), 533)
+        self.assertEqual(len(plan["append_raw_rows"]), 5)
+        self.assertEqual(len(plan["append_results"]), 5)
+        self.assertEqual(
+            [row["ordinal"] for row in plan["append_raw_rows"]],
+            [534, 535, 536, 537, 538],
+        )
+        self.assertNotEqual(
+            [row["ordinal"] for row in plan["append_raw_rows"]],
+            [row["source_position"] for row in plan["append_crosswalk"]],
+        )
+        self.assertEqual(
+            plan["append_ingest_run"]["scope"]["append_crosswalk"],
+            plan["append_crosswalk"],
+        )
+        self.assertEqual(
+            plan["append_ingest_run"]["scope"]["append_crosswalk_sha256"],
+            plan["append_crosswalk_sha256"],
+        )
+        self.assertEqual(
+            sha256_json(plan["append_crosswalk"]),
+            plan["append_crosswalk_sha256"],
+        )
+        for result, link in zip(plan["append_results"], plan["append_crosswalk"]):
+            self.assertEqual(
+                result["original_description"],
+                link["description_provenance"]["text"],
+            )
+            self.assertTrue(link["parent_heading_provenance"]["text"])
+            self.assertEqual(result["legal_status"], "UNVERIFIED")
+            self.assertFalse(result["verified"])
+            self.assertFalse(result["admitted"])
+        self.assertEqual(
+            [row["normalized_rate_text"] for row in plan["append_results"][-2:]],
+            [None, None],
+        )
+        self.assertEqual(
+            [row["original_duty_text"] for row in plan["append_results"][-2:]],
+            ["563С)", "563С)"],
+        )
+        self.assertEqual(sql.count("INSERT INTO tariff_ingest.ingest_runs"), 1)
+        self.assertEqual(sql.count("INSERT INTO tariff_ingest.ett_collected_rows"), 1)
+        self.assertEqual(
+            sql.count("INSERT INTO tariff_ingest.ett_normalization_results"), 1
+        )
+        self.assertIn("IN SHARE ROW EXCLUSIVE MODE", sql)
+        self.assertIn("append current state is partial or conflicting", sql)
+        self.assertNotRegex(
+            sql,
+            r"(?im)^\s*(UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b",
+        )
+        self.assertNotRegex(
+            sql,
+            r"(?im)^\s*(START\s+TRANSACTION|BEGIN\s*;|COMMIT|ROLLBACK|\\connect)\b",
+        )
+
+    def test_legacy_append5_tampering_fails_before_sql(self):
+        mutations = (
+            (
+                "storage ordinal",
+                lambda row: row.__setitem__("storage_ordinal", 533),
+                "storage ordinals",
+            ),
+            (
+                "source position",
+                lambda row: row.__setitem__("source_position", 1),
+                "source position/page/line",
+            ),
+            (
+                "raw hash",
+                lambda row: row.__setitem__("row_sha256", "0" * 64),
+                "raw_line SHA",
+            ),
+            (
+                "description fragment",
+                lambda row: row["description_provenance"]["fragments"].__setitem__(
+                    1, "not retained"
+                ),
+                "fragment is not present",
+            ),
+            (
+                "parent heading",
+                lambda row: row["parent_heading_provenance"]["fragments"].__setitem__(
+                    0, "not retained"
+                ),
+                "fragment is not present",
+            ),
+        )
+        for label, mutate, error in mutations:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
+                package_dir = Path(temporary) / "package"
+                package = _build_legacy_append_package(package_dir)
+                mutate(package["append_rows"][0])
+                _rewrite_package(package_dir, package)
+                with self.assertRaisesRegex(EttOfflinePlanError, error):
+                    build_offline_artifacts(package_dir)
 
     def test_legacy_package_contract_tampering_fails_before_sql(self):
         mutations = (
