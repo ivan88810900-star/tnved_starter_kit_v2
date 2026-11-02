@@ -34,7 +34,7 @@ class AmbiguousEttRowError(StagingRawIngestError):
 
 
 _CODE_SHAPED_RE = re.compile(
-    r"^[ \t]*(?P<g1>[0-9]{4})[ \t]+(?P<g2>[0-9]{2})[ \t]+"
+    r"^[ \t]*(?:\+[ \t]+)?(?P<g1>[0-9]{4})[ \t]+(?P<g2>[0-9]{2})[ \t]+"
     r"(?P<g3>[0-9]{3})[ \t]+(?P<g4>[0-9])(?P<tail>.*)$"
 )
 _COLUMN_SEPARATOR_RE = re.compile(r"[ \t]{2,}")
@@ -177,6 +177,11 @@ def prepare_ett_staging_batch(
         "row_status": ROW_STATUS,
         "normalization_performed": False,
         "legal_admission_performed": False,
+        "completeness": {
+            "status": "BLOCKED",
+            "source_provenance_verified": False,
+            "multiline_continuations_collected": False,
+        },
         "totals": {
             "raw_count": total_raw_count,
             "unique_count": len(total_hashes),
@@ -208,3 +213,4 @@ __all__ = [
     "StagingRawIngestError",
     "prepare_ett_staging_batch",
 ]
+
