@@ -38,7 +38,7 @@ _CODE_SHAPED_RE = re.compile(
     r"(?P<g3>[0-9]{3})[ \t]+(?P<g4>[0-9])(?P<tail>.*)$"
 )
 _UNSUPPORTED_PREFIX_RE = re.compile(
-    r"^[ \t]*(?P<prefix>[^\w\s]+)[ \t]+[0-9]{4}[ \t]+[0-9]{2}[ \t]+"
+    r"^[ \t]*(?P<prefix>[^\w\s]+)[ \t]*[0-9]{4}[ \t]+[0-9]{2}[ \t]+"
     r"[0-9]{3}[ \t]+[0-9](?:[ \t]|$)"
 )
 _COLUMN_SEPARATOR_RE = re.compile(r"[ \t]{2,}")
