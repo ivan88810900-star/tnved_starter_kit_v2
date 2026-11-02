@@ -37,6 +37,10 @@ _CODE_SHAPED_RE = re.compile(
     r"^[ \t]*(?:\+[ \t]+)?(?P<g1>[0-9]{4})[ \t]+(?P<g2>[0-9]{2})[ \t]+"
     r"(?P<g3>[0-9]{3})[ \t]+(?P<g4>[0-9])(?P<tail>.*)$"
 )
+_UNSUPPORTED_PREFIX_RE = re.compile(
+    r"^[ \t]*(?P<prefix>[^\w\s]+)[ \t]+[0-9]{4}[ \t]+[0-9]{2}[ \t]+"
+    r"[0-9]{3}[ \t]+[0-9](?:[ \t]|$)"
+)
 _COLUMN_SEPARATOR_RE = re.compile(r"[ \t]{2,}")
 
 
@@ -61,6 +65,12 @@ def _parse_rows(text: str) -> list[dict[str, Any]]:
     for line_number, raw_line in enumerate(text.splitlines(), start=1):
         match = _CODE_SHAPED_RE.match(raw_line)
         if match is None:
+            prefixed = _UNSUPPORTED_PREFIX_RE.match(raw_line)
+            if prefixed is not None:
+                raise AmbiguousEttRowError(
+                    f"line {line_number}: unsupported code prefix "
+                    f"{prefixed.group('prefix')!r}"
+                )
             continue
 
         tail = match.group("tail")
