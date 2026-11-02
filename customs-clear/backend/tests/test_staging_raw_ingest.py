@@ -193,16 +193,19 @@ class StagingRawIngestTests(unittest.TestCase):
             prepare_ett_staging_batch(source)
 
     def test_malformed_change_prefix_is_rejected(self) -> None:
-        source = (
-            _line("3004100005", "валидная строка")
-            + "\n* "
-            + _line("3004100006", "неподдерживаемый маркер")
-            + "\n"
-        ).encode("utf-8")
-        with self.assertRaisesRegex(
-            AmbiguousEttRowError, "unsupported code prefix '\\*'"
-        ):
-            prepare_ett_staging_batch(source)
+        for prefix in ("* ", "*", "++", "—"):
+            with self.subTest(prefix=prefix):
+                source = (
+                    _line("3004100005", "валидная строка")
+                    + "\n"
+                    + prefix
+                    + _line("3004100006", "неподдерживаемый маркер")
+                    + "\n"
+                ).encode("utf-8")
+                with self.assertRaisesRegex(
+                    AmbiguousEttRowError, "unsupported code prefix"
+                ):
+                    prepare_ett_staging_batch(source)
 
     def test_cursor_may_point_to_exact_completion_but_not_beyond(self) -> None:
         source = _source(2)
