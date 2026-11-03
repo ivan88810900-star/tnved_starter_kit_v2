@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "cycle": 437,
+  "checked_at": "2026-11-03T22:23:30Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+  "task_id": "TARIFF-PR260-ISOLATED-LEGACY-MIGRATION-FIXTURE-20261103",
+  "pr": 260,
+  "prior_head_sha": "22004e5903215ebdc2464d4a93d303d4af83ed68",
+  "final_head_sha": "602006fbeae4ea22aa7484830421cff0a3dd1737",
+  "delta": {
+    "commits": 1,
+    "files": [
+      "customs-clear/backend/tests/test_tnved_catalog_api.py"
+    ],
+    "additions": 337,
+    "deletions": 13,
+    "purpose": "keep legacy migration initialization bound to the disposable copied SQLite fixture and restore ambient DATABASE_URL only during cleanup"
+  },
+  "review": {
+    "a0_bounded_review": "NO_CONFIRMED_DEFECT_IN_ONE_COMMIT_DELTA",
+    "fresh_independent_a5": "PENDING_NOT_CLAIMED",
+    "review_threads": 0,
+    "submitted_reviews": 0,
+    "residual_boundary": "The change is test-fixture hardening only; it does not connect the recovery SQLite adapter to an HTTP, UI, or CLI consumer."
+  },
+  "verification": {
+    "push_run_id": 41692656853,
+    "push_job_id": 126114948172,
+    "push_conclusion": "success",
+    "pull_request_run_id": 41692668610,
+    "pull_request_job_id": 126114991004,
+    "pull_request_conclusion": "success",
+    "exact_head_check_runs": 2,
+    "exact_head_check_conclusions": [
+      "success",
+      "success"
+    ],
+    "metadata_reconciled": true,
+    "draft": true,
+    "mergeable": true
+  },
+  "safety": {
+    "a6_provider_called": false,
+    "database_or_source_operation": false,
+    "production_write": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "permissions_or_secrets_changed": false,
+    "feature_flags_changed": false
+  },
+  "next_step": "Obtain fresh independent exact-head QA for PR #260. Keep the PR draft; protected merge remains a separate owner gate."
+}
