@@ -765,3 +765,14 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Evidence: `.ai/orchestration/evidence/cycle428_ett_legacy_preview_cli.json`. TASK_BOARD remains unchanged because the prior revision-927 target was explicitly rejected and was not retried.
 - Next: obtain a fresh independent exact-head review of PR #269, correct any findings, and rerun exact-head CI. Keep the PR draft; persistent staging apply and protected merge remain separate owner gates.
 
+
+
+## Cycle 435 checkpoint — PR #269 metadata reconciled (2026-11-03)
+
+- GitHub was reread before action: main remains `ea633c769863bd55f5d11e4a807ba459f711a4a2`; draft PR #269 remains at exact head `ded231d0abe6793f4cc2ca110f4a4b11439f8efb` on base `ec51b53d0d266ff146870fc5c17b944023e97264`.
+- Confirmed metadata defect: the PR body still named stale candidate `957ffae94303499455e3de89ae9309fbfdb97cc2` and claimed a fresh independent A5 pass, while current exact-head state has no submitted reviews and cycle434 records A5 pending.
+- The PR body was corrected to the current exact head and exact workflow receipts. Code, branch head and CI inputs were unchanged.
+- Exact-head workflows remain successful: pull request `41484321363`, push `41484307461`, and Tariff safety `41484307374`. Review threads: 0; submitted reviews: 0.
+- Status: **DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING**. No merge, deploy, database/source operation, enforcement change, permission/secret change or A6/provider call occurred.
+- Evidence: `.ai/orchestration/evidence/cycle435_pr269_metadata_reconciliation.json`.
+- Next: obtain a fresh independent exact-head A5 review for PR #269. Keep the PR draft; persistent staging apply and protected merge remain separate owner gates.
