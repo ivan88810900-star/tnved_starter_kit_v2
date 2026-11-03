@@ -312,6 +312,10 @@ class TnvedRecoveryOfflineCiTest(unittest.TestCase):
                     with self.subTest(invalid_limit=invalid_limit):
                         with self.assertRaisesRegex(ValueError, "limit must be"):
                             store.children("01", limit=invalid_limit)  # type: ignore[arg-type]
+                for invalid_code, invalid_limit in (("", True), ("bad", 999)):
+                    with self.subTest(code=invalid_code, invalid_limit=invalid_limit):
+                        with self.assertRaisesRegex(ValueError, "limit must be"):
+                            store.children(invalid_code, limit=invalid_limit)
 
             with closing(sqlite3.connect(first)) as connection:
                 connection.execute(
