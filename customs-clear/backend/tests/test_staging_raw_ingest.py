@@ -143,6 +143,9 @@ class StagingRawIngestTests(unittest.TestCase):
         )
         second = _line("3005903100", "– – – марля", duty="5")
         return (
+            "     3002            Проверяемый верхний заголовок,\n"
+            "                     продолжение верхнего заголовка\n"
+            "Ставка ввозной\n"
             "Код                       Наименование позиции\n"
             "в долларах США)\n"
             "3002 13         – иммунологические продукты:\n"
@@ -183,6 +186,14 @@ class StagingRawIngestTests(unittest.TestCase):
         self.assertEqual(
             first["description_provenance"]["fragments"],
             ["– – проверяемая позиция,", "продолжение описания"],
+        )
+        self.assertIn(
+            "3002            Проверяемый верхний заголовок",
+            first["preceding_context_provenance"]["text"],
+        )
+        self.assertIn(
+            "продолжение верхнего заголовка",
+            first["preceding_context_provenance"]["text"],
         )
         self.assertNotIn("следующий контекст", first["description"])
         self.assertIn(
