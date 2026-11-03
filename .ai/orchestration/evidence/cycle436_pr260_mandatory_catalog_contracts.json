@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "cycle": 436,
+  "checked_at": "2026-11-03T16:34:30Z",
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+  "task_id": "TARIFF-PR260-MANDATORY-CATALOG-CONTRACTS-20261103",
+  "pr": 260,
+  "prior_head_sha": "dbc5c15d5e9d2bdfbcc8c8aca02c6f95c4da441f",
+  "final_head_sha": "22004e5903215ebdc2464d4a93d303d4af83ed68",
+  "finding": {
+    "id": "PR260-LEGACY-CATALOG-SKIP-001",
+    "status": "REPAIRED_BOUNDED",
+    "evidence": "The prior head required opt-in fixture environment variables for the 21-test legacy class while exact-head CI invoked only one new hermetic smoke test.",
+    "boundary": "Twelve seed-independent existing contracts are now mandatory in a disposable migrated SQLite subprocess. Nine populated-catalog/payment-runtime-dependent methods remain explicitly outside the hermetic claim."
+  },
+  "changes": [
+    "Added a CI-enforced subprocess wrapper for twelve existing seed-independent catalog API contracts.",
+    "Pinned the migration runtime used to build the disposable SQLite fixture.",
+    "Kept the search-to-compat-children traversal mandatory and retained fail-on-skip assertions."
+  ],
+  "verification": {
+    "push_run_id": 41675228543,
+    "push_job_id": 126053932810,
+    "push_conclusion": "success",
+    "pull_request_run_id": 41675238218,
+    "pull_request_job_id": 126053965675,
+    "pull_request_conclusion": "success",
+    "orchestration_tests": 225,
+    "recovery_gate": {
+      "discovered": 2,
+      "executed": 2,
+      "skipped": 0
+    },
+    "hermetic_wrapper_tests": 2,
+    "existing_seed_independent_contracts": 12,
+    "review_threads": 0,
+    "submitted_reviews": 0,
+    "fresh_independent_a5": "PENDING_NOT_CLAIMED"
+  },
+  "protected_actions_performed": [],
+  "a6_provider_called": false,
+  "production_write": false,
+  "merge_performed": false,
+  "deploy_performed": false
+}
