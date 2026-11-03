@@ -273,6 +273,7 @@ class TnvedRecoveryOfflineCiTest(unittest.TestCase):
                     ["01", item["code"]],
                 )
                 self.assertEqual(store.search("0100")[0]["code"], item["code"])
+                self.assertEqual(store.search("01 00")[0]["code"], item["code"])
                 self.assertEqual(
                     [row["code"] for row in store.children("0 1")],
                     [item["code"]],
@@ -302,3 +303,4 @@ class TnvedRecoveryOfflineCiTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
