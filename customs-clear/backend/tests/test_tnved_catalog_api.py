@@ -6,11 +6,13 @@ import importlib.util
 import os
 from pathlib import Path
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
 import types
 import unittest
+from unittest import mock
 
 _LEGACY_DEPS_OK = all(
     importlib.util.find_spec(name) is not None
@@ -21,6 +23,26 @@ _LEGACY_DATABASE_URL = os.environ.get(
 ).strip()
 _LEGACY_TEMP_DIR: tempfile.TemporaryDirectory[str] | None = None
 _LEGACY_APP_DB = None
+_LEGACY_DATABASE_URL_UNSET = object()
+_LEGACY_PREVIOUS_DATABASE_URL: str | None | object = (
+    _LEGACY_DATABASE_URL_UNSET
+)
+
+
+def _restore_legacy_database_url() -> None:
+    global _LEGACY_PREVIOUS_DATABASE_URL
+
+    previous = _LEGACY_PREVIOUS_DATABASE_URL
+    if previous is _LEGACY_DATABASE_URL_UNSET:
+        return
+    try:
+        if previous is None:
+            os.environ.pop("DATABASE_URL", None)
+        else:
+            assert isinstance(previous, str)
+            os.environ["DATABASE_URL"] = previous
+    finally:
+        _LEGACY_PREVIOUS_DATABASE_URL = _LEGACY_DATABASE_URL_UNSET
 
 
 def _legacy_database_is_safe() -> bool:
@@ -50,6 +72,7 @@ def _load_legacy_dependencies() -> None:
     global ClassificationDecision, HsRate, PreliminaryDecision
     global Chapter, Commodity, Section, init_db
     global _LEGACY_TEMP_DIR, _LEGACY_APP_DB
+    global _LEGACY_PREVIOUS_DATABASE_URL
 
     if not _legacy_database_is_safe():
         raise RuntimeError("legacy TN VED tests require an explicit isolated SQLite fixture")
@@ -64,6 +87,10 @@ def _load_legacy_dependencies() -> None:
             "legacy TN VED tests require a fresh process before binding a disposable fixture"
         )
 
+    if _LEGACY_PREVIOUS_DATABASE_URL is not _LEGACY_DATABASE_URL_UNSET:
+        raise RuntimeError(
+            "legacy TN VED fixture environment lifecycle is already active"
+        )
     source_path = Path(
         _LEGACY_DATABASE_URL.removeprefix("sqlite:///")
     ).resolve()
@@ -71,7 +98,7 @@ def _load_legacy_dependencies() -> None:
     copied_path = Path(temp_dir.name) / "fixture.sqlite"
     shutil.copy2(source_path, copied_path)
     copied_url = f"sqlite:///{copied_path}"
-    previous_database_url = os.environ.get("DATABASE_URL")
+    _LEGACY_PREVIOUS_DATABASE_URL = os.environ.get("DATABASE_URL")
     os.environ["DATABASE_URL"] = copied_url
     success = False
     try:
@@ -122,23 +149,53 @@ def _load_legacy_dependencies() -> None:
         _LEGACY_APP_DB = app_db
         success = True
     finally:
-        if previous_database_url is None:
-            os.environ.pop("DATABASE_URL", None)
-        else:
-            os.environ["DATABASE_URL"] = previous_database_url
         if not success:
-            temp_dir.cleanup()
+            try:
+                temp_dir.cleanup()
+            finally:
+                _restore_legacy_database_url()
+
+
+def _run_legacy_init_db() -> None:
+    if _LEGACY_APP_DB is None:
+        raise RuntimeError("legacy fixture engine is not initialized")
+    fixture_engine = _LEGACY_APP_DB.engine
+    session_bind = getattr(SessionLocal, "kw", {}).get("bind")
+    if (
+        os.environ.get("DATABASE_URL") != str(fixture_engine.url)
+        or session_bind is not fixture_engine
+    ):
+        raise RuntimeError(
+            "legacy init_db target does not match the disposable fixture"
+        )
+
+    def blocked_network(*args, **kwargs):
+        raise AssertionError("network access is forbidden during legacy init_db")
+
+    with (
+        mock.patch("socket.socket.connect", blocked_network),
+        mock.patch("socket.socket.connect_ex", blocked_network),
+        mock.patch("socket.socket.sendto", blocked_network),
+        mock.patch("socket.create_connection", blocked_network),
+        mock.patch("socket.getaddrinfo", blocked_network),
+    ):
+        init_db()
 
 
 def _cleanup_legacy_database() -> None:
     global _LEGACY_TEMP_DIR, _LEGACY_APP_DB
 
-    if _LEGACY_APP_DB is not None:
-        _LEGACY_APP_DB.engine.dispose()
-    if _LEGACY_TEMP_DIR is not None:
-        _LEGACY_TEMP_DIR.cleanup()
-    _LEGACY_APP_DB = None
-    _LEGACY_TEMP_DIR = None
+    try:
+        try:
+            if _LEGACY_APP_DB is not None:
+                _LEGACY_APP_DB.engine.dispose()
+        finally:
+            if _LEGACY_TEMP_DIR is not None:
+                _LEGACY_TEMP_DIR.cleanup()
+    finally:
+        _LEGACY_APP_DB = None
+        _LEGACY_TEMP_DIR = None
+        _restore_legacy_database_url()
 
 
 _HERMETIC_API_SCRIPT = r"""
@@ -337,6 +394,273 @@ with app_db.SessionLocal() as db:
 
 
 class HermeticTnvedCatalogApiTests(unittest.TestCase):
+
+    def test_legacy_init_target_is_fixture_until_cleanup(self):
+        fixture_url = "sqlite:////private/fixture.sqlite"
+
+        for ambient_url in ("sentinel://ambient-not-a-database", None):
+            for init_raises in (False, True):
+                with self.subTest(
+                    ambient_url=ambient_url,
+                    init_raises=init_raises,
+                ):
+                    seen_targets = []
+                    fake_engine = types.SimpleNamespace(
+                        url=fixture_url,
+                        dispose=mock.Mock(),
+                    )
+                    fake_session = types.SimpleNamespace(
+                        kw={"bind": fake_engine}
+                    )
+                    fake_temp_dir = types.SimpleNamespace(
+                        cleanup=mock.Mock()
+                    )
+
+                    def fake_init_db():
+                        seen_targets.append(
+                            os.environ.get("DATABASE_URL")
+                        )
+                        with self.assertRaisesRegex(
+                            AssertionError,
+                            "network access is forbidden",
+                        ):
+                            socket.create_connection(
+                                ("inert.invalid", 443)
+                            )
+                        if init_raises:
+                            raise RuntimeError("mock migration failure")
+
+                    patched_globals = {
+                        "SessionLocal": fake_session,
+                        "init_db": fake_init_db,
+                        "_LEGACY_APP_DB": types.SimpleNamespace(
+                            engine=fake_engine
+                        ),
+                        "_LEGACY_TEMP_DIR": fake_temp_dir,
+                        "_LEGACY_PREVIOUS_DATABASE_URL": ambient_url,
+                    }
+                    with mock.patch.dict(os.environ, {}, clear=False):
+                        if ambient_url is None:
+                            os.environ.pop("DATABASE_URL", None)
+                        else:
+                            os.environ["DATABASE_URL"] = ambient_url
+                        os.environ["DATABASE_URL"] = fixture_url
+
+                        with mock.patch.dict(
+                            globals(), patched_globals
+                        ):
+                            if init_raises:
+                                with self.assertRaisesRegex(
+                                    RuntimeError,
+                                    "mock migration failure",
+                                ):
+                                    _run_legacy_init_db()
+                            else:
+                                _run_legacy_init_db()
+
+                            self.assertEqual(
+                                os.environ.get("DATABASE_URL"),
+                                fixture_url,
+                            )
+                            _cleanup_legacy_database()
+                            if ambient_url is None:
+                                self.assertNotIn(
+                                    "DATABASE_URL", os.environ
+                                )
+                            else:
+                                self.assertEqual(
+                                    os.environ["DATABASE_URL"],
+                                    ambient_url,
+                                )
+
+                    self.assertEqual(seen_targets, [fixture_url])
+                    fake_engine.dispose.assert_called_once_with()
+                    fake_temp_dir.cleanup.assert_called_once_with()
+
+    def test_legacy_init_rejects_environment_target_mismatch(self):
+        fixture_url = "sqlite:////private/fixture.sqlite"
+        fake_engine = types.SimpleNamespace(url=fixture_url)
+        fake_session = types.SimpleNamespace(kw={"bind": fake_engine})
+        fake_init_db = mock.Mock()
+
+        with mock.patch.dict(
+            os.environ,
+            {"DATABASE_URL": "sentinel://ambient-not-a-database"},
+            clear=False,
+        ):
+            with mock.patch.dict(
+                globals(),
+                {
+                    "SessionLocal": fake_session,
+                    "init_db": fake_init_db,
+                    "_LEGACY_APP_DB": types.SimpleNamespace(
+                        engine=fake_engine
+                    ),
+                },
+            ):
+                with self.assertRaisesRegex(
+                    RuntimeError,
+                    "target does not match",
+                ):
+                    _run_legacy_init_db()
+
+        fake_init_db.assert_not_called()
+
+    def test_legacy_init_rejects_session_bind_mismatch(self):
+        fixture_url = "sqlite:////private/fixture.sqlite"
+        fake_engine = types.SimpleNamespace(url=fixture_url)
+        fake_session = types.SimpleNamespace(
+            kw={"bind": object()}
+        )
+        fake_init_db = mock.Mock()
+
+        with mock.patch.dict(
+            os.environ,
+            {"DATABASE_URL": fixture_url},
+            clear=False,
+        ):
+            with mock.patch.dict(
+                globals(),
+                {
+                    "SessionLocal": fake_session,
+                    "init_db": fake_init_db,
+                    "_LEGACY_APP_DB": types.SimpleNamespace(
+                        engine=fake_engine
+                    ),
+                },
+            ):
+                with self.assertRaisesRegex(
+                    RuntimeError,
+                    "target does not match",
+                ):
+                    _run_legacy_init_db()
+
+        fake_init_db.assert_not_called()
+
+    def test_legacy_cleanup_restores_environment_after_failures(self):
+        ambient_url = "sentinel://ambient-not-a-database"
+        fixture_url = "sqlite:////private/fixture.sqlite"
+
+        for failing_step in ("dispose", "temp_cleanup"):
+            with self.subTest(failing_step=failing_step):
+                fake_engine = types.SimpleNamespace(
+                    url=fixture_url,
+                    dispose=mock.Mock(),
+                )
+                fake_temp_dir = types.SimpleNamespace(
+                    cleanup=mock.Mock()
+                )
+                if failing_step == "dispose":
+                    fake_engine.dispose.side_effect = RuntimeError(
+                        "mock dispose failure"
+                    )
+                else:
+                    fake_temp_dir.cleanup.side_effect = RuntimeError(
+                        "mock temp cleanup failure"
+                    )
+
+                with mock.patch.dict(
+                    os.environ,
+                    {"DATABASE_URL": fixture_url},
+                    clear=False,
+                ):
+                    with mock.patch.dict(
+                        globals(),
+                        {
+                            "_LEGACY_APP_DB": types.SimpleNamespace(
+                                engine=fake_engine
+                            ),
+                            "_LEGACY_TEMP_DIR": fake_temp_dir,
+                            "_LEGACY_PREVIOUS_DATABASE_URL": ambient_url,
+                        },
+                    ):
+                        with self.assertRaisesRegex(
+                            RuntimeError,
+                            f"mock {failing_step.replace('_', ' ')} failure",
+                        ):
+                            _cleanup_legacy_database()
+                        self.assertEqual(
+                            os.environ["DATABASE_URL"],
+                            ambient_url,
+                        )
+                        self.assertIsNone(_LEGACY_APP_DB)
+                        self.assertIsNone(_LEGACY_TEMP_DIR)
+                        self.assertIs(
+                            _LEGACY_PREVIOUS_DATABASE_URL,
+                            _LEGACY_DATABASE_URL_UNSET,
+                        )
+
+                fake_engine.dispose.assert_called_once_with()
+                fake_temp_dir.cleanup.assert_called_once_with()
+
+    def test_legacy_loader_import_failure_restores_environment(self):
+        ambient_url = "sentinel://ambient-not-a-database"
+        fixture_url = "sqlite:////private/source.sqlite"
+        fake_temp_dir = types.SimpleNamespace(
+            name="/private/mock-legacy-temp",
+            cleanup=mock.Mock(),
+        )
+        original_import = __import__
+
+        def fail_fastapi_import(name, *args, **kwargs):
+            if name == "fastapi":
+                raise ImportError("mock fastapi import failure")
+            return original_import(name, *args, **kwargs)
+
+        with mock.patch.dict(
+            os.environ,
+            {
+                "DATABASE_URL": ambient_url,
+                "TARIFF_RUN_LEGACY_TNVED_CATALOG": "1",
+            },
+            clear=False,
+        ):
+            with mock.patch.dict(sys.modules, {}, clear=False):
+                sys.modules.pop("app.db", None)
+                with mock.patch.dict(
+                    globals(),
+                    {
+                        "_LEGACY_DATABASE_URL": fixture_url,
+                        "_LEGACY_PREVIOUS_DATABASE_URL": (
+                            _LEGACY_DATABASE_URL_UNSET
+                        ),
+                    },
+                ):
+                    loader_mocks = {
+                        "_legacy_database_is_safe": mock.Mock(
+                            return_value=True
+                        ),
+                        "tempfile": types.SimpleNamespace(
+                            TemporaryDirectory=mock.Mock(
+                                return_value=fake_temp_dir
+                            )
+                        ),
+                        "shutil": types.SimpleNamespace(
+                            copy2=mock.Mock()
+                        ),
+                    }
+                    with mock.patch.dict(globals(), loader_mocks):
+                        with mock.patch(
+                            "builtins.__import__",
+                            side_effect=fail_fastapi_import,
+                        ):
+                            with self.assertRaisesRegex(
+                                unittest.SkipTest,
+                                "need FastAPI app",
+                            ):
+                                _load_legacy_dependencies()
+
+                    self.assertEqual(
+                        os.environ["DATABASE_URL"],
+                        ambient_url,
+                    )
+                    self.assertIs(
+                        _LEGACY_PREVIOUS_DATABASE_URL,
+                        _LEGACY_DATABASE_URL_UNSET,
+                    )
+
+        fake_temp_dir.cleanup.assert_called_once_with()
+
     def test_search_to_compat_children_traversal(self):
         backend_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory(prefix="tnved-api-") as tmp:
@@ -426,7 +750,7 @@ class TnvedCatalogApiTests(unittest.TestCase):
     def setUpClass(cls):
         _load_legacy_dependencies()
         cls.addClassCleanup(_cleanup_legacy_database)
-        init_db()
+        _run_legacy_init_db()
         cls.client = TestClient(app)
         cls._section_id: int | None = None
         cls._chapter_id: int | None = None
