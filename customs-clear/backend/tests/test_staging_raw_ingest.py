@@ -141,7 +141,8 @@ class StagingRawIngestTests(unittest.TestCase):
         continuation = (
             " " * (semantic_column + continuation_shift) + "продолжение описания"
         )
-        second = _line("3005903100", "– – – марля", duty="5")
+        previous = _line("3005903100", "– – – марля", duty="5")
+        target = _line("3005905000", "– – – вата", duty="5")
         return (
             "     3002            Проверяемый верхний заголовок,\n"
             "                     продолжение верхнего заголовка\n"
@@ -152,10 +153,29 @@ class StagingRawIngestTests(unittest.TestCase):
             f"{first}\n"
             f"{continuation}\n"
             "                – – следующий контекст:\n"
-            f"{second}\n"
+            f"{previous}\n"
             + " " * 66
             + "63С)\n"
+            f"{target}\n"
         ).encode("utf-8")
+
+    @staticmethod
+    def _chapter30_duty_binding() -> tuple[dict[str, object], ...]:
+        return (
+            {
+                "marker_source_line": 11,
+                "marker": "63С)",
+                "page_number": 1,
+                "target_hs_code": "3005905000",
+                "target_source_line": 12,
+                "previous_hs_code": "3005903100",
+                "previous_source_line": 10,
+                "marker_y": (20.0, 30.0),
+                "target_y": (25.0, 35.0),
+                "previous_y": (5.0, 15.0),
+                "binding_basis": "reviewed_pdf_page_bbox_vertical_overlap",
+            },
+        )
 
     def test_chapter30_profile_binds_multiline_and_context_without_mutating_raw(self) -> None:
         source = self._chapter30_multiline_fixture()
@@ -164,19 +184,24 @@ class StagingRawIngestTests(unittest.TestCase):
             mock.patch.object(
                 staging_raw_ingest, "CHAPTER30_SOURCE_TEXT_SHA256", source_hash
             ),
-            mock.patch.object(staging_raw_ingest, "CHAPTER30_EXPECTED_ROWS", 2),
+            mock.patch.object(staging_raw_ingest, "CHAPTER30_EXPECTED_ROWS", 3),
             mock.patch.object(
                 staging_raw_ingest, "CHAPTER30_EXPECTED_PLUS_ROWS", 1
+            ),
+            mock.patch.object(
+                staging_raw_ingest,
+                "CHAPTER30_REVIEWED_DUTY_NOTE_BINDINGS",
+                self._chapter30_duty_binding(),
             ),
         ):
             payload = prepare_ett_staging_batch(
                 source,
-                batch_size=2,
+                batch_size=3,
                 allow_leading_plus=True,
                 bind_chapter30_multiline=True,
             )
 
-        first, second = payload["batch"]["rows"]
+        first, previous, target = payload["batch"]["rows"]
         self.assertEqual(payload["parser_version"], CHAPTER30_PARSER_VERSION)
         self.assertTrue(first["raw_line"].startswith("+ "))
         self.assertEqual(
@@ -198,13 +223,28 @@ class StagingRawIngestTests(unittest.TestCase):
         self.assertNotIn("следующий контекст", first["description"])
         self.assertIn(
             "следующий контекст",
-            second["preceding_context_provenance"]["text"],
+            previous["preceding_context_provenance"]["text"],
         )
-        self.assertEqual(second["duty_text"], "5")
-        self.assertEqual(second["duty_provenance"]["text"], "5 63С)")
+        self.assertEqual(previous["duty_text"], "5")
+        self.assertEqual(previous["duty_provenance"]["rendered_text"], "5")
+        self.assertNotIn("note_marker", previous["duty_provenance"])
+        self.assertEqual(target["duty_text"], "5")
+        self.assertEqual(target["duty_provenance"]["text"], "5")
+        self.assertEqual(target["duty_provenance"]["rendered_text"], "5 63С)")
+        self.assertEqual(
+            target["duty_provenance"]["note_marker"]["target_hs_code"],
+            "3005905000",
+        )
+        self.assertEqual(
+            target["duty_provenance"]["note_marker"]["marker_source_line"], 11
+        )
         self.assertEqual(
             payload["completeness"]["record_outcomes"],
-            {"complete": 2, "ambiguous": 0, "errors": 0},
+            {"complete": 3, "ambiguous": 0, "errors": 0},
+        )
+        self.assertEqual(payload["completeness"]["duty_continuation_line_count"], 0)
+        self.assertEqual(
+            payload["completeness"]["reviewed_duty_note_binding_count"], 1
         )
 
     def test_chapter30_profile_rejects_digest_before_parsing(self) -> None:
@@ -226,12 +266,45 @@ class StagingRawIngestTests(unittest.TestCase):
             mock.patch.object(
                 staging_raw_ingest, "CHAPTER30_SOURCE_TEXT_SHA256", source_hash
             ),
-            mock.patch.object(staging_raw_ingest, "CHAPTER30_EXPECTED_ROWS", 2),
+            mock.patch.object(staging_raw_ingest, "CHAPTER30_EXPECTED_ROWS", 3),
             mock.patch.object(
                 staging_raw_ingest, "CHAPTER30_EXPECTED_PLUS_ROWS", 1
             ),
+            mock.patch.object(
+                staging_raw_ingest,
+                "CHAPTER30_REVIEWED_DUTY_NOTE_BINDINGS",
+                self._chapter30_duty_binding(),
+            ),
             self.assertRaisesRegex(
                 AmbiguousEttRowError, "unclassified chapter-30 table context"
+            ),
+        ):
+            prepare_ett_staging_batch(
+                source,
+                allow_leading_plus=True,
+                bind_chapter30_multiline=True,
+            )
+
+    def test_chapter30_profile_rejects_nonexclusive_duty_note_placement(self) -> None:
+        source = self._chapter30_multiline_fixture()
+        source_hash = hashlib.sha256(source).hexdigest()
+        bad_binding = dict(self._chapter30_duty_binding()[0])
+        bad_binding["previous_y"] = (25.0, 35.0)
+        with (
+            mock.patch.object(
+                staging_raw_ingest, "CHAPTER30_SOURCE_TEXT_SHA256", source_hash
+            ),
+            mock.patch.object(staging_raw_ingest, "CHAPTER30_EXPECTED_ROWS", 3),
+            mock.patch.object(
+                staging_raw_ingest, "CHAPTER30_EXPECTED_PLUS_ROWS", 1
+            ),
+            mock.patch.object(
+                staging_raw_ingest,
+                "CHAPTER30_REVIEWED_DUTY_NOTE_BINDINGS",
+                (bad_binding,),
+            ),
+            self.assertRaisesRegex(
+                AmbiguousEttRowError, "geometry is not exclusive"
             ),
         ):
             prepare_ett_staging_batch(
