@@ -1,3 +1,13 @@
+# Cycle 436 checkpoint — PR #260 mandatory catalog contracts restored (2026-11-03 16:34 UTC)
+
+- GitHub truth was restored from `main` `ea633c769863bd55f5d11e4a807ba459f711a4a2`, open PRs/issues, exact-head checks, review surfaces, `agent/orchestration-state`, lease and recent commits.
+- Confirmed `PR260-LEGACY-CATALOG-SKIP-001`: prior exact head `dbc5c15d5e9d2bdfbcc8c8aca02c6f95c4da441f` made the existing 21-test catalog class opt-in while CI ran only one new hermetic smoke scenario.
+- Draft PR #260 advanced to exact head `22004e5903215ebdc2464d4a93d303d4af83ed68`. Twelve existing seed-independent API contracts now execute in a disposable migrated SQLite subprocess and fail if skipped; the search-to-compat-children traversal remains mandatory. Nine populated-catalog/payment-runtime-dependent legacy methods are explicitly outside this hermetic claim.
+- Exact-head push run `41675228543` / job `126053932810` and pull-request run `41675238218` / job `126053965675` both completed `success`. Each also passed 225 orchestration tests, the 2/2 recovery gate with zero skips, committed-state validation and both hermetic wrappers.
+- PR metadata now binds the exact head and evidence. Fresh independent A5 for this head remains pending; no readiness claim was made.
+- Evidence: `.ai/orchestration/evidence/cycle436_pr260_mandatory_catalog_contracts.json`.
+- No merge, deploy, production or staging write, legal admission, enforcement flag, destructive migration, A6/provider call, permission/secret change, force push or branch deletion occurred.
+
 # Cycle 430 checkpoint — chapter-29 normalization accepted; staging baseline 619 (2026-11-02 15:03 UTC)
 
 - Sanitized acceptance evidence records the completed, independently reviewed chapter-29 operation from exact candidate `957ffae94303499455e3de89ae9309fbfdb97cc2` and exact-head CI run `41460830507`; no private source rows, exports, links, credentials or paths are published.
