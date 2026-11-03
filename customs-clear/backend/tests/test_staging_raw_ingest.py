@@ -6,10 +6,13 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
+from app.services import staging_raw_ingest
 from app.services.staging_raw_ingest import (
     AmbiguousEttRowError,
+    CHAPTER30_PARSER_VERSION,
     InvalidUtf8SourceError,
     PARSER_VERSION,
     PLUS_PARSER_VERSION,
@@ -128,6 +131,103 @@ class StagingRawIngestTests(unittest.TestCase):
                 for row in rows
             )
         )
+
+    @staticmethod
+    def _chapter30_multiline_fixture(*, continuation_shift: int = 0) -> bytes:
+        first = "+ " + _line(
+            "3002130000", "– – проверяемая позиция,", duty="3"
+        )
+        semantic_column = first.index("проверяемая")
+        continuation = (
+            " " * (semantic_column + continuation_shift) + "продолжение описания"
+        )
+        second = _line("3005903100", "– – – марля", duty="5")
+        return (
+            "Код                       Наименование позиции\n"
+            "в долларах США)\n"
+            "3002 13         – иммунологические продукты:\n"
+            f"{first}\n"
+            f"{continuation}\n"
+            "                – – следующий контекст:\n"
+            f"{second}\n"
+            + " " * 66
+            + "63С)\n"
+        ).encode("utf-8")
+
+    def test_chapter30_profile_binds_multiline_and_context_without_mutating_raw(self) -> None:
+        source = self._chapter30_multiline_fixture()
+        source_hash = hashlib.sha256(source).hexdigest()
+        with (
+            mock.patch.object(
+                staging_raw_ingest, "CHAPTER30_SOURCE_TEXT_SHA256", source_hash
+            ),
+            mock.patch.object(staging_raw_ingest, "CHAPTER30_EXPECTED_ROWS", 2),
+            mock.patch.object(
+                staging_raw_ingest, "CHAPTER30_EXPECTED_PLUS_ROWS", 1
+            ),
+        ):
+            payload = prepare_ett_staging_batch(
+                source,
+                batch_size=2,
+                allow_leading_plus=True,
+                bind_chapter30_multiline=True,
+            )
+
+        first, second = payload["batch"]["rows"]
+        self.assertEqual(payload["parser_version"], CHAPTER30_PARSER_VERSION)
+        self.assertTrue(first["raw_line"].startswith("+ "))
+        self.assertEqual(
+            first["row_sha256"],
+            hashlib.sha256(first["raw_line"].encode("utf-8")).hexdigest(),
+        )
+        self.assertEqual(
+            first["description_provenance"]["fragments"],
+            ["– – проверяемая позиция,", "продолжение описания"],
+        )
+        self.assertNotIn("следующий контекст", first["description"])
+        self.assertIn(
+            "следующий контекст",
+            second["preceding_context_provenance"]["text"],
+        )
+        self.assertEqual(second["duty_text"], "5")
+        self.assertEqual(second["duty_provenance"]["text"], "5 63С)")
+        self.assertEqual(
+            payload["completeness"]["record_outcomes"],
+            {"complete": 2, "ambiguous": 0, "errors": 0},
+        )
+
+    def test_chapter30_profile_rejects_digest_before_parsing(self) -> None:
+        with mock.patch.object(staging_raw_ingest, "_parse_rows") as parser:
+            with self.assertRaisesRegex(
+                StagingRawIngestError, "non-reviewed source layout"
+            ):
+                prepare_ett_staging_batch(
+                    b"not the reviewed layout",
+                    allow_leading_plus=True,
+                    bind_chapter30_multiline=True,
+                )
+            parser.assert_not_called()
+
+    def test_chapter30_profile_rejects_misaligned_orphan_continuation(self) -> None:
+        source = self._chapter30_multiline_fixture(continuation_shift=1)
+        source_hash = hashlib.sha256(source).hexdigest()
+        with (
+            mock.patch.object(
+                staging_raw_ingest, "CHAPTER30_SOURCE_TEXT_SHA256", source_hash
+            ),
+            mock.patch.object(staging_raw_ingest, "CHAPTER30_EXPECTED_ROWS", 2),
+            mock.patch.object(
+                staging_raw_ingest, "CHAPTER30_EXPECTED_PLUS_ROWS", 1
+            ),
+            self.assertRaisesRegex(
+                AmbiguousEttRowError, "unclassified chapter-30 table context"
+            ),
+        ):
+            prepare_ett_staging_batch(
+                source,
+                allow_leading_plus=True,
+                bind_chapter30_multiline=True,
+            )
 
     def test_legacy_pin_keeps_533_rows_while_opt_in_exposes_five_candidates(
         self,
@@ -363,4 +463,5 @@ class StagingRawIngestTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
