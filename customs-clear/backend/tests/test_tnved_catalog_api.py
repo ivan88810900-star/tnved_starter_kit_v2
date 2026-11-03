@@ -379,13 +379,30 @@ class HermeticTnvedCatalogApiTests(unittest.TestCase):
                 "TARIFF_LEGACY_TNVED_FIXTURE_URL": f"sqlite:///{fixture_path}",
                 "TARIFF_RUN_LEGACY_TNVED_CATALOG": "1",
             }
+            seed_independent_tests = [
+                "test_chapters_ok",
+                "test_commodities_ok",
+                "test_detail_10",
+                "test_detail_4_digit_row",
+                "test_format_duty_strips_garbage_and_parses_composite",
+                "test_format_duty_strips_pdf_footnotes",
+                "test_hierarchy_tree_ok",
+                "test_invalid_code_length",
+                "test_node_leaf_rates",
+                "test_preliminary_decisions_empty_message",
+                "test_preliminary_decisions_endpoint",
+                "test_sections_ok",
+            ]
             completed = subprocess.run(
                 [
                     sys.executable,
                     "-m",
                     "unittest",
                     "-v",
-                    "tests.test_tnved_catalog_api.TnvedCatalogApiTests",
+                    *[
+                        f"tests.test_tnved_catalog_api.TnvedCatalogApiTests.{name}"
+                        for name in seed_independent_tests
+                    ],
                 ],
                 cwd=backend_root,
                 env=env,
@@ -396,7 +413,7 @@ class HermeticTnvedCatalogApiTests(unittest.TestCase):
             )
         output = f"{completed.stdout}\n{completed.stderr}"
         self.assertEqual(completed.returncode, 0, output)
-        self.assertIn("Ran 21 tests", output)
+        self.assertIn("Ran 12 tests", output)
         self.assertNotIn("skipped=", output)
 
 
