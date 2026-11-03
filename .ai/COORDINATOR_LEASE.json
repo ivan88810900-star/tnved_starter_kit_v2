@@ -1,8 +1,8 @@
 {
   "acquisition_note": "independent exact-head review of PR268 and next safe ETT maintenance step",
-  "expires_at": null,
-  "generation": 436,
-  "holder": null,
+  "expires_at": "2026-11-03T22:52:03.093Z",
+  "generation": 437,
+  "holder": "/root/scheduled-cycle437-20261104T011417MSK",
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-11-03T16:35:04.411169Z"
+  "state": "active",
+  "token": "7c77d1d1ed07a18059a003aa2ccbb63f",
+  "updated_at": "2026-11-03T22:22:03.093Z"
 }
