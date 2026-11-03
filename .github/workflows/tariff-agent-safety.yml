@@ -2,7 +2,7 @@ name: Tariff agent safety
 on:
   pull_request:
     branches: [main, feat/canonical-read-path]
-    paths: ['tools/tariff_agents/**', 'tests/agent_orchestration/**', '.ai/**', 'AGENTS.md', '.github/workflows/tariff-agent-safety.yml', '.github/workflows/tariff-a6-live.yml']
+    paths: ['tools/tariff_agents/**', 'tests/agent_orchestration/**', 'customs-clear/backend/tests/test_tnved_catalog_api.py', 'customs-clear/backend/app/api/tnved.py', 'customs-clear/backend/app/api/tnved_catalog.py', 'customs-clear/backend/app/db.py', 'customs-clear/backend/app/models/__init__.py', 'customs-clear/backend/app/models/tnved.py', 'customs-clear/backend/app/services/hs_matching.py', 'customs-clear/backend/app/services/normative_store.py', 'customs-clear/backend/app/services/tnved_fts.py', 'customs-clear/backend/app/services/tnved_tree/**', '.ai/**', 'AGENTS.md', '.github/workflows/tariff-agent-safety.yml', '.github/workflows/tariff-a6-live.yml']
   push:
     branches: ['agent/**']
   workflow_dispatch:
@@ -33,3 +33,24 @@ jobs:
         run: python3 scripts/run_tnved_recovery_ci.py
       - name: Committed persistent state schema
         run: python3 -m tools.tariff_agents validate-snapshot
+      - name: Hermetic TN VED API search-to-children traversal
+        env:
+          PIP_DISABLE_PIP_VERSION_CHECK: '1'
+          PIP_NO_CACHE_DIR: '1'
+          PIP_NO_INPUT: '1'
+          PYTHONDONTWRITEBYTECODE: '1'
+        working-directory: customs-clear/backend
+        run: |
+          python3 -c 'import sys; assert (3, 11) <= sys.version_info[:2] < (3, 14), sys.version'
+          python3 -m venv "${RUNNER_TEMP}/tnved-api-venv"
+          "${RUNNER_TEMP}/tnved-api-venv/bin/python" -m pip install --only-binary=:all: \
+            annotated-doc==0.0.3 annotated-types==0.7.0 anyio==4.14.2 \
+            certifi==2026.10.18 fastapi==0.162.0 greenlet==3.2.4 \
+            h11==0.16.0 httpcore==1.0.9 httpx==0.28.1 idna==3.11 \
+            loguru==0.7.3 opentelemetry-api==1.44.0 \
+            pydantic==2.14.2 pydantic-core==2.50.2 \
+            SQLAlchemy==2.0.44 starlette==1.10.0 \
+            typing-extensions==4.16.0 typing-inspection==0.4.4
+          "${RUNNER_TEMP}/tnved-api-venv/bin/python" -m unittest -v \
+            tests.test_tnved_catalog_api.HermeticTnvedCatalogApiTests
+
