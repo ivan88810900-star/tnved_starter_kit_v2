@@ -59,6 +59,7 @@ _PARTIAL_CODE_RE = re.compile(
     r"^[ \t]*[0-9]{4}(?:[ \t]+[0-9]{2}(?:[ \t]+[0-9]{3})?)?"
     r"[ \t]{2,}\S"
 )
+_TOP_HEADING_RE = re.compile(r"^[ \t]*(?P<code>[0-9]{4})[ \t]{2,}\S")
 _DUTY_NOTE_CONTINUATION_RE = re.compile(r"^[0-9]+С\)$")
 _PAGE_FURNITURE = {
     "Ставка ввозной",
@@ -232,10 +233,16 @@ def _bind_chapter30_multiline(
         raise AmbiguousEttRowError("chapter-30 row line binding is not unique")
 
     first_index = row_indexes[0]
-    context_start = 0
+    context_start = None
     for index in range(first_index):
-        if lines[index].strip(" \t") == "в долларах США)":
-            context_start = index + 1
+        heading = _TOP_HEADING_RE.match(lines[index])
+        if heading is not None and heading.group("code") == rows[0]["hs_code"][:4]:
+            context_start = index
+            break
+    if context_start is None:
+        raise AmbiguousEttRowError(
+            "chapter-30 first row has no matching top-level heading"
+        )
     pending_indexes = list(range(context_start, first_index))
     description_continuation_count = 0
     duty_continuation_count = 0
