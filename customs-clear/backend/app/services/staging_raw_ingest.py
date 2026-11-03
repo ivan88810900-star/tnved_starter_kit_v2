@@ -19,7 +19,7 @@ from typing import Any
 PARSER_VERSION = "ett-pdftotext-layout-raw-v1"
 PLUS_PARSER_VERSION = "ett-pdftotext-layout-raw-v2-plus"
 CHAPTER30_PARSER_VERSION = (
-    "ett-pdftotext-layout-raw-v2-plus-chapter30-multiline-v1"
+    "ett-pdftotext-layout-raw-v2-plus-chapter30-multiline-v2"
 )
 CHAPTER30_SOURCE_TEXT_SHA256 = (
     "90554ea32706876c28d479b42d8f0dfb7d9032311550f63553066c6d5d40b536"
@@ -373,8 +373,16 @@ def _bind_chapter30_multiline(
         row["duty_provenance"]["rendered_text"] = row["duty_text"]
         note_binding = duty_notes_by_target.get(row["hs_code"])
         if note_binding is not None:
-            row["duty_provenance"]["rendered_text"] = (
+            qualified_duty_text = (
                 f"{row['duty_text']} {note_binding['marker']}"
+            )
+            row["duty_provenance"] = _provenance(
+                [row_index + 1, note_binding["marker_source_line"]],
+                [row["duty_text"], note_binding["marker"]],
+            )
+            row["duty_provenance"]["rendered_text"] = qualified_duty_text
+            row["duty_provenance"]["physical_source_order_lines"] = sorted(
+                row["duty_provenance"]["source_lines"]
             )
             row["duty_provenance"]["note_marker"] = {
                 key: note_binding[key]
@@ -392,6 +400,11 @@ def _bind_chapter30_multiline(
                     "binding_basis",
                 )
             }
+            row["duty_text"] = qualified_duty_text
+            if row["duty_text"] != row["duty_provenance"]["text"]:
+                raise AmbiguousEttRowError(
+                    "chapter-30 qualified duty text is not provenance-bound"
+                )
             reviewed_duty_note_binding_count += 1
         pending_indexes = following_context
 
