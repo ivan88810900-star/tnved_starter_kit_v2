@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
 
 _LEGACY_DEPS_OK = all(
@@ -75,14 +76,35 @@ def _load_legacy_dependencies() -> None:
     success = False
     try:
         try:
+            from fastapi import FastAPI
             from fastapi.testclient import TestClient
 
-            from app.api.tnved_catalog import _format_duty, clear_preview_cache
+            def blocked_provider(*args, **kwargs):
+                raise AssertionError("unrelated provider called by legacy catalog tests")
+
+            embedding_stub = types.ModuleType("app.services.embedding_service")
+            embedding_stub.embeddings_stats = lambda: {}
+            embedding_stub.ingest_tnved_embeddings_batch = blocked_provider
+            embedding_stub.semantic_search_tnved = blocked_provider
+            sys.modules["app.services.embedding_service"] = embedding_stub
+
+            security_stub = types.ModuleType("app.security")
+            security_stub.require_admin_token = blocked_provider
+            security_stub.require_authenticated_user = blocked_provider
+            sys.modules["app.security"] = security_stub
+
+            from app.api import tnved as tnved_compat
+            from app.api import tnved_catalog
             from app.db import SessionLocal
-            from app.main import app
             from app.models.core import ClassificationDecision, HsRate, PreliminaryDecision
             from app.models.tnved import Chapter, Commodity, Section
             from app.services.normative_store import init_db
+
+            _format_duty = tnved_catalog._format_duty
+            clear_preview_cache = tnved_catalog.clear_preview_cache
+            app = FastAPI()
+            app.include_router(tnved_catalog.router, prefix="/api/v1/tnved")
+            app.include_router(tnved_compat.router, prefix="/api/tnved")
         except ImportError as exc:
             raise unittest.SkipTest("tnved catalog tests need FastAPI app") from exc
 
@@ -374,7 +396,7 @@ class HermeticTnvedCatalogApiTests(unittest.TestCase):
             )
         output = f"{completed.stdout}\n{completed.stderr}"
         self.assertEqual(completed.returncode, 0, output)
-        self.assertIn("Ran 10 tests", output)
+        self.assertIn("Ran 21 tests", output)
         self.assertNotIn("skipped=", output)
 
 
