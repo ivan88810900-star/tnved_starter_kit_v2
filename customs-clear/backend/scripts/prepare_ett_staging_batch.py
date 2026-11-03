@@ -31,6 +31,14 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="use the versioned parser that admits literal '+ ' row markers",
     )
+    parser.add_argument(
+        "--chapter30-reviewed-layout",
+        action="store_true",
+        help=(
+            "bind multiline descriptions and structural context only for the "
+            "SHA-pinned reviewed chapter-30 layout"
+        ),
+    )
     parser.add_argument("--output", type=Path, help="JSON output path (default: stdout)")
     return parser
 
@@ -69,7 +77,10 @@ def main(argv: list[str] | None = None) -> int:
             source_bytes,
             start_ordinal=args.start_ordinal,
             batch_size=args.batch_size,
-            allow_leading_plus=args.allow_leading_plus,
+            allow_leading_plus=(
+                args.allow_leading_plus or args.chapter30_reviewed_layout
+            ),
+            bind_chapter30_multiline=args.chapter30_reviewed_layout,
         )
         serialized = json.dumps(
             payload,
@@ -89,4 +100,5 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
