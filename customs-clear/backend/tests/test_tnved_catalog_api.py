@@ -343,6 +343,40 @@ class HermeticTnvedCatalogApiTests(unittest.TestCase):
             f"stdout:\n{completed.stdout}\nstderr:\n{completed.stderr}",
         )
 
+    def test_existing_catalog_contracts_run_hermetically(self):
+        backend_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(prefix="tnved-legacy-seed-") as tmp:
+            fixture_path = Path(tmp) / "empty.sqlite"
+            fixture_path.touch()
+            env = {
+                "LANG": "C.UTF-8",
+                "LC_ALL": "C.UTF-8",
+                "PATH": os.environ.get("PATH", ""),
+                "PYTHONDONTWRITEBYTECODE": "1",
+                "PYTHONPATH": str(backend_root),
+                "TARIFF_LEGACY_TNVED_FIXTURE_URL": f"sqlite:///{fixture_path}",
+                "TARIFF_RUN_LEGACY_TNVED_CATALOG": "1",
+            }
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "unittest",
+                    "-v",
+                    "tests.test_tnved_catalog_api.TnvedCatalogApiTests",
+                ],
+                cwd=backend_root,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+        output = f"{completed.stdout}\n{completed.stderr}"
+        self.assertEqual(completed.returncode, 0, output)
+        self.assertIn("Ran 10 tests", output)
+        self.assertNotIn("skipped=", output)
+
 
 @unittest.skipUnless(
     _LEGACY_DEPS_OK and _LEGACY_DB_READY,
