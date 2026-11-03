@@ -263,9 +263,20 @@ class TnvedRecoveryOfflineCiTest(unittest.TestCase):
                 item = store.lookup("0100000000")
                 self.assertIsNotNone(item)
                 assert item is not None
+                formatted = store.lookup("01 00 000 000")
+                self.assertIsNotNone(formatted)
+                assert formatted is not None
+                self.assertEqual(formatted["code"], item["code"])
                 self.assertIsNone(item["rates"])
-                self.assertEqual(store.breadcrumb(item["code"])[-1]["code"], item["code"])
-                self.assertEqual(store.search(item["code"])[0]["code"], item["code"])
+                self.assertEqual(
+                    [row["code"] for row in store.breadcrumb(item["code"])],
+                    ["01", item["code"]],
+                )
+                self.assertEqual(store.search("0100")[0]["code"], item["code"])
+                self.assertEqual(
+                    [row["code"] for row in store.children("0 1")],
+                    [item["code"]],
+                )
 
     def test_builder_rejects_bytes_outside_supplied_pins(self) -> None:
         builder = _builder()
