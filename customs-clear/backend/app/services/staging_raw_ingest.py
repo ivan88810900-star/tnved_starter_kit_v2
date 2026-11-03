@@ -26,6 +26,21 @@ CHAPTER30_SOURCE_TEXT_SHA256 = (
 )
 CHAPTER30_EXPECTED_ROWS = 82
 CHAPTER30_EXPECTED_PLUS_ROWS = 16
+CHAPTER30_REVIEWED_DUTY_NOTE_BINDINGS = (
+    {
+        "marker_source_line": 551,
+        "marker": "63С)",
+        "page_number": 12,
+        "target_hs_code": "3005905000",
+        "target_source_line": 552,
+        "previous_hs_code": "3005903100",
+        "previous_source_line": 550,
+        "marker_y": (311.538680, 320.970320),
+        "target_y": (314.838320, 326.502320),
+        "previous_y": (297.918320, 309.582320),
+        "binding_basis": "reviewed_pdf_page_bbox_vertical_overlap",
+    },
+)
 ROW_STATUS = "COLLECTED_UNVERIFIED"
 MAX_BATCH_SIZE = 10_000
 
@@ -60,7 +75,6 @@ _PARTIAL_CODE_RE = re.compile(
     r"[ \t]{2,}\S"
 )
 _TOP_HEADING_RE = re.compile(r"^[ \t]*(?P<code>[0-9]{4})[ \t]{2,}\S")
-_DUTY_NOTE_CONTINUATION_RE = re.compile(r"^[0-9]+С\)$")
 _PAGE_FURNITURE = {
     "Ставка ввозной",
     "таможенной",
@@ -210,6 +224,62 @@ def _validate_context_lines(
     return source_lines, fragments
 
 
+def _vertical_overlap(first: tuple[float, float], second: tuple[float, float]) -> float:
+    return max(0.0, min(first[1], second[1]) - max(first[0], second[0]))
+
+
+def _reviewed_duty_note_bindings(
+    text: str, lines: list[str], rows: list[dict[str, Any]]
+) -> tuple[dict[int, dict[str, Any]], dict[str, dict[str, Any]]]:
+    rows_by_hs = {row["hs_code"]: row for row in rows}
+    by_marker_index: dict[int, dict[str, Any]] = {}
+    by_target_hs: dict[str, dict[str, Any]] = {}
+    source_parts = text.splitlines(keepends=True)
+    for value in CHAPTER30_REVIEWED_DUTY_NOTE_BINDINGS:
+        binding = dict(value)
+        marker_line = binding["marker_source_line"]
+        target_line = binding["target_source_line"]
+        previous_line = binding["previous_source_line"]
+        marker_index = marker_line - 1
+        target = rows_by_hs.get(binding["target_hs_code"])
+        previous = rows_by_hs.get(binding["previous_hs_code"])
+        if (
+            marker_line + 1 != target_line
+            or previous_line + 1 != marker_line
+            or marker_index < 0
+            or marker_index >= len(lines)
+            or lines[marker_index].strip(" \t") != binding["marker"]
+            or target is None
+            or previous is None
+            or target["source_line_number"] != target_line
+            or previous["source_line_number"] != previous_line
+        ):
+            raise AmbiguousEttRowError(
+                "chapter-30 reviewed duty-note source binding mismatch"
+            )
+        page_number = 1 + sum(
+            part.count("\f") for part in source_parts[:marker_index]
+        )
+        if page_number != binding["page_number"]:
+            raise AmbiguousEttRowError(
+                "chapter-30 reviewed duty-note page binding mismatch"
+            )
+        if (
+            _vertical_overlap(binding["marker_y"], binding["target_y"]) <= 0
+            or _vertical_overlap(binding["marker_y"], binding["previous_y"]) != 0
+        ):
+            raise AmbiguousEttRowError(
+                "chapter-30 reviewed duty-note geometry is not exclusive"
+            )
+        if marker_index in by_marker_index or target["hs_code"] in by_target_hs:
+            raise AmbiguousEttRowError(
+                "chapter-30 reviewed duty-note binding is duplicated"
+            )
+        by_marker_index[marker_index] = binding
+        by_target_hs[target["hs_code"]] = binding
+    return by_marker_index, by_target_hs
+
+
 def _bind_chapter30_multiline(
     text: str, rows: list[dict[str, Any]]
 ) -> dict[str, Any]:
@@ -231,6 +301,9 @@ def _bind_chapter30_multiline(
     row_index_set = set(row_indexes)
     if len(row_index_set) != len(rows):
         raise AmbiguousEttRowError("chapter-30 row line binding is not unique")
+    duty_notes_by_index, duty_notes_by_target = _reviewed_duty_note_bindings(
+        text, lines, rows
+    )
 
     first_index = row_indexes[0]
     context_start = None
@@ -245,7 +318,7 @@ def _bind_chapter30_multiline(
         )
     pending_indexes = list(range(context_start, first_index))
     description_continuation_count = 0
-    duty_continuation_count = 0
+    reviewed_duty_note_binding_count = 0
     context_line_count = 0
 
     for position, row in enumerate(rows):
@@ -265,8 +338,6 @@ def _bind_chapter30_multiline(
         semantic_column = _row_semantic_column(row)
         description_lines = [row_index + 1]
         description_fragments = [row["description"]]
-        duty_lines = [row_index + 1]
-        duty_fragments = [row["duty_text"]]
         next_index = (
             row_indexes[position + 1] if position + 1 < len(rows) else len(lines)
         )
@@ -275,6 +346,8 @@ def _bind_chapter30_multiline(
         for index in range(row_index + 1, next_index):
             line = lines[index]
             if _is_page_furniture(line):
+                continue
+            if index in duty_notes_by_index:
                 continue
             stripped = line.strip(" \t")
             if (
@@ -287,15 +360,6 @@ def _bind_chapter30_multiline(
                 description_fragments.append(stripped)
                 description_continuation_count += 1
                 continue
-            if (
-                not context_started
-                and _leading_width(line) >= 50
-                and _DUTY_NOTE_CONTINUATION_RE.fullmatch(stripped)
-            ):
-                duty_lines.append(index + 1)
-                duty_fragments.append(stripped)
-                duty_continuation_count += 1
-                continue
             context_started = True
             following_context.append(index)
 
@@ -303,7 +367,32 @@ def _bind_chapter30_multiline(
             description_lines, description_fragments
         )
         row["description"] = row["description_provenance"]["text"]
-        row["duty_provenance"] = _provenance(duty_lines, duty_fragments)
+        row["duty_provenance"] = _provenance(
+            [row_index + 1], [row["duty_text"]]
+        )
+        row["duty_provenance"]["rendered_text"] = row["duty_text"]
+        note_binding = duty_notes_by_target.get(row["hs_code"])
+        if note_binding is not None:
+            row["duty_provenance"]["rendered_text"] = (
+                f"{row['duty_text']} {note_binding['marker']}"
+            )
+            row["duty_provenance"]["note_marker"] = {
+                key: note_binding[key]
+                for key in (
+                    "marker_source_line",
+                    "marker",
+                    "page_number",
+                    "target_hs_code",
+                    "target_source_line",
+                    "previous_hs_code",
+                    "previous_source_line",
+                    "marker_y",
+                    "target_y",
+                    "previous_y",
+                    "binding_basis",
+                )
+            }
+            reviewed_duty_note_binding_count += 1
         pending_indexes = following_context
 
     trailing_lines, trailing_fragments = _validate_context_lines(lines, pending_indexes)
@@ -320,7 +409,8 @@ def _bind_chapter30_multiline(
         "code_line_count": len(rows),
         "plus_line_count": plus_rows,
         "description_continuation_line_count": description_continuation_count,
-        "duty_continuation_line_count": duty_continuation_count,
+        "duty_continuation_line_count": 0,
+        "reviewed_duty_note_binding_count": reviewed_duty_note_binding_count,
         "structural_context_line_count": context_line_count,
         "record_outcomes": {
             "complete": len(rows),
@@ -474,6 +564,7 @@ __all__ = [
     "CHAPTER30_EXPECTED_PLUS_ROWS",
     "CHAPTER30_EXPECTED_ROWS",
     "CHAPTER30_PARSER_VERSION",
+    "CHAPTER30_REVIEWED_DUTY_NOTE_BINDINGS",
     "CHAPTER30_SOURCE_TEXT_SHA256",
     "InvalidUtf8SourceError",
     "MAX_BATCH_SIZE",
