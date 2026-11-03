@@ -18,6 +18,14 @@ from typing import Any
 
 PARSER_VERSION = "ett-pdftotext-layout-raw-v1"
 PLUS_PARSER_VERSION = "ett-pdftotext-layout-raw-v2-plus"
+CHAPTER30_PARSER_VERSION = (
+    "ett-pdftotext-layout-raw-v2-plus-chapter30-multiline-v1"
+)
+CHAPTER30_SOURCE_TEXT_SHA256 = (
+    "90554ea32706876c28d479b42d8f0dfb7d9032311550f63553066c6d5d40b536"
+)
+CHAPTER30_EXPECTED_ROWS = 82
+CHAPTER30_EXPECTED_PLUS_ROWS = 16
 ROW_STATUS = "COLLECTED_UNVERIFIED"
 MAX_BATCH_SIZE = 10_000
 
@@ -47,6 +55,26 @@ _UNSUPPORTED_PREFIX_RE = re.compile(
     r"[0-9]{3}[ \t]+[0-9](?:[ \t]|$)"
 )
 _COLUMN_SEPARATOR_RE = re.compile(r"[ \t]{2,}")
+_PARTIAL_CODE_RE = re.compile(
+    r"^[ \t]*[0-9]{4}(?:[ \t]+[0-9]{2}(?:[ \t]+[0-9]{3})?)?"
+    r"[ \t]{2,}\S"
+)
+_DUTY_NOTE_CONTINUATION_RE = re.compile(r"^[0-9]+С\)$")
+_PAGE_FURNITURE = {
+    "Ставка ввозной",
+    "таможенной",
+    "пошлины",
+    "Доп.",
+    "Код",
+    "Наименование позиции            ед.",
+    "Наименование позиции             ед.",
+    "Наименование позиции           ед.",
+    "ТН ВЭД",
+    "изм.",
+    "стоимости либо",
+    "в евро, либо",
+    "в долларах США)",
+}
 
 
 def _decode_utf8_strict(source_bytes: bytes) -> str:
@@ -117,6 +145,184 @@ def _parse_rows(text: str, *, allow_leading_plus: bool) -> list[dict[str, Any]]:
     return rows
 
 
+def _leading_width(line: str) -> int:
+    return len(line) - len(line.lstrip(" \t"))
+
+
+def _is_page_furniture(line: str) -> bool:
+    stripped = line.strip(" \t")
+    if not stripped:
+        return True
+    if stripped in _PAGE_FURNITURE:
+        return True
+    return stripped.startswith(
+        ("Код ", "Наименование позиции ", "ТН ВЭД ", "(в процентах", "от таможенной")
+    )
+
+
+def _provenance(
+    source_lines: list[int], fragments: list[str]
+) -> dict[str, Any]:
+    return {
+        "text": " ".join(fragments),
+        "source_lines": source_lines,
+        "fragments": fragments,
+    }
+
+
+def _row_semantic_column(row: dict[str, Any]) -> int:
+    match = _PLUS_CODE_SHAPED_RE.match(row["raw_line"])
+    if match is None:
+        raise AmbiguousEttRowError(
+            f"line {row['source_line_number']}: reviewed row no longer matches"
+        )
+    tail = match.group("tail")
+    description_offset = tail.find(row["description"])
+    if description_offset < 0:
+        raise AmbiguousEttRowError(
+            f"line {row['source_line_number']}: description column cannot be located"
+        )
+    hierarchy = re.match(r"(?:–[ \t]+)*", row["description"])
+    return match.start("tail") + description_offset + len(hierarchy.group(0))
+
+
+def _validate_context_lines(
+    lines: list[str], indexes: list[int]
+) -> tuple[list[int], list[str]]:
+    source_lines: list[int] = []
+    fragments: list[str] = []
+    context_open = False
+    for index in indexes:
+        line = lines[index]
+        if _is_page_furniture(line):
+            continue
+        stripped = line.strip(" \t")
+        starts_context = bool(_PARTIAL_CODE_RE.match(line)) or stripped.startswith("–")
+        if starts_context:
+            context_open = True
+        elif not context_open or _leading_width(line) == 0:
+            raise AmbiguousEttRowError(
+                f"line {index + 1}: unclassified chapter-30 table context"
+            )
+        source_lines.append(index + 1)
+        fragments.append(stripped)
+    return source_lines, fragments
+
+
+def _bind_chapter30_multiline(
+    text: str, rows: list[dict[str, Any]]
+) -> dict[str, Any]:
+    source_sha256 = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    if source_sha256 != CHAPTER30_SOURCE_TEXT_SHA256:
+        raise StagingRawIngestError(
+            "chapter-30 multiline profile rejects non-reviewed source layout"
+        )
+    plus_rows = sum(row["raw_line"].lstrip(" \t").startswith("+ ") for row in rows)
+    if len(rows) != CHAPTER30_EXPECTED_ROWS or plus_rows != CHAPTER30_EXPECTED_PLUS_ROWS:
+        raise StagingRawIngestError(
+            "chapter-30 reviewed code-line completeness mismatch"
+        )
+    if any(row["supplementary_unit"] != "–" for row in rows):
+        raise StagingRawIngestError("chapter-30 supplementary-unit contract mismatch")
+
+    lines = text.splitlines()
+    row_indexes = [row["source_line_number"] - 1 for row in rows]
+    row_index_set = set(row_indexes)
+    if len(row_index_set) != len(rows):
+        raise AmbiguousEttRowError("chapter-30 row line binding is not unique")
+
+    first_index = row_indexes[0]
+    context_start = 0
+    for index in range(first_index):
+        if lines[index].strip(" \t") == "в долларах США)":
+            context_start = index + 1
+    pending_indexes = list(range(context_start, first_index))
+    description_continuation_count = 0
+    duty_continuation_count = 0
+    context_line_count = 0
+
+    for position, row in enumerate(rows):
+        row_index = row_indexes[position]
+        if row_index not in row_index_set or lines[row_index] != row["raw_line"]:
+            raise AmbiguousEttRowError(
+                f"line {row_index + 1}: row provenance does not match source text"
+            )
+        context_lines, context_fragments = _validate_context_lines(
+            lines, pending_indexes
+        )
+        context_line_count += len(context_lines)
+        row["preceding_context_provenance"] = _provenance(
+            context_lines, context_fragments
+        )
+
+        semantic_column = _row_semantic_column(row)
+        description_lines = [row_index + 1]
+        description_fragments = [row["description"]]
+        duty_lines = [row_index + 1]
+        duty_fragments = [row["duty_text"]]
+        next_index = (
+            row_indexes[position + 1] if position + 1 < len(rows) else len(lines)
+        )
+        following_context: list[int] = []
+        context_started = False
+        for index in range(row_index + 1, next_index):
+            line = lines[index]
+            if _is_page_furniture(line):
+                continue
+            stripped = line.strip(" \t")
+            if (
+                not context_started
+                and _leading_width(line) == semantic_column
+                and not stripped.startswith("–")
+                and not _PARTIAL_CODE_RE.match(line)
+            ):
+                description_lines.append(index + 1)
+                description_fragments.append(stripped)
+                description_continuation_count += 1
+                continue
+            if (
+                not context_started
+                and _leading_width(line) >= 50
+                and _DUTY_NOTE_CONTINUATION_RE.fullmatch(stripped)
+            ):
+                duty_lines.append(index + 1)
+                duty_fragments.append(stripped)
+                duty_continuation_count += 1
+                continue
+            context_started = True
+            following_context.append(index)
+
+        row["description_provenance"] = _provenance(
+            description_lines, description_fragments
+        )
+        row["description"] = row["description_provenance"]["text"]
+        row["duty_provenance"] = _provenance(duty_lines, duty_fragments)
+        pending_indexes = following_context
+
+    trailing_lines, trailing_fragments = _validate_context_lines(lines, pending_indexes)
+    if trailing_lines or trailing_fragments:
+        raise AmbiguousEttRowError(
+            "chapter-30 structural context remains after the final code row"
+        )
+
+    return {
+        "status": "COMPLETE_REVIEWED_SNAPSHOT",
+        "source_layout_verified": True,
+        "official_current_bytes_verified": False,
+        "multiline_continuations_collected": True,
+        "code_line_count": len(rows),
+        "plus_line_count": plus_rows,
+        "description_continuation_line_count": description_continuation_count,
+        "duty_continuation_line_count": duty_continuation_count,
+        "structural_context_line_count": context_line_count,
+        "record_outcomes": {
+            "complete": len(rows),
+            "ambiguous": 0,
+            "errors": 0,
+        },
+    }
+
+
 def _duplicate_evidence(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     by_hash: dict[str, list[dict[str, Any]]] = defaultdict(list)
     by_code: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -156,6 +362,7 @@ def prepare_ett_staging_batch(
     start_ordinal: int = 1,
     batch_size: int = 100,
     allow_leading_plus: bool = False,
+    bind_chapter30_multiline: bool = False,
 ) -> dict[str, Any]:
     """Return a deterministic bounded raw batch and global duplicate evidence.
 
@@ -170,6 +377,12 @@ def prepare_ett_staging_batch(
         raise TypeError("batch_size must be an integer")
     if type(allow_leading_plus) is not bool:
         raise TypeError("allow_leading_plus must be a boolean")
+    if type(bind_chapter30_multiline) is not bool:
+        raise TypeError("bind_chapter30_multiline must be a boolean")
+    if bind_chapter30_multiline and not allow_leading_plus:
+        raise StagingRawIngestError(
+            "chapter-30 multiline profile requires allow_leading_plus"
+        )
     if start_ordinal < 1:
         raise StagingRawIngestError("start_ordinal must be at least 1")
     if batch_size < 1 or batch_size > MAX_BATCH_SIZE:
@@ -178,7 +391,20 @@ def prepare_ett_staging_batch(
         )
 
     text = _decode_utf8_strict(source_bytes)
+    if (
+        bind_chapter30_multiline
+        and hashlib.sha256(source_bytes).hexdigest()
+        != CHAPTER30_SOURCE_TEXT_SHA256
+    ):
+        raise StagingRawIngestError(
+            "chapter-30 multiline profile rejects non-reviewed source layout"
+        )
     rows = _parse_rows(text, allow_leading_plus=allow_leading_plus)
+    chapter30_completeness = (
+        _bind_chapter30_multiline(text, rows)
+        if bind_chapter30_multiline
+        else None
+    )
     total_raw_count = len(rows)
     if start_ordinal > total_raw_count + 1:
         raise StagingRawIngestError(
@@ -195,7 +421,11 @@ def prepare_ett_staging_batch(
 
     payload = {
         "schema_version": 1,
-        "parser_version": PLUS_PARSER_VERSION if allow_leading_plus else PARSER_VERSION,
+        "parser_version": (
+            CHAPTER30_PARSER_VERSION
+            if bind_chapter30_multiline
+            else PLUS_PARSER_VERSION if allow_leading_plus else PARSER_VERSION
+        ),
         "source_text_sha256": hashlib.sha256(source_bytes).hexdigest(),
         "row_status": ROW_STATUS,
         "normalization_performed": False,
@@ -227,11 +457,17 @@ def prepare_ett_staging_batch(
             "source_provenance_verified": False,
             "multiline_continuations_collected": False,
         }
+    if chapter30_completeness is not None:
+        payload["completeness"] = chapter30_completeness
     return payload
 
 
 __all__ = [
     "AmbiguousEttRowError",
+    "CHAPTER30_EXPECTED_PLUS_ROWS",
+    "CHAPTER30_EXPECTED_ROWS",
+    "CHAPTER30_PARSER_VERSION",
+    "CHAPTER30_SOURCE_TEXT_SHA256",
     "InvalidUtf8SourceError",
     "MAX_BATCH_SIZE",
     "PARSER_VERSION",
@@ -240,4 +476,5 @@ __all__ = [
     "StagingRawIngestError",
     "prepare_ett_staging_batch",
 ]
+
 
