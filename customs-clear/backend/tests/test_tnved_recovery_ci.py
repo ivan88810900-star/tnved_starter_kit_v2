@@ -279,6 +279,63 @@ class TnvedRecoveryOfflineCiTest(unittest.TestCase):
                     [item["code"]],
                 )
 
+            extra_codes = [f"01{number:08d}" for number in range(1, 200)]
+            with closing(sqlite3.connect(first)) as connection:
+                connection.executemany(
+                    """INSERT INTO recovery_nodes
+                       (edition_id,code,label,parent_code,source_id,page,path_json,note_refs_json,change_symbol)
+                       VALUES (?,?,?,?,?,?,?,?,?)""",
+                    [
+                        (
+                            "edition-01",
+                            code,
+                            f"Synthetic child {code}",
+                            "01",
+                            "source-01",
+                            3,
+                            json.dumps(["Synthetic chapter 01", f"Synthetic child {code}"]),
+                            "[]",
+                            "",
+                        )
+                        for code in reversed(extra_codes)
+                    ],
+                )
+                connection.commit()
+
+            expected_codes = ["0100000000", *extra_codes]
+            with TnvedRecoveryStore(first) as store:
+                self.assertEqual(
+                    [row["code"] for row in store.children("01", limit=200)],
+                    expected_codes,
+                )
+                for invalid_limit in (0, 201, 1.5, True):
+                    with self.subTest(invalid_limit=invalid_limit):
+                        with self.assertRaisesRegex(ValueError, "limit must be"):
+                            store.children("01", limit=invalid_limit)  # type: ignore[arg-type]
+
+            with closing(sqlite3.connect(first)) as connection:
+                connection.execute(
+                    """INSERT INTO recovery_nodes
+                       (edition_id,code,label,parent_code,source_id,page,path_json,note_refs_json,change_symbol)
+                       VALUES (?,?,?,?,?,?,?,?,?)""",
+                    (
+                        "edition-01",
+                        "0100000200",
+                        "Synthetic child 0100000200",
+                        "01",
+                        "source-01",
+                        3,
+                        json.dumps(["Synthetic chapter 01", "Synthetic child 0100000200"]),
+                        "[]",
+                        "",
+                    ),
+                )
+                connection.commit()
+
+            with TnvedRecoveryStore(first) as store:
+                with self.assertRaisesRegex(ValueError, "refusing partial result"):
+                    store.children("01", limit=200)
+
     def test_builder_rejects_bytes_outside_supplied_pins(self) -> None:
         builder = _builder()
         with tempfile.TemporaryDirectory() as raw:
