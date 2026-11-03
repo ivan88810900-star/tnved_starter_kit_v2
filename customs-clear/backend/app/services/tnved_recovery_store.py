@@ -74,6 +74,20 @@ class TnvedRecoveryStore:
         rows[-1]["path"] = item["path"]
         return rows
 
+    def children(self, code: str, *, limit: int = 200) -> list[dict[str, Any]]:
+        normalized = "".join(ch for ch in str(code) if ch.isdigit())
+        if not normalized or limit < 1:
+            return []
+        rows = self._conn.execute(
+            """SELECT code,label,path_json,edition_id,source_id
+                 FROM recovery_nodes
+                WHERE parent_code=?
+                ORDER BY length(code), code
+                LIMIT ?""",
+            (normalized, min(limit, 200)),
+        ).fetchall()
+        return [{**dict(row), "path": json.loads(row["path_json"])} for row in rows]
+
     def search(self, query: str, *, limit: int = 40) -> list[dict[str, Any]]:
         value = str(query).strip().lower()
         if len(value) < 2 or limit < 1:
