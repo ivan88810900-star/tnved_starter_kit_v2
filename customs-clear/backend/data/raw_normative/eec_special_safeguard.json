@@ -6,6 +6,26 @@
   "effective_from": "2026-01-01",
   "description": "Специальные защитные пошлины ЕЭК",
   "data_source": "Решения Коллегии/Совета ЕЭК (официальные документы)",
+  "verification_status": "rejected_source_mismatch",
+  "verification_checked_at": "2026-10-15",
+  "verification_note": "Карантин: ни одна из трёх строк не подтверждена указанными реквизитами в официальном правовом портале ЕАЭС. Пакет нельзя применять; до синхронизации подтверждённого перечня сохраняется manual review.",
+  "verification_evidence": [
+    {
+      "claimed_act": "Решение Коллегии ЕЭК № 30 от 03.03.2020",
+      "official_url": "https://docs.eaeunion.org/documents/247/5029/",
+      "finding": "Официальный акт № 30 относится к стандартам безопасности средств индивидуальной защиты, а не к специальной защитной пошлине."
+    },
+    {
+      "claimed_act": "Решение Коллегии ЕЭК № 65 от 14.04.2020",
+      "official_url": "https://docs.eaeunion.org/documents/search/",
+      "finding": "По точным фильтрам номера и даты официальный портал не возвращает такой акт."
+    },
+    {
+      "claimed_act": "Решение Коллегии ЕЭК № 149 от 29.10.2019",
+      "official_url": "https://docs.eaeunion.org/documents/search/",
+      "finding": "По точным фильтрам номера и даты официальный портал не возвращает такой акт."
+    }
+  ],
   "measures": [
     {
       "hs_code": "7306",
@@ -18,7 +38,8 @@
       "currency_code": "USD",
       "effective_to": "",
       "source_revision": "special-safeguard:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/",
+      "needs_verification": true
     },
     {
       "hs_code": "7210",
@@ -31,7 +52,8 @@
       "currency_code": "USD",
       "effective_to": "",
       "source_revision": "special-safeguard:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/",
+      "needs_verification": true
     },
     {
       "hs_code": "7228",
@@ -44,7 +66,8 @@
       "currency_code": "USD",
       "effective_to": "",
       "source_revision": "special-safeguard:2026-06-18",
-      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/"
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/trade-protect/",
+      "needs_verification": true
     }
   ]
 }

@@ -4,33 +4,51 @@ from __future__ import annotations
 
 import unittest
 
+import pytest
+
+
+pytest_plugins = ("tests.classification_inventory_fixture",)
+
 try:
-    from app.db import Base, SessionLocal, engine
+    from app import db as app_db
     from app.models.tnved import Chapter, Commodity, Section
-    from app.services.tnved_fts import ensure_fts_index, search_commodities_fts
+    from app.services import tnved_fts
+    from app.services.tnved_fts import search_commodities_fts
 
     _OK = True
 except ImportError:
     _OK = False
 
 
-@unittest.skipUnless(_OK, "FTS tests need FastAPI app + models")
-class TnvedFtsTests(unittest.TestCase):
-    available = False
+@pytest.fixture(autouse=True)
+def _isolated_fts_inventory(
+    classification_inventory_session_local,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Build and query FTS only inside the disposable classification database."""
+    if not _OK:
+        yield
+        return
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        Base.metadata.create_all(bind=engine)
-        cls.available = ensure_fts_index()
-        if not cls.available:
-            return
-        with SessionLocal() as db:
-            sec = Section(roman_number="FTSX", title="FTS тест", notes="")
-            db.add(sec)
-            db.flush()
-            ch = Chapter(section_id=sec.id, code="9988", title="FTS глава", notes="")
-            db.add(ch)
-            db.flush()
+    disposable_engine = classification_inventory_session_local.kw["bind"]
+    monkeypatch.setattr(tnved_fts, "engine", disposable_engine)
+    monkeypatch.setattr(tnved_fts, "_fts_ready", None)
+
+    app_db.Base.metadata.create_all(bind=disposable_engine)
+    available = tnved_fts.ensure_fts_index()
+    TnvedFtsTests.available = available
+    if available:
+        with classification_inventory_session_local() as db:
+            sec = db.query(Section).filter(Section.roman_number == "FTSX").first()
+            if sec is None:
+                sec = Section(roman_number="FTSX", title="FTS тест", notes="")
+                db.add(sec)
+                db.flush()
+            ch = db.query(Chapter).filter(Chapter.code == "9988").first()
+            if ch is None:
+                ch = Chapter(section_id=sec.id, code="9988", title="FTS глава", notes="")
+                db.add(ch)
+                db.flush()
             seeds = [
                 ("9988100000", "уникумтовар спортивный для тестирования морфологии"),
                 ("9988200000", "прочие уникумтовары разные модели"),
@@ -48,7 +66,14 @@ class TnvedFtsTests(unittest.TestCase):
                     )
             db.commit()
         # Перестроить индекс, чтобы seed-строки попали в FTS детерминированно.
-        ensure_fts_index(rebuild=True)
+        tnved_fts.ensure_fts_index(rebuild=True)
+
+    yield
+
+
+@unittest.skipUnless(_OK, "FTS tests need FastAPI app + models")
+class TnvedFtsTests(unittest.TestCase):
+    available = False
 
     def setUp(self) -> None:
         if not self.__class__.available:

@@ -1,19 +1,120 @@
 """Tests for import restrictions database — Issue #86."""
 from __future__ import annotations
 
-import pytest
-from sqlalchemy import text
+import hashlib
+import os
+import subprocess
+import sys
+from collections.abc import Iterator
+from pathlib import Path
 
+import pytest
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import make_url
+from sqlalchemy.orm import sessionmaker
+
+from app import db as app_db
 from app.db import SessionLocal
+from app.services import normative_store
 from app.services.normative_store import find_import_restrictions
+from scripts import seed_import_restrictions
+
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+BOOTSTRAP_SCRIPT = BACKEND_ROOT / "scripts" / "bootstrap_disposable_classification_inventory.py"
+DEFAULT_DATABASE = BACKEND_ROOT / "customs.db"
+PINNED_CATALOGUE = BACKEND_ROOT / "customs.db.backup_before_pdf_import"
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file_handle:
+        for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _protected_paths() -> set[Path]:
+    paths = {DEFAULT_DATABASE.resolve(), PINNED_CATALOGUE.resolve()}
+    configured_url = make_url(app_db.DATABASE_URL)
+    if configured_url.drivername.startswith("sqlite") and configured_url.database:
+        paths.add(Path(configured_url.database).resolve())
+    return paths
+
+
+def _protected_fingerprints() -> dict[Path, str | None]:
+    return {
+        path: _sha256(path) if path.is_file() else None
+        for path in _protected_paths()
+    }
+
+
+@pytest.fixture(scope="module")
+def import_restrictions_session_factory(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[sessionmaker]:
+    """Build and seed an isolated catalogue without using the configured DB."""
+    temp_dir = tmp_path_factory.mktemp("import-restrictions")
+    database = temp_dir / "import-restrictions.db"
+    protected_hashes = _protected_fingerprints()
+    env = os.environ.copy()
+    env.pop("DATABASE_URL", None)
+    env.pop("TNVED_SOURCE_DB", None)
+    result = subprocess.run(
+        [sys.executable, str(BOOTSTRAP_SCRIPT), str(database)],
+        cwd=BACKEND_ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert _protected_fingerprints() == protected_hashes
+
+    engine = create_engine(
+        f"sqlite:///{database}",
+        connect_args={"check_same_thread": False},
+    )
+    factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    patches = pytest.MonkeyPatch()
+    patches.setattr(sys.modules[__name__], "SessionLocal", factory)
+    patches.setattr(app_db, "engine", engine)
+    patches.setattr(app_db, "SessionLocal", factory)
+    patches.setattr(normative_store, "SessionLocal", factory)
+    patches.setattr(seed_import_restrictions, "engine", engine)
+    patches.setattr(seed_import_restrictions, "SessionLocal", factory)
+    patches.setattr(seed_import_restrictions, "DRY_RUN", False)
+
+    try:
+        initial = seed_import_restrictions.seed()
+        repeated = seed_import_restrictions.seed()
+        assert repeated == {"inserted": 0, "total": initial["total"]}
+        yield factory
+    finally:
+        patches.undo()
+        engine.dispose()
+        for suffix in ("", "-shm", "-wal"):
+            candidate = Path(f"{database}{suffix}")
+            if candidate.exists():
+                candidate.unlink()
+        assert _protected_fingerprints() == protected_hashes
+
+
+@pytest.fixture(autouse=True)
+def _import_restrictions_lookup_database(
+    import_restrictions_session_factory: sessionmaker,
+) -> None:
+    """Ensure lookup-only tests share the same isolated seeded database."""
 
 
 class TestImportRestrictionsData:
     @pytest.fixture(autouse=True)
-    def _db(self):
-        self.db = SessionLocal()
-        yield
-        self.db.close()
+    def _db(self, import_restrictions_session_factory: sessionmaker):
+        self.db = import_restrictions_session_factory()
+        try:
+            yield
+        finally:
+            self.db.close()
 
     def test_total_entries_above_70(self) -> None:
         total = self.db.execute(text("SELECT COUNT(*) FROM import_restrictions")).scalar()

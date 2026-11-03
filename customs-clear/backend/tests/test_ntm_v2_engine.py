@@ -58,14 +58,30 @@ def test_measure_not_duplicated_per_tr_and_permit(memory_sessionmaker: sessionma
         assert len(rows) == 1
 
 
-def test_engine_prefix_8517(memory_sessionmaker: sessionmaker) -> None:
+def test_engine_prefix_851713(memory_sessionmaker: sessionmaker) -> None:
     from app.services.ntm_engine_v2 import evaluate_ntm_v2
 
     import_tr_ts_catalog_to_ntm_v2()
-    out = evaluate_ntm_v2(hs_code="8517620000")
+    out = evaluate_ntm_v2(hs_code="8517130000")
     keys = {(r["permit_type"], r["tr_ts"]) for r in out["requirements"]}
-    assert ("ДС", "004/2011") in keys
-    assert any(r["matched_hs_scope"] == "8517" for r in out["requirements"] if r["tr_ts"] == "004/2011")
+    assert ("ДС", "020/2011") in keys
+    assert ("ДС", "004/2011") not in keys
+    assert any(r["matched_hs_scope"] == "851713" for r in out["requirements"] if r["tr_ts"] == "020/2011")
+
+
+@pytest.mark.parametrize("hs_code", ["8517710000", "8517790000"])
+def test_engine_does_not_enforce_phone_regulations_on_parts(
+    memory_sessionmaker: sessionmaker,
+    hs_code: str,
+) -> None:
+    from app.services.ntm_engine_v2 import evaluate_ntm_v2
+
+    import_tr_ts_catalog_to_ntm_v2()
+    out = evaluate_ntm_v2(hs_code=hs_code)
+    keys = {(r["permit_type"], r["tr_ts"]) for r in out["requirements"]}
+    assert ("ДС", "004/2011") not in keys
+    assert ("ДС", "020/2011") not in keys
+    assert ("ДС", "037/2016") not in keys
 
 
 def test_engine_normalizes_hs_formatting(memory_sessionmaker: sessionmaker) -> None:
@@ -85,23 +101,23 @@ def test_engine_excludes_rule_by_valid_to(memory_sessionmaker: sessionmaker) -> 
         rule = (
             s.query(NtmApplicabilityRuleV2)
             .join(NtmMeasureV2)
-            .filter(NtmMeasureV2.tr_ts_act_code == "004/2011", NtmMeasureV2.permit_type == "ДС")
-            .filter(NtmApplicabilityRuleV2.hs_code == "8517")
+            .filter(NtmMeasureV2.tr_ts_act_code == "020/2011", NtmMeasureV2.permit_type == "ДС")
+            .filter(NtmApplicabilityRuleV2.hs_code == "851713")
             .one()
         )
         rule.valid_to = date.today() - timedelta(days=1)
         s.commit()
 
-    out = evaluate_ntm_v2(hs_code="8517620000")
-    assert all(not (r["tr_ts"] == "004/2011" and r["permit_type"] == "ДС") for r in out["requirements"])
+    out = evaluate_ntm_v2(hs_code="8517130000")
+    assert all(not (r["tr_ts"] == "020/2011" and r["permit_type"] == "ДС") for r in out["requirements"])
 
 
 def test_engine_includes_rule_when_dates_open(memory_sessionmaker: sessionmaker) -> None:
     from app.services.ntm_engine_v2 import evaluate_ntm_v2
 
     import_tr_ts_catalog_to_ntm_v2()
-    out = evaluate_ntm_v2(hs_code="8517620000")
-    assert any(r["tr_ts"] == "004/2011" and r["permit_type"] == "ДС" for r in out["requirements"])
+    out = evaluate_ntm_v2(hs_code="8517130000")
+    assert any(r["tr_ts"] == "020/2011" and r["permit_type"] == "ДС" for r in out["requirements"])
 
 
 def test_shadow_full_overlap(memory_sessionmaker: sessionmaker) -> None:
@@ -123,7 +139,7 @@ def test_shadow_legacy_only(monkeypatch: pytest.MonkeyPatch, memory_sessionmaker
         return [{"permit_type": "ДС", "tr_ts": "999/2099"}]
 
     monkeypatch.setattr(eng, "get_tr_ts_requirements", _fake_legacy)
-    cmp = eng.compare_legacy_tr_ts_catalog_vs_ntm_v2("8517620000")
+    cmp = eng.compare_legacy_tr_ts_catalog_vs_ntm_v2("8517130000")
     assert "ДС|999/2099" in cmp["legacy_only"]
     assert cmp["is_full_match"] is False
 
@@ -133,7 +149,7 @@ def test_shadow_v2_only(monkeypatch: pytest.MonkeyPatch, memory_sessionmaker: se
 
     import_tr_ts_catalog_to_ntm_v2()
     monkeypatch.setattr(eng, "get_tr_ts_requirements", lambda _hs: [])
-    cmp = eng.compare_legacy_tr_ts_catalog_vs_ntm_v2("8517620000")
+    cmp = eng.compare_legacy_tr_ts_catalog_vs_ntm_v2("8517130000")
     assert len(cmp["v2_only"]) > 0
     assert cmp["is_full_match"] is False
 
@@ -274,6 +290,153 @@ def test_engine_official_sgr_exclude_only_rule(
     keys_ex = _matched_official_rule_import_keys(memory_sessionmaker, "9619000000", "товар для взрослых")
     assert EXCLUDE_ONLY_ENGINE_KEY in keys_ok
     assert EXCLUDE_ONLY_ENGINE_KEY not in keys_ex
+
+
+def test_engine_official_sgr_exact_scope_does_not_expand_to_descendants(
+    memory_sessionmaker: sessionmaker,
+) -> None:
+    from app.services.ntm_v2_official_sgr_import import (
+        evaluate_official_sgr_for_position,
+        import_official_sgr_rules_to_ntm_v2,
+        official_sgr_seed_rule_matches_position,
+    )
+
+    row = {
+        "rule_id": "test-exact-3304",
+        "hs_scope": "3304",
+        "hs_scope_mode": "exact",
+        "permit_type": "СГР",
+        "applicability": "possible",
+        "title": "Exact test scope",
+        "evidence": "test-only scope contract",
+    }
+    import_official_sgr_rules_to_ntm_v2({"source_document": "test", "rules": [row]})
+
+    assert official_sgr_seed_rule_matches_position(row, "3304990000", "") is False
+    assert evaluate_official_sgr_for_position("3304990000", "")["matched_rules"] == []
+    assert evaluate_official_sgr_for_position("3304", "")["matched_rules"]
+
+
+def test_engine_official_sgr_inactive_measure_is_not_admitted(
+    memory_sessionmaker: sessionmaker,
+) -> None:
+    from app.services.ntm_v2_official_sgr_import import (
+        evaluate_official_sgr_for_position,
+        import_official_sgr_rules_to_ntm_v2,
+    )
+
+    import_official_sgr_rules_to_ntm_v2(
+        {
+            "source_document": "test",
+            "rules": [
+                {
+                    "rule_id": "test-inactive-measure",
+                    "hs_scope": "3808",
+                    "hs_scope_mode": "prefix",
+                    "permit_type": "СГР",
+                    "applicability": "possible",
+                    "title": "Inactive measure test",
+                    "evidence": "test-only status contract",
+                }
+            ],
+        }
+    )
+    with memory_sessionmaker() as session:
+        measure = session.query(NtmMeasureV2).filter_by(source_kind="official_sgr_registry").one()
+        measure.status = "inactive"
+        session.commit()
+
+    assert evaluate_official_sgr_for_position("3808990000", "")["matched_rules"] == []
+
+
+def test_engine_official_sgr_export_rule_is_not_admitted_for_import(
+    memory_sessionmaker: sessionmaker,
+) -> None:
+    from app.services.ntm_v2_official_sgr_import import (
+        evaluate_official_sgr_for_position,
+        import_official_sgr_rules_to_ntm_v2,
+    )
+
+    import_official_sgr_rules_to_ntm_v2(
+        {
+            "source_document": "test",
+            "rules": [
+                {
+                    "rule_id": "test-export-direction",
+                    "hs_scope": "3808",
+                    "hs_scope_mode": "prefix",
+                    "permit_type": "СГР",
+                    "applicability": "possible",
+                    "title": "Export direction test",
+                    "evidence": "test-only direction contract",
+                }
+            ],
+        }
+    )
+    with memory_sessionmaker() as session:
+        rule = session.query(NtmApplicabilityRuleV2).filter_by(
+            rule_import_key="official_sgr_registry|rule:test-export-direction"
+        ).one()
+        rule.direction = "export"
+        session.commit()
+
+    assert evaluate_official_sgr_for_position("3808990000", "")["matched_rules"] == []
+
+
+def test_official_sgr_import_rejects_unknown_hs_scope_mode(
+    memory_sessionmaker: sessionmaker,
+) -> None:
+    from app.services.ntm_v2_official_sgr_import import import_official_sgr_rules_to_ntm_v2
+
+    report = import_official_sgr_rules_to_ntm_v2(
+        {
+            "source_document": "test",
+            "rules": [
+                {
+                    "rule_id": "test-unknown-mode",
+                    "hs_scope": "3808",
+                    "hs_scope_mode": "wildcard",
+                    "permit_type": "СГР",
+                    "applicability": "possible",
+                    "title": "Unknown mode test",
+                    "evidence": "test-only mode contract",
+                }
+            ],
+        }
+    )
+
+    assert report["rules_invalid"] == 1
+    assert report["rules_created"] == 0
+    with memory_sessionmaker() as session:
+        assert session.query(NtmApplicabilityRuleV2).count() == 0
+
+
+@pytest.mark.parametrize(
+    "description_fields",
+    [{}, {"exclude_if_contains_any": ["industrial"]}],
+)
+def test_official_sgr_import_rejects_description_only_without_positive_gate(
+    memory_sessionmaker: sessionmaker,
+    description_fields: dict,
+) -> None:
+    from app.services.ntm_v2_official_sgr_import import import_official_sgr_rules_to_ntm_v2
+
+    row = {
+        "rule_id": "test-empty-description-only",
+        "hs_scope": "",
+        "hs_scope_mode": "description_only",
+        "permit_type": "СГР",
+        "applicability": "definite",
+        "title": "Empty description-only test",
+        "evidence": "test-only positive gate contract",
+        **description_fields,
+    }
+    report = import_official_sgr_rules_to_ntm_v2({"source_document": "test", "rules": [row]})
+
+    assert report["rules_invalid"] == 1
+    assert report["rules_created"] == 0
+    with memory_sessionmaker() as session:
+        assert session.query(NtmApplicabilityRuleV2).count() == 0
 
 
 def test_rule_description_matches_official_sgr_and_mode(

@@ -201,16 +201,6 @@ async def permits_verify_job_export(
     )
 
 
-@router.get("/verify/{number:path}")
-async def permits_verify_short(
-    number: str,
-    hs_code: str = Query("", description="Код ТН ВЭД для сверки"),
-    doc_type: str = Query("", description="СС или ДС; если пусто — авто"),
-) -> JSONResponse:
-    """GET /api/permits/verify/{number} — проверка из локальной opendata-копии или реестра ФСА."""
-    return await permits_verify_by_number(number, hs_code=hs_code, doc_type=doc_type)
-
-
 @router.get("/search")
 async def permits_search(
     tnved: str = Query(..., min_length=4, description="Код или префикс ТН ВЭД"),
@@ -247,6 +237,20 @@ async def permits_verify_job_status(
     if not row:
         raise HTTPException(status_code=404, detail="Задание не найдено")
     return JSONResponse({"status": "OK", "job_id": job_id, **row})
+
+
+@router.get("/verify/{number:path}")
+async def permits_verify_short(
+    number: str,
+    hs_code: str = Query("", description="Код ТН ВЭД для сверки"),
+    doc_type: str = Query("", description="СС или ДС; если пусто — авто"),
+) -> JSONResponse:
+    """GET /api/permits/verify/{number} — проверка из локальной opendata-копии или реестра ФСА.
+
+    Этот legacy catch-all обязан оставаться после всех статических /verify/*
+    маршрутов, иначе он перехватывает jobs/detail и запускает проверку реестра.
+    """
+    return await permits_verify_by_number(number, hs_code=hs_code, doc_type=doc_type)
 
 
 @router.get("/metrics")

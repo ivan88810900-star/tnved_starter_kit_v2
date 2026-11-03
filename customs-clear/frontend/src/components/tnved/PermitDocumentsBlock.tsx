@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { api } from '../../api/client';
 import { getUserFacingApiError } from '../../api/error';
 import type { NormativeRequirementsBlockData } from '../../types/api.types';
+import { formatUnsafeExternalUrlEvidence, getSafeExternalUrl } from '../../utils/externalUrl';
 import { describePermit } from '../../utils/permitVocabulary';
 
 const TROIS_OFFICIAL = 'https://customs.gov.ru/registers/objects-intellectual-property';
@@ -24,6 +25,39 @@ type VerifyRow = {
   data_as_of?: string;
   freshness_label?: string;
 };
+
+export function PermitDocumentsVerificationLink({
+  manualCheckUrl,
+  registryLink,
+}: {
+  manualCheckUrl: unknown;
+  registryLink: unknown;
+}) {
+  const candidates = [manualCheckUrl, registryLink];
+  const safeUrl = candidates.map(getSafeExternalUrl).find((value): value is string => Boolean(value)) ?? null;
+  const rejectedEvidence = Array.from(new Set(
+    candidates
+      .filter((value): value is string => typeof value === 'string' && value.length > 0 && !getSafeExternalUrl(value))
+      .map((value) => formatUnsafeExternalUrlEvidence(value))
+      .filter(Boolean),
+  ));
+
+  if (!safeUrl && rejectedEvidence.length === 0) return null;
+  return (
+    <>
+      {safeUrl ? (
+        <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-indigo-600 hover:underline">
+          Проверить на ФСА →
+        </a>
+      ) : null}
+      {rejectedEvidence.map((evidence) => (
+        <span key={evidence} data-testid="unsafe-permit-verification-url-evidence" className="mt-1 block text-slate-500">
+          Адрес проверки (ссылка недоступна): <span className="break-all font-mono">{evidence}</span>
+        </span>
+      ))}
+    </>
+  );
+}
 
 export function PermitDocumentsBlock({ hsCode, productName, normativeBlock }: Props) {
   const [certNumber, setCertNumber] = useState('');
@@ -138,14 +172,10 @@ export function PermitDocumentsBlock({ hsCode, productName, normativeBlock }: Pr
             ) : null}
             {verifyResult.fallback_note ? <p className="mt-1 text-amber-700">{verifyResult.fallback_note}</p> : null}
             {(verifyResult.manual_check_url || verifyResult.registry_link) && (
-              <a
-                href={verifyResult.manual_check_url || verifyResult.registry_link || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1 inline-block text-indigo-600 hover:underline"
-              >
-                Проверить на ФСА →
-              </a>
+              <PermitDocumentsVerificationLink
+                manualCheckUrl={verifyResult.manual_check_url}
+                registryLink={verifyResult.registry_link}
+              />
             )}
           </div>
         ) : null}

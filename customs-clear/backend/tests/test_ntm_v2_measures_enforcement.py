@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app.db import Base
 from app.models.tnved import Chapter, Commodity, NonTariffMeasure, Section
 from app.models.ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2
+from app.services import sanctions_risk_block
 from app.services.ntm_v2_legacy_measures_enforcement import (
     classify_v2_measure_for_enforcement,
     compare_non_tariff_check_measures_enforcement,
@@ -22,22 +23,26 @@ from app.services.ntm_v2_legacy_measures_import import import_legacy_non_tariff_
 @pytest.fixture
 def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
     engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(
-        engine,
-        tables=[
-            Section.__table__,
-            Chapter.__table__,
-            Commodity.__table__,
-            NonTariffMeasure.__table__,
-            NtmMeasureV2.__table__,
-            NtmApplicabilityRuleV2.__table__,
-        ],
-    )
-    sm = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    monkeypatch.setattr("app.db.SessionLocal", sm)
-    monkeypatch.setattr("app.services.normative_store.SessionLocal", sm)
-    monkeypatch.setattr("app.services.non_tariff_rules.SessionLocal", sm)
-    return sm
+    try:
+        Base.metadata.create_all(
+            engine,
+            tables=[
+                Section.__table__,
+                Chapter.__table__,
+                Commodity.__table__,
+                NonTariffMeasure.__table__,
+                NtmMeasureV2.__table__,
+                NtmApplicabilityRuleV2.__table__,
+            ],
+        )
+        sm = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        monkeypatch.setattr("app.db.SessionLocal", sm)
+        monkeypatch.setattr("app.services.normative_store.SessionLocal", sm)
+        monkeypatch.setattr("app.services.non_tariff_rules.SessionLocal", sm)
+        monkeypatch.setattr(sanctions_risk_block, "SessionLocal", sm)
+        yield sm
+    finally:
+        engine.dispose()
 
 
 @pytest.fixture
@@ -62,6 +67,12 @@ def minimal_ntm_patches(monkeypatch: pytest.MonkeyPatch) -> None:
         "app.services.non_tariff_service.lookup_tr_ts_acts_by_codes",
         lambda _codes: [],
     )
+
+
+def test_memory_sessionmaker_rebinds_preimported_sanctions_alias(
+    memory_sessionmaker: sessionmaker,
+) -> None:
+    assert sanctions_risk_block.SessionLocal is memory_sessionmaker
 
 
 def _seed_measure(

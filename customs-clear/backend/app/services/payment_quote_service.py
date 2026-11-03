@@ -152,6 +152,25 @@ def _resolve_special_duty_line(
     details = list(raw.get("special_duties") or [])
     configured = _special_duties_configured_for_hs(hs_code)
 
+    uncertain = [
+        detail
+        for detail in details
+        if detail.get("manual_review_required")
+        or detail.get("needs_verification")
+        or detail.get("warning")
+    ]
+    if uncertain:
+        reasons = [str(detail.get("warning") or "").strip() for detail in uncertain]
+        reason = "; ".join(dict.fromkeys(item for item in reasons if item))
+        return PaymentQuoteLineItem(
+            code="special_duty",
+            label="Специальные / защитные / компенсационные пошлины",
+            amount_rub=None,
+            status="manual_review_required",
+            reason=reason or "Применимость специальной пошлины требует ручной проверки.",
+            source="special_duties",
+        )
+
     if amount > 0 and details:
         acts = ", ".join({str(d.get("regulatory_act") or "").strip() for d in details if d.get("regulatory_act")})
         return PaymentQuoteLineItem(
@@ -275,6 +294,14 @@ def _build_assumptions(payload: dict[str, Any], raw: dict[str, Any]) -> list[Pay
             value=f"{customs_value:,.2f} RUB".replace(",", " "),
         )
     )
+    destination = (payload.get("destination_country") or "").strip().upper()
+    assumptions.append(
+        PaymentQuoteAssumption(
+            key="destination_country",
+            label="Страна назначения",
+            value=destination or "не указана",
+        )
+    )
     if invoice_currency != "RUB":
         assumptions.append(
             PaymentQuoteAssumption(
@@ -335,6 +362,10 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     raw = compute_payments(calc_payload)
     breakdown = raw.get("breakdown") or {}
     country = raw.get("country") or (str(payload.get("country") or "").upper().strip() or None)
+    destination_country = (
+        raw.get("destination_country")
+        or (str(payload.get("destination_country") or "").upper().strip() or None)
+    )
     dq = raw.get("data_quality") or {}
 
     if raw.get("status") == "EMBARGO":
@@ -370,6 +401,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             status="EMBARGO",
             hs_code=hs_code,
             country=country,
+            destination_country=destination_country,
             description=description,
             customs_value_rub=float(raw.get("customs_value") or 0.0),
             invoice_currency=invoice_currency,
@@ -391,6 +423,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         duty_reason = duty_reason or "Ставка пошлины не найдена в локальной базе; применена ставка 0% для расчёта."
 
     excise_status, excise_amount, excise_reason = _resolve_excise_status(raw=raw, user_excise=user_excise)
+    vat_source_rejected = bool(dq.get("vat_source_rejected"))
 
     line_items: list[PaymentQuoteLineItem] = [
         PaymentQuoteLineItem(
@@ -405,8 +438,8 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         PaymentQuoteLineItem(
             code="vat",
             label="НДС",
-            amount_rub=float(breakdown.get("vat") or 0.0),
-            status="applied",
+            amount_rub=(None if vat_source_rejected else float(breakdown.get("vat") or 0.0)),
+            status=("manual_review_required" if vat_source_rejected else "applied"),
             reason=str(breakdown.get("vat_reason") or ""),
             source="hs_rates / vat_preferences (НК РФ)",
             rate_label=f"{breakdown.get('vat_rate')}%",
@@ -435,7 +468,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     assumptions = _build_assumptions(payload, raw)
 
     uncertain_statuses = {"manual_review_required", "unknown", "not_configured", "embargo"}
-    blocking_codes = {"excise", "antidumping", "special_duty"}
+    blocking_codes = {"vat", "excise", "antidumping", "special_duty"}
     has_uncertain = any(
         item.status in uncertain_statuses and item.code in blocking_codes for item in line_items
     )
@@ -450,6 +483,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         status=str(raw.get("status") or "OK"),
         hs_code=hs_code,
         country=country,
+        destination_country=destination_country,
         description=description,
         customs_value_rub=float(raw.get("customs_value") or 0.0),
         invoice_currency=invoice_currency,

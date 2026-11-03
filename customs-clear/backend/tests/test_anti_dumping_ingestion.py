@@ -227,6 +227,109 @@ class TestAntiDumpingApplyProvenance(unittest.TestCase):
             self.assertEqual(len(logs), 1)
             self.assertEqual(logs[0].status, "OK")
 
+    def test_partial_refresh_stays_stale_and_reports_retire_only_mutation(self) -> None:
+        import app.services.anti_dumping_ingestion as adi
+
+        measures = [
+            {
+                "hs_code": "3206110000",
+                "origin_country": "CN",
+                "rate_percent": 16.25,
+                "regulatory_act": (
+                    "Решение Коллегии ЕЭК № 96 от 14.10.2025; временное "
+                    "неприменение по Решению Коллегии ЕЭК № 124 от 21.09.2026"
+                ),
+                "manufacturer_exporter": (
+                    "прочие производители (индивидуальные ставки перечислены "
+                    "в Решении № 96)"
+                ),
+                "product_description": (
+                    "Диоксид титана с содержанием TiO2 не менее 80% в пересчете "
+                    "на сухое вещество; исключения перечислены в приложении № 2 "
+                    "к Решению № 96"
+                ),
+                "effective_from": start,
+                "effective_to": end,
+                "currency_code": "USD",
+                "needs_verification": True,
+                "source_revision": "anti-dumping:2026-10-15",
+                "source_url": source_url,
+            }
+            for start, end, source_url in (
+                (
+                    "2025-11-16",
+                    "2026-10-02",
+                    "https://docs.eaeunion.org/documents/446/10233/",
+                ),
+                (
+                    "2027-08-11",
+                    "2030-11-15",
+                    "https://docs.eaeunion.org/documents/463/10925/",
+                ),
+            )
+        ]
+        payload = _official_anti_dumping_payload(
+            revision="anti-dumping:2026-06-23",
+            official_url="https://remedies.eaeunion.org/dimd/ru",
+            measures=measures,
+        )
+        with _BundleFixture(payload) as (root, rel):
+            with unittest.mock.patch.object(adi, "_BACKEND_ROOT", root):
+                first = run_anti_dumping_apply(rel_path=rel)
+                self.assertTrue(first["db_mutated"])
+                with self.sm() as db:
+                    db.add(
+                        SpecialDuty(
+                            hs_code_prefix="3206",
+                            origin_country="CN",
+                            rate_percent=16.25,
+                            rate_specific=0.0,
+                            currency_code="USD",
+                            regulatory_act="Решение Коллегии ЕЭК № 96 от 14.10.2025",
+                            measure_type="anti_dumping",
+                            manufacturer_exporter="",
+                            product_description=(
+                                "Диоксид титана / пигменты TiO2 "
+                                "(до 16,25% по изготовителю, ЕЭК №96)"
+                            ),
+                            effective_from="2025-11-16",
+                            effective_to="2030-10-14",
+                            source_code="EEC_ANTI_DUMPING",
+                            source_revision="anti-dumping:2026-06-23",
+                            source_url="https://remedies.eaeunion.org/dimd/ru",
+                        )
+                    )
+                    db.commit()
+                second = run_anti_dumping_apply(rel_path=rel)
+
+        self.assertEqual(second["row_counts"]["insert"], 0)
+        self.assertEqual(second["row_counts"]["update"], 0)
+        self.assertEqual(second["row_counts"]["retire"], 1)
+        self.assertEqual(second["row_counts"]["skip"], 2)
+        self.assertTrue(second["db_mutated"])
+        self.assertIn("Partial refresh", second["notes"][2])
+        with self.sm() as db:
+            status = (
+                db.query(SourceStatus)
+                .filter(SourceStatus.source_code == "EEC_ANTI_DUMPING")
+                .one()
+            )
+            self.assertTrue(status.is_stale)
+            latest_log = (
+                db.query(SyncLog)
+                .filter(SyncLog.source_code == "EEC_ANTI_DUMPING")
+                .order_by(SyncLog.id.desc())
+                .first()
+            )
+            self.assertEqual(latest_log.status, "PARTIAL")
+            self.assertEqual(latest_log.rows_affected, 1)
+            self.assertEqual(
+                db.query(SpecialDuty)
+                .filter(SpecialDuty.hs_code_prefix == "3206")
+                .count(),
+                0,
+            )
+
 
 class TestAntiDumpingMeasureIdentity(unittest.TestCase):
     """P1: разные производители/окна/scope не должны схлопываться в одну меру."""

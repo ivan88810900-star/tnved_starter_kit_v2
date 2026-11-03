@@ -63,6 +63,32 @@ def test_missing_required_field_detected(valid_payload: dict) -> None:
     assert any(e["code"] == "missing_required" for e in result["errors"])
 
 
+@pytest.mark.parametrize(
+    "description_fields",
+    [{}, {"exclude_if_contains_any": ["industrial"]}],
+)
+def test_description_only_requires_positive_description_gate(
+    valid_payload: dict,
+    description_fields: dict,
+) -> None:
+    payload = copy.deepcopy(valid_payload)
+    payload["rules"].append(
+        {
+            "rule_id": "bad-empty-description-only",
+            "hs_scope": "",
+            "hs_scope_mode": "description_only",
+            "permit_type": "СГР",
+            "applicability": "definite",
+            "title": "Empty description-only",
+            "evidence": "test",
+            **description_fields,
+        }
+    )
+    result = validate_official_sgr_dataset(payload)
+    assert result["valid"] is False
+    assert any(e["code"] == "empty_rule" for e in result["errors"])
+
+
 def test_prohibited_definite_9503_rejected(valid_payload: dict) -> None:
     payload = copy.deepcopy(valid_payload)
     payload["rules"].append(

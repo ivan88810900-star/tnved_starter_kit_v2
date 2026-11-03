@@ -10,17 +10,91 @@
 - Золотые тесты: эталонные расчёты для известных позиций
 """
 import unittest
+import unittest.mock
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from app.db import Base
 from app.db import SessionLocal
-from app.models.tnved import HsDutyRule, VatPreference
-from app.services.normative_store import init_db
+from app.models import HsRate
+from app.models.tnved import Commodity, HsDutyRule, SpecialDuty, VatPreference
+from app.services.normative_store import SEED_RATES
 from app.services.payment_engine import _compute_structured_duty, compare_payment_scenarios, compute_payments
 
 
 class PaymentEngineTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        init_db()
+        cls.engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        Base.metadata.create_all(
+            bind=cls.engine,
+            tables=[
+                Commodity.__table__,
+                HsDutyRule.__table__,
+                HsRate.__table__,
+                SpecialDuty.__table__,
+                VatPreference.__table__,
+            ],
+        )
+        cls.SessionLocal = sessionmaker(
+            bind=cls.engine,
+            autocommit=False,
+            autoflush=False,
+        )
+        cls._patchers = [
+            unittest.mock.patch(f"{__name__}.SessionLocal", cls.SessionLocal),
+            unittest.mock.patch("app.services.payment_engine.SessionLocal", cls.SessionLocal),
+            unittest.mock.patch("app.services.normative_store.SessionLocal", cls.SessionLocal),
+            unittest.mock.patch("app.services.rate_display.SessionLocal", cls.SessionLocal),
+            unittest.mock.patch(
+                "app.services.payment_engine.get_country_risk_by_iso",
+                return_value=None,
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.find_geo_embargo_match",
+                return_value=None,
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.find_geo_duty_override_row",
+                return_value=None,
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.get_tariff_preference",
+                return_value=None,
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.get_recycling_fee",
+                return_value=[],
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.get_integrated_data_stats",
+                return_value={"hs_rates_count": len(SEED_RATES)},
+            ),
+            unittest.mock.patch(
+                "app.services.payment_engine.get_tnved_context_for_hs",
+                return_value={},
+            ),
+        ]
+        for patcher in cls._patchers:
+            patcher.start()
+        with cls.SessionLocal() as db:
+            db.add_all(
+                HsRate(hs_code=row["hs_prefix"], **row)
+                for row in SEED_RATES
+            )
+            db.commit()
+
+    @classmethod
+    def tearDownClass(cls):
+        for patcher in reversed(cls._patchers):
+            patcher.stop()
+        cls.engine.dispose()
 
     # ------------------------------------------------------------------ helpers
     def _calc(self, **kwargs):
@@ -90,6 +164,46 @@ class PaymentEngineTests(unittest.TestCase):
         res = self._calc(hs_code="8509400000", customs_value=100_000, vat_rate=10.0)
         self.assertEqual(res["breakdown"]["vat_rate"], 10.0)
         self.assertIn("вручную", res["breakdown"]["vat_reason"])
+
+    def test_rejected_vat_source_withholds_vat_and_final_total(self):
+        code = "9900000001"
+        with SessionLocal() as db:
+            db.add(
+                HsRate(
+                    hs_code=code,
+                    hs_prefix=code,
+                    duty_rate="5",
+                    vat_import_rate=22.0,
+                    vat_rule="standard",
+                    vat_source_code="EEC_VAT",
+                    vat_source_revision="vat:2026-06-18",
+                    vat_source_url="https://www.nalog.gov.ru/rn77/taxation/taxes/nds/",
+                )
+            )
+            db.commit()
+        try:
+            res = self._calc(hs_code=code, customs_value=100_000, freight=0)
+            self.assertEqual(res["status"], "MANUAL_REVIEW_REQUIRED")
+            self.assertTrue(res["data_quality"]["vat_source_rejected"])
+            self.assertIsNone(res["breakdown"]["vat"])
+            self.assertIsNone(res["breakdown"]["total_payable"])
+            self.assertGreater(res["breakdown"]["total_partial"], 0)
+            self.assertIn("ручная проверка", res["breakdown"]["vat_reason"].lower())
+
+            manual = self._calc(
+                hs_code=code,
+                customs_value=100_000,
+                freight=0,
+                vat_rate=10.0,
+            )
+            self.assertEqual(manual["status"], "OK")
+            self.assertFalse(manual["data_quality"]["vat_source_rejected"])
+            self.assertIsNotNone(manual["breakdown"]["vat"])
+            self.assertIsNotNone(manual["breakdown"]["total_payable"])
+        finally:
+            with SessionLocal() as db:
+                db.query(HsRate).filter(HsRate.hs_code == code).delete()
+                db.commit()
 
     # ------------------------------------------------------------------ Duty
     def test_duty_auto_from_db(self):

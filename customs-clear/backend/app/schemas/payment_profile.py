@@ -5,11 +5,11 @@ from pydantic import BaseModel, Field
 
 class MoneyBreakdown(BaseModel):
     base_duty: float = Field(description="Ввозная пошлина (Import Duty), RUB.")
-    vat: float = Field(description="НДС (VAT), RUB.")
+    vat: float | None = Field(description="НДС (VAT), RUB; null при недостоверной автоматической ставке.")
     excise: float = Field(description="Акциз, RUB.")
-    anti_dumping: float = Field(description="Антидемпинговая составляющая, RUB.")
+    anti_dumping: float | None = Field(description="Антидемпинговая составляющая, RUB; null при unresolved scope.")
     customs_fee: float = Field(description="Таможенный сбор, RUB.")
-    total_payable: float = Field(description="Итого к уплате, RUB.")
+    total_payable: float | None = Field(description="Итого к уплате, RUB; null при обязательной ручной проверке.")
 
 
 class ComplianceDocumentItem(BaseModel):
@@ -27,6 +27,7 @@ class PaymentProfileResponse(BaseModel):
     status: str
     hs_code: str
     country: str | None = None
+    destination_country: str | None = None
     breakdown: MoneyBreakdown
     documents: list[ComplianceDocumentItem] = Field(default_factory=list)
     blocking_issue: bool = False

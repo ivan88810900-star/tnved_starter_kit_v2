@@ -38,6 +38,7 @@ def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("app.db.SessionLocal", sm)
     monkeypatch.setattr("app.services.normative_store.SessionLocal", sm)
     monkeypatch.setattr("app.services.non_tariff_rules.SessionLocal", sm)
+    monkeypatch.setattr("app.services.sanctions_risk_block.SessionLocal", sm)
     return sm
 
 

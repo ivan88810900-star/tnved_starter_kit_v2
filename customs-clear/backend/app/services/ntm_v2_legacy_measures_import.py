@@ -17,6 +17,7 @@ from .non_tariff_rules import (
     _extract_tr_ts_code,
     _measure_to_permit_type,
 )
+from .non_tariff_measures_lookup import is_admitted_legacy_measure_quality
 from .ntm_v2_legacy_rules_import import merge_v2_legacy_rules_into_broker
 from .tr_ts_catalog import TR_TS_FULL_NAMES
 
@@ -341,7 +342,7 @@ def import_legacy_non_tariff_measures_to_ntm_v2(
     """
     Импортирует все строки ``non_tariff_measures`` в v2 (идемпотентно).
 
-    Строки с ``quality='noise'`` не импортируются (как фильтр в ``find_measures_for_code``).
+    Строки ``noise`` и ``synthetic_seed`` не импортируются, как и в runtime lookup.
     """
     close_session = False
     if session is None:
@@ -354,6 +355,7 @@ def import_legacy_non_tariff_measures_to_ntm_v2(
     applicability_rules_created = 0
     applicability_rules_updated = 0
     skipped_noise = 0
+    skipped_synthetic = 0
     skipped_invalid_hs = 0
     duplicates_skipped = 0
 
@@ -371,8 +373,12 @@ def import_legacy_non_tariff_measures_to_ntm_v2(
 
         for row in legacy_rows:
             legacy_measures_processed += 1
-            if (row.quality or "").strip().lower() == "noise":
-                skipped_noise += 1
+            quality_normalized = (row.quality or "").strip().lower()
+            if not is_admitted_legacy_measure_quality(quality_normalized):
+                if quality_normalized == "synthetic_seed":
+                    skipped_synthetic += 1
+                else:
+                    skipped_noise += 1
                 continue
 
             commodity_code = normalize_hs_code(row.commodity_code)
@@ -493,6 +499,7 @@ def import_legacy_non_tariff_measures_to_ntm_v2(
         "applicability_rules_created": applicability_rules_created,
         "applicability_rules_updated": applicability_rules_updated,
         "skipped_noise": skipped_noise,
+        "skipped_synthetic": skipped_synthetic,
         "skipped_invalid_hs": skipped_invalid_hs,
         "duplicates_skipped": duplicates_skipped,
     }

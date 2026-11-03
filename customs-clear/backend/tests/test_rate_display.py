@@ -1,6 +1,47 @@
 """Ставки для карточки: акциз с наследованием, подакцизные главы без данных."""
 
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from app import db as app_db
+from app.models.core import HsRate
+from app.services import normative_store, rate_display
 from app.services.rate_display import format_excise_display, resolve_excise_for_hs
+
+
+@pytest.fixture(autouse=True)
+def isolated_rate_db(tmp_path, monkeypatch: pytest.MonkeyPatch):
+    """Keep rate-display checks independent of an ambient development DB."""
+    engine = create_engine(
+        f"sqlite:///{tmp_path / 'rate-display.sqlite'}",
+        connect_args={"check_same_thread": False},
+    )
+    app_db.Base.metadata.create_all(bind=engine, tables=[HsRate.__table__])
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+    monkeypatch.setattr(app_db, "engine", engine)
+    monkeypatch.setattr(app_db, "SessionLocal", session_factory)
+    monkeypatch.setattr(normative_store, "SessionLocal", session_factory)
+    monkeypatch.setattr(rate_display, "SessionLocal", session_factory)
+
+    with session_factory() as db:
+        db.add(
+            HsRate(
+                hs_code="2204000000",
+                hs_prefix="2204",
+                duty_rate="0",
+                excise_type="fixed",
+                excise_value=45.0,
+                excise_basis="руб/л",
+            )
+        )
+        db.commit()
+
+    try:
+        yield
+    finally:
+        engine.dispose()
 
 
 def test_excise_inherited_from_parent_for_champagne_leaf() -> None:

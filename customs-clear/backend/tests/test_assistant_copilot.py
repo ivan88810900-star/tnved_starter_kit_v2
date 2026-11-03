@@ -2,17 +2,166 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
+import os
+import subprocess
+import sys
 import unittest
 from copy import deepcopy
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
-from app.services.assistant_orchestrator import (
-    bundle_for_llm,
-    pick_hs_from_classification,
-    run_copilot_pipeline,
-)
-from app.services.claude_service import analyze_copilot_bundle
-from app.services.normative_store import init_db
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DATABASE = BACKEND_ROOT / "customs.db"
+PINNED_CATALOGUE = BACKEND_ROOT / "customs.db.backup_before_pdf_import"
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file_handle:
+        for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _protected_fingerprints() -> dict[Path, str | None]:
+    paths = {
+        candidate
+        for path in (DEFAULT_DATABASE, PINNED_CATALOGUE)
+        for candidate in (path, Path(f"{path}-wal"), Path(f"{path}-shm"))
+    }
+    return {
+        path: _sha256(path) if path.is_file() else None
+        for path in paths
+    }
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _isolated_assistant_copilot_database(tmp_path_factory: pytest.TempPathFactory):
+    """Exercise copilot orchestration without reading or creating ambient SQLite."""
+    protected_hashes = _protected_fingerprints()
+    temp_dir = tmp_path_factory.mktemp("assistant-copilot")
+    database = temp_dir / "assistant-copilot.db"
+    patches = pytest.MonkeyPatch()
+    preloaded_app_modules = {
+        module_name
+        for module_name in sys.modules
+        if module_name == "app" or module_name.startswith("app.")
+    }
+    patches.setenv("DATABASE_URL", f"sqlite:///{database}")
+    patches.delenv("TNVED_SOURCE_DB", raising=False)
+    bootstrap = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from app.services.normative_store import init_db; init_db()",
+        ],
+        cwd=BACKEND_ROOT,
+        env=os.environ.copy(),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert bootstrap.returncode == 0, bootstrap.stdout + bootstrap.stderr
+    assert _protected_fingerprints() == protected_hashes
+
+    from app import db as app_db, main as app_main
+    from app.services import payment_engine_compat
+    from app.services.assistant_orchestrator import (
+        bundle_for_llm as actual_bundle_for_llm,
+        pick_hs_from_classification as actual_pick_hs_from_classification,
+        run_copilot_pipeline as actual_run_copilot_pipeline,
+    )
+    from app.services.claude_service import (
+        analyze_copilot_bundle as actual_analyze_copilot_bundle,
+    )
+
+    assert _protected_fingerprints() == protected_hashes
+    original_session = app_db.SessionLocal
+    original_engine = app_db.engine
+    original_payment_engine_cache = (
+        payment_engine_compat._compare,
+        payment_engine_compat._compute,
+        payment_engine_compat._get_rule,
+        payment_engine_compat._get_meta,
+    )
+    engine = create_engine(
+        f"sqlite:///{database}",
+        connect_args={"check_same_thread": False},
+    )
+    factory = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+
+    for module_name, module in tuple(sys.modules.items()):
+        if module is None or not (module_name == "app" or module_name.startswith("app.")):
+            continue
+        if getattr(module, "SessionLocal", None) is original_session:
+            patches.setattr(module, "SessionLocal", factory)
+        if getattr(module, "engine", None) is original_engine:
+            patches.setattr(module, "engine", engine)
+
+    test_module = sys.modules[__name__]
+    patches.setattr(test_module, "bundle_for_llm", actual_bundle_for_llm, raising=False)
+    patches.setattr(
+        test_module,
+        "pick_hs_from_classification",
+        actual_pick_hs_from_classification,
+        raising=False,
+    )
+    patches.setattr(
+        test_module,
+        "run_copilot_pipeline",
+        actual_run_copilot_pipeline,
+        raising=False,
+    )
+    patches.setattr(
+        test_module,
+        "analyze_copilot_bundle",
+        actual_analyze_copilot_bundle,
+        raising=False,
+    )
+    patches.setattr(test_module, "init_db", lambda: None, raising=False)
+    patches.setattr(app_main, "init_db", lambda: None)
+
+    try:
+        yield
+    finally:
+        patches.undo()
+        for module_name, module in tuple(sys.modules.items()):
+            if module is None or not (module_name == "app" or module_name.startswith("app.")):
+                continue
+            if getattr(module, "SessionLocal", None) is factory:
+                setattr(module, "SessionLocal", original_session)
+            if getattr(module, "engine", None) is engine:
+                setattr(module, "engine", original_engine)
+        (
+            payment_engine_compat._compare,
+            payment_engine_compat._compute,
+            payment_engine_compat._get_rule,
+            payment_engine_compat._get_meta,
+        ) = original_payment_engine_cache
+        for module_name in tuple(sys.modules):
+            if (
+                module_name not in preloaded_app_modules
+                and (module_name == "app" or module_name.startswith("app."))
+            ):
+                module = sys.modules.pop(module_name, None)
+                parent_name, _, child_name = module_name.rpartition(".")
+                parent = sys.modules.get(parent_name)
+                if parent is not None and getattr(parent, child_name, None) is module:
+                    delattr(parent, child_name)
+        engine.dispose()
+        for path in (
+            database,
+            Path(f"{database}-wal"),
+            Path(f"{database}-shm"),
+        ):
+            if path.exists():
+                path.unlink()
+        assert _protected_fingerprints() == protected_hashes
 
 
 class PickHsTests(unittest.TestCase):
@@ -104,6 +253,28 @@ class CopilotPipelineTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("non_tariff", b)
         slim = bundle_for_llm(b)
         self.assertIn("payment_summary", slim)
+
+    async def test_registry_request_without_hs_reports_blocked_not_disabled(self):
+        bundle = await run_copilot_pipeline(
+            description="товар без подтверждённого кода",
+            hs_code="",
+            country="CN",
+            customs_value=None,
+            freight=0,
+            permits=[{"type": "ДС", "number": "ЕАЭС N RU TEST"}],
+            run_ai_classification=False,
+            run_payment=False,
+            run_registry_verify=True,
+        )
+
+        registry_step = next(
+            step for step in bundle["pipeline"] if step["step"] == "registry"
+        )
+        self.assertTrue(registry_step["skipped"])
+        self.assertIn("нет кода ТН ВЭД", registry_step["detail"])
+        self.assertNotIn("выключено", registry_step["detail"])
+        self.assertEqual(bundle["non_tariff"]["status"], "UNKNOWN")
+        self.assertIsNone(bundle["permits_verification"])
 
 
 class CopilotNormativeFreshnessIntegrationTests(unittest.IsolatedAsyncioTestCase):

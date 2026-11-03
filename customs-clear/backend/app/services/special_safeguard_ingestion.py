@@ -151,6 +151,18 @@ def _validate_official_special_safeguard_bundle_payload(
             "checksum_sha256": checksum,
         }
 
+    verification_status = str(payload.get("verification_status") or "").strip().lower()
+    if verification_status and verification_status != "verified":
+        return {
+            "status": "manual_review_required",
+            "reason": f"source_verification_{verification_status}",
+            "revision": revision,
+            "format": fmt,
+            "record_count": len(measures),
+            "measures_count": len(measures),
+            "checksum_sha256": checksum,
+        }
+
     if _is_non_official_revision_token(revision):
         return {
             "status": "manual_review_required",

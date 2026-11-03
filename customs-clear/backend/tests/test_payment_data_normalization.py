@@ -14,7 +14,6 @@ from app.db import Base
 from app.main import app
 from app.models.core import GeoSpecialDuty, HsRate, SourceStatus, SyncLog, TnvedEntry
 from app.models.tnved import Commodity, HsDutyRule, Section, SpecialDuty, VatPreference
-from app.services.normative_store import init_db
 from app.services.payment_data_normalization import (
     normalize_anti_dumping,
     normalize_excise,
@@ -475,8 +474,13 @@ class TestPaymentNormalizationSeedEecRevision(unittest.TestCase):
 class TestPaymentNormalizationApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        init_db()
+        cls.sm = _memory_sessionmaker()
+        cls._patches = _start_db_patches(cls.sm)
         cls.client = TestClient(app)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        _stop_db_patches(*cls._patches)
 
     def test_payment_normalization_endpoint(self) -> None:
         r = self.client.get("/api/sources/payment-normalization")

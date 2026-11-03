@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import sqlite3
+from pathlib import Path
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -122,6 +125,13 @@ def test_import_skips_noise(memory_sessionmaker: sessionmaker) -> None:
     assert r["measures_created"] == 0
 
 
+def test_import_skips_synthetic_seed(memory_sessionmaker: sessionmaker) -> None:
+    _add_measure(memory_sessionmaker, quality="synthetic_seed")
+    r = import_legacy_non_tariff_measures_to_ntm_v2()
+    assert r["skipped_synthetic"] == 1
+    assert r["measures_created"] == 0
+
+
 def test_import_different_measure_types(memory_sessionmaker: sessionmaker) -> None:
     _add_measure(memory_sessionmaker, measure_type="license", description="Лицензия Минпромторга")
     _add_measure(
@@ -195,6 +205,22 @@ def test_smoke_real_db_sample() -> None:
     from app.db import SessionLocal, engine
     from app.models.tnved import NonTariffMeasure
     from app.services.non_tariff_rules import find_measures_for_code
+
+    if engine.url.get_backend_name() == "sqlite":
+        database = engine.url.database
+        if not database or database == ":memory:" or not Path(database).is_file():
+            pytest.skip("requires an existing dev database")
+        readonly_uri = f"{Path(database).resolve().as_uri()}?mode=ro&immutable=1"
+        with sqlite3.connect(readonly_uri, uri=True) as connection:
+            tables = {
+                row[0]
+                for row in connection.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'table' "
+                    "AND name IN ('non_tariff_measures', 'ntm_measures_v2')"
+                )
+            }
+        if tables != {"non_tariff_measures", "ntm_measures_v2"}:
+            pytest.skip("requires non_tariff_measures and ntm_measures_v2 tables")
 
     insp = inspect(engine)
     if not insp.has_table("non_tariff_measures") or not insp.has_table("ntm_measures_v2"):

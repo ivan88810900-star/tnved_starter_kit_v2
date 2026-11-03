@@ -18,6 +18,7 @@ AntiDumpingIngestionStatus = Literal[
 class AntiDumpingRowCounts(BaseModel):
     insert: int = 0
     update: int = 0
+    retire: int = 0
     skip: int = 0
     blocked: int = 0
     total_in_source: int = 0

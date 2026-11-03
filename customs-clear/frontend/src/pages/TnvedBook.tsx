@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '../api/client';
+import { formatUnsafeExternalUrlEvidence, getSafeExternalUrl } from '../utils/externalUrl';
 
 type TnvedHit = { hs_code: string; title: string; level: number; chapter: string };
 type SearchSuggestion = { term: string; hint: string };
@@ -165,21 +166,30 @@ export const TnvedBook: React.FC = () => {
           </div>
           {semErr && <p className="text-[11px] text-amber-200/90">{semErr}</p>}
           {semHits.length > 0 && (
-            <ul className="max-h-52 space-y-1 overflow-auto rounded-lg border border-white/[0.06] bg-black/20 p-2 text-[11px]">
-              {semHits.map((h) => (
-                <li key={`${h.hs_code}-${h.score}`}>
-                  <button
-                    type="button"
-                    className="flex w-full flex-col items-start rounded-md px-2 py-1.5 text-left hover:bg-white/[0.04]"
-                    onClick={() => void loadLookup(h.hs_code)}
-                  >
-                    <span className="cc-mono text-sky-200/90">{h.hs_code}</span>
-                    <span className="text-slate-400">{h.title || '—'}</span>
-                    <span className="text-[10px] text-slate-600">score {h.score}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-2">
+              <p
+                className="rounded-lg border border-amber-500/20 bg-amber-950/20 px-3 py-2 text-[11px] leading-relaxed text-amber-100/90"
+                data-testid="semantic-search-candidate-warning"
+              >
+                Результаты — только кандидаты семантического поиска по векторному сходству, а не подтверждённая
+                классификация ТН ВЭД. Код нужно вручную сверить с описанием, примечаниями и классификационными решениями.
+              </p>
+              <ul className="max-h-52 space-y-1 overflow-auto rounded-lg border border-white/[0.06] bg-black/20 p-2 text-[11px]">
+                {semHits.map((h) => (
+                  <li key={`${h.hs_code}-${h.score}`}>
+                    <button
+                      type="button"
+                      className="flex w-full flex-col items-start rounded-md px-2 py-1.5 text-left hover:bg-white/[0.04]"
+                      onClick={() => void loadLookup(h.hs_code)}
+                    >
+                      <span className="cc-mono text-sky-200/90">{h.hs_code}</span>
+                      <span className="text-slate-400">{h.title || '—'}</span>
+                      <span className="text-[10px] text-slate-600">Векторное сходство: {h.score}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       </details>
@@ -261,24 +271,47 @@ export const TnvedBook: React.FC = () => {
             <div>
               <span className="cc-label">Примечания</span>
               <ul className="mt-2 space-y-2">
-                {detail.notes.map((n) => (
-                  <li key={n.id} className="rounded-lg border border-white/[0.06] bg-black/20 px-3 py-2 text-[11px] text-slate-300">
-                    <span className="font-medium text-slate-200">{n.title}</span>
-                    <span className="ml-2 rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] uppercase text-slate-500">{n.category}</span>
-                    <p className="mt-1 whitespace-pre-wrap text-slate-400">{n.body}</p>
-                    {n.source_url && (
-                      <a href={n.source_url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sky-400/80 hover:underline">
-                        Источник
-                      </a>
-                    )}
-                  </li>
-                ))}
+                {detail.notes.map((n) => {
+                  const safeSourceUrl = getSafeExternalUrl(n.source_url);
+                  return (
+                    <li key={n.id} className="rounded-lg border border-white/[0.06] bg-black/20 px-3 py-2 text-[11px] text-slate-300">
+                      <span className="font-medium text-slate-200">{n.title}</span>
+                      <span className="ml-2 rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] uppercase text-slate-500">{n.category}</span>
+                      <p className="mt-1 whitespace-pre-wrap text-slate-400">{n.body}</p>
+                      {safeSourceUrl ? (
+                        <a href={safeSourceUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-sky-400/80 hover:underline">
+                          Источник
+                        </a>
+                      ) : n.source_url ? (
+                        <span className="mt-1 block text-slate-500" data-testid="unsafe-source-url-evidence">
+                          Источник (ссылка недоступна):{' '}
+                          <span className="break-all font-mono">{formatUnsafeExternalUrlEvidence(n.source_url)}</span>
+                        </span>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
-          <a href={detail.official_ett_url} target="_blank" rel="noreferrer" className="cc-btn-ghost inline-flex">
-            ТН ВЭД и ЕТТ на сайте ЕЭК
-          </a>
+          {getSafeExternalUrl(detail.official_ett_url) ? (
+            <a
+              href={detail.official_ett_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cc-btn-ghost inline-flex"
+            >
+              ТН ВЭД и ЕТТ на сайте ЕЭК
+            </a>
+          ) : detail.official_ett_url ? (
+            <span
+              className="cc-btn-ghost inline-flex max-w-full cursor-not-allowed flex-wrap text-slate-500"
+              data-testid="unsafe-official-ett-url-evidence"
+            >
+              ТН ВЭД и ЕТТ на сайте ЕЭК (ссылка недоступна):{' '}
+              <span className="break-all font-mono">{formatUnsafeExternalUrlEvidence(detail.official_ett_url)}</span>
+            </span>
+          ) : null}
         </div>
       )}
     </div>

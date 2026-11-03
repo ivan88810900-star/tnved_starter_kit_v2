@@ -1,18 +1,40 @@
 """Tests for customs procedures database."""
 from __future__ import annotations
 
-import pytest
-from sqlalchemy import text
+import sys
 
+import pytest
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
+
+from app import db as app_db
 from app.db import SessionLocal
+from scripts import seed_customs_procedures
 
 
 class TestCustomsProcedures:
     @pytest.fixture(autouse=True)
-    def _db(self):
+    def _db(self, monkeypatch: pytest.MonkeyPatch, tmp_path):
+        engine = create_engine(f"sqlite:///{tmp_path / 'customs-procedures.db'}")
+        session_factory = sessionmaker(
+            autocommit=False,
+            autoflush=False,
+            bind=engine,
+        )
+        monkeypatch.setattr(sys.modules[__name__], "SessionLocal", session_factory)
+        monkeypatch.setattr(app_db, "SessionLocal", session_factory)
+        monkeypatch.setattr(app_db, "engine", engine)
+        monkeypatch.setattr(seed_customs_procedures, "SessionLocal", session_factory)
+        monkeypatch.setattr(seed_customs_procedures, "engine", engine)
+        monkeypatch.setattr(seed_customs_procedures, "DRY_RUN", False)
+        seed_customs_procedures.seed()
+
         self.db = SessionLocal()
-        yield
-        self.db.close()
+        try:
+            yield
+        finally:
+            self.db.close()
+            engine.dispose()
 
     def test_total_procedures_above_20(self) -> None:
         count = self.db.execute(

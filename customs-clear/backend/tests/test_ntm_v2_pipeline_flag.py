@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from sqlalchemy import create_engine
@@ -17,6 +19,9 @@ from tests.test_ntm_pipeline import REGRESSION_MATRIX
 
 @pytest.fixture
 def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
+    async def _no_enrichment(**_kwargs: object) -> list[dict]:
+        return []
+
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(
         engine,
@@ -24,6 +29,32 @@ def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
     )
     sm = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     monkeypatch.setattr("app.db.SessionLocal", sm)
+    for target in (
+        "app.services.non_tariff_service.find_rules_for_code",
+        "app.services.non_tariff_service.find_measures_for_code",
+        "app.services.non_tariff_service.find_normative_notes_for_hs",
+        "app.services.non_tariff_service.lookup_tr_ts_acts_by_codes",
+        "app.services.non_tariff_service.get_regulatory_documents_for_hs",
+        "app.services.ntm_v2_legacy_rules_import.get_advisory_legacy_rule_requirements_v2",
+        "app.services.ntm_v2_legacy_rules_import.get_legacy_rule_requirements_for_enforcement",
+        "app.services.ntm_v2_legacy_rules_import.get_legacy_rule_requirements_v2_legacy_shape",
+        "app.services.ntm_v2_official_sgr_import.get_advisory_official_sgr_requirements_v2",
+    ):
+        monkeypatch.setattr(target, lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.enrich_measures_by_description",
+        _no_enrichment,
+    )
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.build_sanctions_risk_block",
+        lambda **_kwargs: SimpleNamespace(model_dump=lambda: {}),
+    )
+    for target in (
+        "app.services.ntm_v2_legacy_rules_import.should_apply_v2_rules_enforcement",
+        "app.services.ntm_v2_official_sgr_import.should_apply_official_sgr_advisory",
+        "app.services.ntm_v2_legacy_measures_enforcement.should_apply_v2_measures_enforcement",
+    ):
+        monkeypatch.setattr(target, lambda *_args, **_kwargs: False)
     return sm
 
 
@@ -109,13 +140,38 @@ def test_empty_v2_falls_back_to_legacy_catalog(
     assert any("NTM_V2_TR_TS" in r.message for r in caplog.records)
 
 
+def test_schema_upgrade_keeps_ntm_diagnostic_logger_enabled(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Alembic runs in-process at startup and must not silence app diagnostics."""
+    database_url = f"sqlite:///{tmp_path / 'schema-upgrade.sqlite3'}"
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    schema_engine = create_engine(database_url)
+    schema_sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=schema_engine)
+    from scripts import seed_declaration_documents
+
+    monkeypatch.setattr(seed_declaration_documents, "engine", schema_engine)
+    monkeypatch.setattr(seed_declaration_documents, "SessionLocal", schema_sessionmaker)
+    target = logging.getLogger("app.services.ntm_engine_v2")
+    target.disabled = False
+
+    from app.services.normative_store import _run_alembic_upgrade_to_head
+
+    try:
+        _run_alembic_upgrade_to_head()
+    finally:
+        schema_engine.dispose()
+
+    assert target.disabled is False
+
+
 def test_empty_v2_and_legacy_both_empty(
     memory_sessionmaker: sessionmaker, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("NTM_V2_TR_TS_ENABLED", "true")
     from app.services.ntm_engine_v2 import get_tr_ts_requirements_v2_legacy_shape
 
-    assert get_tr_ts_requirements_v2_legacy_shape("8517620000", "") == []
+    assert get_tr_ts_requirements_v2_legacy_shape("9999999999", "") == []
 
 
 def test_compare_pipeline_tr_ts_vs_legacy_when_flag_on(

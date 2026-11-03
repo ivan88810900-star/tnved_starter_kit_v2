@@ -19,6 +19,7 @@ from .payment_revision_utils import (
     is_excise_only_bundle_path,
     is_import_duty_bundle_path,
     is_official_excise_ingestion_revision,
+    is_rejected_excise_revision,
     is_vat_only_bundle_path,
     is_wrong_domain_revision_in_excise_bundle,
     raw_rate_rows,
@@ -111,6 +112,17 @@ def _validate_official_excise_bundle_payload(
 
     raw_tnved = payload.get("tnved")
     tnved = raw_tnved if isinstance(raw_tnved, list) else []
+
+    if is_rejected_excise_revision(revision):
+        return {
+            "status": "manual_review_required",
+            "reason": "source_verification_rejected_obsolete_effective_period",
+            "revision": revision,
+            "format": fmt,
+            "record_count": len(rates) + len(tnved),
+            "rates_count": len(rates),
+            "checksum_sha256": checksum,
+        }
 
     if _is_non_official_excise_revision_token(revision):
         return {

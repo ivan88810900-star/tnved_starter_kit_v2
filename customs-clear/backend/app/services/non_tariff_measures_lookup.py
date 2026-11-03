@@ -8,6 +8,21 @@ from ..models.tnved import NonTariffMeasure
 from .hs_matching import normalize_hs_code
 
 
+EXCLUDED_LEGACY_MEASURE_QUALITIES = frozenset({"noise", "synthetic_seed"})
+
+
+def is_admitted_legacy_measure_quality(quality: str | None) -> bool:
+    """Only non-noise, non-generated legacy rows may reach product decisions."""
+    return (quality or "").strip().lower() not in EXCLUDED_LEGACY_MEASURE_QUALITIES
+
+
+def admitted_legacy_measure_quality_clause():
+    """SQL predicate shared by every legacy NTM product read path."""
+    return (NonTariffMeasure.quality.is_(None)) | (
+        ~NonTariffMeasure.quality.in_(EXCLUDED_LEGACY_MEASURE_QUALITIES)
+    )
+
+
 def build_measure_code_candidates(code: str) -> list[str]:
     """
     Все варианты ``commodity_code`` для поиска мер:
@@ -54,9 +69,7 @@ def get_measures_for_code(
 
     query = db.query(NonTariffMeasure).filter(NonTariffMeasure.commodity_code.in_(candidates))
     if hasattr(NonTariffMeasure, "quality"):
-        query = query.filter(
-            (NonTariffMeasure.quality.is_(None)) | (NonTariffMeasure.quality != "noise")
-        )
+        query = query.filter(admitted_legacy_measure_quality_clause())
     if hasattr(NonTariffMeasure, "direction"):
         query = query.filter(NonTariffMeasure.direction == (direction or "import").strip().lower())
 

@@ -3,8 +3,19 @@
   "format": "eec_excise_v1",
   "source_url": "https://www.nalog.gov.ru/rn77/taxation/taxes/excise/",
   "effective_from": "2025-01-01",
+  "effective_to": "2025-12-31",
   "description": "Акцизные ставки при ввозе — НК РФ Ст. 193 (2025), полный перечень",
   "legal_basis": "НК РФ Глава 22, Ст. 181 (перечень), Ст. 193 (ставки); ФЗ от 29.10.2024 № 362-ФЗ",
+  "verification_status": "rejected_obsolete_effective_period",
+  "verification_evidence": [
+    {
+      "finding": "Snapshot contains the 2025 schedule without an end date and must not be applied to 2026 calculations.",
+      "bundle_example": "2207100000: 643 RUB per litre of anhydrous ethyl alcohol",
+      "current_rule": "From 2026-01-01 Article 193 rates were indexed; the corresponding ethyl-alcohol rate is 824 RUB.",
+      "official_act": "Federal Law No. 425-FZ of 2025-11-28",
+      "official_url": "https://www.nalog.gov.ru/rn27/news/tax_doc_news/16590707/"
+    }
+  ],
   "rates": [
     {
       "hs_code": "2207100000",

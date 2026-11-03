@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "revision": "ett:2026-07-01",
+  "effective_from": "2026-07-01",
+  "regulatory_act": "Решение Коллегии ЕЭК от 07.04.2026 № 43",
+  "source_act_url": "https://old.adilet.zan.kz/rus/docs/H26EK000043",
+  "source_chapter_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_01.07.2026.pdf",
+  "description": "Замена кодов полиграфической краски с 01.07.2026",
+  "rates": [
+    {
+      "hs_code": "3215110000",
+      "duty_rate": "5%",
+      "source_revision": "ett:2026-06-18",
+      "source_url": "https://old.adilet.zan.kz/rus/docs/H26EK000043",
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-06-30"
+    },
+    {
+      "hs_code": "3215190000",
+      "duty_rate": "0%",
+      "source_revision": "ett:2026-06-18",
+      "source_url": "https://old.adilet.zan.kz/rus/docs/H26EK000043",
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-06-30"
+    },
+    {
+      "hs_code": "3215110001",
+      "duty_rate": "5%",
+      "source_revision": "ett:2026-07-01",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_01.07.2026.pdf",
+      "valid_from": "2026-07-01"
+    },
+    {
+      "hs_code": "3215110002",
+      "duty_rate": "5%",
+      "source_revision": "ett:2026-07-01",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_01.07.2026.pdf",
+      "valid_from": "2026-07-01"
+    },
+    {
+      "hs_code": "3215110009",
+      "duty_rate": "5%",
+      "source_revision": "ett:2026-07-01",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_01.07.2026.pdf",
+      "valid_from": "2026-07-01"
+    },
+    {
+      "hs_code": "3215190001",
+      "duty_rate": "0%",
+      "source_revision": "ett:2026-07-01",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_01.07.2026.pdf",
+      "valid_from": "2026-07-01"
+    },
+    {
+      "hs_code": "3215190002",
+      "duty_rate": "0%",
+      "source_revision": "ett:2026-07-01",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_01.07.2026.pdf",
+      "valid_from": "2026-07-01"
+    },
+    {
+      "hs_code": "3215190009",
+      "duty_rate": "0%",
+      "source_revision": "ett:2026-07-01",
+      "source_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_01.07.2026.pdf",
+      "valid_from": "2026-07-01"
+    }
+  ]
+}

@@ -4,10 +4,15 @@ from __future__ import annotations
 
 import unittest
 
+import pytest
+
+
+pytest_plugins = ("tests.classification_inventory_fixture",)
+pytestmark = pytest.mark.usefixtures("classification_inventory_session_local")
+
 try:
-    from app.db import SessionLocal
+    from app import db as app_db
     from app.models.tnved import Commodity
-    from app.services.normative_store import init_db
     from app.services.tnved_tree import (
         build_tree,
         collect_chapter_notes,
@@ -30,10 +35,6 @@ _SAMPLE_HEADINGS = ("0101", "0302", "0304", "8517", "9401")
 
 @unittest.skipUnless(_OK, "tree_engine v2 tests need FastAPI app deps")
 class TreeEngineV2SmokeTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        init_db()
-
     def _legacy_heading_tree(self, db, heading_code: str) -> dict | None:
         rows = (
             exclude_obsolete_reserved(
@@ -56,7 +57,7 @@ class TreeEngineV2SmokeTests(unittest.TestCase):
         validator = TreeValidator()
         serializer = TreeSerializer()
 
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             parsed = parser.parse(db)
             roots = builder.build(parsed)
             result = validator.validate(roots, parse_result=parsed)
@@ -87,7 +88,7 @@ class TreeEngineV2SmokeTests(unittest.TestCase):
         builder = TreeBuilder()
         serializer = TreeSerializer()
 
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             parsed = parser.parse(db)
             roots = builder.build(parsed)
             reserialized = serializer.serialize_roots(roots)
@@ -101,7 +102,7 @@ class TreeEngineV2SmokeTests(unittest.TestCase):
         parser = TreeParser()
         builder = TreeBuilder()
 
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             parsed = parser.parse(db)
             roots_a = builder.build(parsed)
             roots_b = builder.build(parsed)
@@ -130,7 +131,7 @@ class TreeEngineV2SmokeTests(unittest.TestCase):
         builder = TreeBuilder()
         serializer = TreeSerializer()
 
-        with SessionLocal() as db:
+        with app_db.SessionLocal() as db:
             parsed = parser.parse(db)
             model = builder.build_model(parsed)
             roots = builder.build(parsed)

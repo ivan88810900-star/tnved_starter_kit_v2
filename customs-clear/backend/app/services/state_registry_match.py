@@ -13,12 +13,15 @@ import re
 from datetime import datetime
 from typing import Any
 
+import httpx
+import requests
 from loguru import logger
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from ..models.core import FssNotification, ReoRegistryEntry, SgrCertificate
 from ..models.tnved import NonTariffMeasure
+from .non_tariff_measures_lookup import admitted_legacy_measure_quality_clause
 
 _SKIP_BRAND = frozenset(
     {"", "отсутствует", "неизвестен", "—", "отсутствует.", "нет", "n/a", "na"}
@@ -31,6 +34,60 @@ SGR_RECOMMENDATION_FUZZY = (
     "Найдено действующее СГР на продукцию данного изготовителя со схожим описанием. "
     "Проверьте возможность применения (внесения артикула) или оформления письма-доверенности от заявителя."
 )
+
+_SGR_INACTIVE_STATUS_MARKERS = (
+    "аннулир",
+    "недейств",
+    "не действ",
+    "неактив",
+    "не актив",
+    "не зарегистрирован",
+    "прекращ",
+    "приостанов",
+    "отозван",
+    "revoked",
+    "withdrawn",
+    "suspended",
+    "terminated",
+    "expired",
+    "inactive",
+    "not active",
+    "not valid",
+    "not registered",
+)
+_SGR_ACTIVE_STATUS_MARKERS_RU = (
+    "действ",
+    "зарегистрирован",
+)
+_SGR_ACTIVE_STATUS_WORDS_EN = frozenset({"active", "valid", "registered"})
+
+_REGISTRY_AI_UNAVAILABLE_RUNTIME_MESSAGES = frozenset(
+    {
+        "Не задан GEMINI_API_KEY или GOOGLE_API_KEY",
+        "Нужен пакет google-generativeai",
+    }
+)
+
+
+def classify_sgr_registry_status(status: str) -> str:
+    """Classify registry text without treating an unknown status as current."""
+    value = _norm(status)
+    if any(marker in value for marker in _SGR_INACTIVE_STATUS_MARKERS):
+        return "inactive"
+    if any(marker in value for marker in _SGR_ACTIVE_STATUS_MARKERS_RU):
+        return "active"
+    if _SGR_ACTIVE_STATUS_WORDS_EN.intersection(re.findall(r"[a-z]+", value)):
+        return "active"
+    return "unverified"
+
+
+def _sgr_status_review_recommendation(status: str) -> str:
+    value = (status or "").strip() or "не указан"
+    return (
+        f"Найдена запись СГР, но её статус «{value}» не подтверждает действие документа. "
+        "Не используйте совпадение как подтверждение применимости; проверьте актуальный статус "
+        "и сведения о продукции в официальном реестре."
+    )
 
 
 def _norm(s: str) -> str:
@@ -147,6 +204,25 @@ def _format_sgr_issue_status(issue: datetime | None, status: str) -> str:
     return f"Выдано {d}, статус: {st}"
 
 
+def _is_registry_ai_unavailable_error(exc: BaseException) -> bool:
+    """Recognize bounded optional-provider failures without masking code defects."""
+    if isinstance(
+        exc,
+        (httpx.HTTPError, requests.RequestException, OSError, TimeoutError),
+    ):
+        return True
+    if (
+        isinstance(exc, RuntimeError)
+        and str(exc) in _REGISTRY_AI_UNAVAILABLE_RUNTIME_MESSAGES
+    ):
+        return True
+    try:
+        from google.api_core.exceptions import GoogleAPICallError, RetryError
+    except ImportError:
+        return False
+    return isinstance(exc, (GoogleAPICallError, RetryError))
+
+
 def _ai_disambiguate_fss(
     candidates: list[FssNotification],
     *,
@@ -156,8 +232,11 @@ def _ai_disambiguate_fss(
         return candidates[0] if candidates else None
     try:
         from .invoice_analyzer import _gemini_generate
-    except Exception as e:
-        logger.debug("registry AI pick: skip import: {}", e)
+    except ImportError as exc:
+        logger.debug(
+            "registry AI pick: optional provider import unavailable ({})",
+            type(exc).__name__,
+        )
         return candidates[0]
     lines = []
     for i, r in enumerate(candidates[:8]):
@@ -170,15 +249,40 @@ def _ai_disambiguate_fss(
     )
     try:
         raw = _gemini_generate(prompt, max_output_tokens=128, temperature=0.0)
-        m = re.search(r"\{[^}]+\}", raw)
-        if not m:
-            return candidates[0]
+    except Exception as exc:
+        if not _is_registry_ai_unavailable_error(exc):
+            raise
+        logger.warning(
+            "registry AI disambiguate FSS: optional provider unavailable ({})",
+            type(exc).__name__,
+        )
+        return candidates[0]
+
+    if not isinstance(raw, str):
+        return candidates[0]
+    m = re.search(r"\{[^}]+\}", raw)
+    if not m:
+        return candidates[0]
+    try:
         obj = json.loads(m.group(0))
+    except json.JSONDecodeError as exc:
+        logger.warning(
+            "registry AI disambiguate FSS: malformed provider output ({})",
+            type(exc).__name__,
+        )
+        return candidates[0]
+    if not isinstance(obj, dict):
+        return candidates[0]
+    try:
         idx = int(obj.get("best_index", 0))
-        if 0 <= idx < len(candidates):
-            return candidates[idx]
-    except Exception as e:
-        logger.warning("registry AI disambiguate FSS: {}", e)
+    except (TypeError, ValueError) as exc:
+        logger.warning(
+            "registry AI disambiguate FSS: malformed provider output ({})",
+            type(exc).__name__,
+        )
+        return candidates[0]
+    if 0 <= idx < len(candidates):
+        return candidates[idx]
     return candidates[0]
 
 
@@ -187,6 +291,7 @@ def _nt_requires_sgr(session: Session, commodity_code: str) -> bool:
     rows = (
         session.query(NonTariffMeasure)
         .filter(NonTariffMeasure.commodity_code == commodity_code)
+        .filter(admitted_legacy_measure_quality_clause())
         .limit(40)
         .all()
     )
@@ -333,7 +438,11 @@ def lookup_sgr_registry(
     if not best:
         return _sgr_not_found_block()
 
-    if kind == "Найдено точное совпадение":
+    status_class = classify_sgr_registry_status(best.status or "")
+    if status_class != "active":
+        kind = "Найдено совпадение, статус требует проверки"
+        rec = _sgr_status_review_recommendation(best.status or "")
+    elif kind == "Найдено точное совпадение":
         rec = (
             "Совпадение по бренду и описанию/артикулу; сверьте полный состав и наименование в реестре СГР перед применением."
         )

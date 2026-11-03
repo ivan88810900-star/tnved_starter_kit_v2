@@ -14,7 +14,6 @@ from app.db import Base
 from app.main import app
 from app.models.core import ExchangeRate, GeoSpecialDuty, HsRate, SourceStatus, SyncLog, TnvedEntry
 from app.models.tnved import Chapter, Commodity, HsDutyRule, Section, SpecialDuty, VatPreference
-from app.services.normative_store import init_db
 from app.services.exchange_rates import CBRF_SOURCE_CODE, FALLBACK, TRACKED, update_exchange_rates_from_cbrf
 from app.services.payment_data_coverage import (
     diagnose_duty_rates,
@@ -978,8 +977,13 @@ class TestPaymentDataCoverageTopLevelEecRevision(unittest.TestCase):
 class TestPaymentDataCoverageApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        init_db()
+        cls.sm = _memory_sessionmaker()
+        cls._patch_cov, cls._patch_norm = _start_coverage_db_patches(cls.sm)
         cls.client = TestClient(app)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        _stop_coverage_db_patches(cls._patch_cov, cls._patch_norm)
 
     def test_payment_coverage_endpoint(self) -> None:
         r = self.client.get("/api/sources/payment-coverage")

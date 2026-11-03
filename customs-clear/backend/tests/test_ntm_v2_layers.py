@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from types import SimpleNamespace
 
 import pytest
 from sqlalchemy import create_engine
@@ -17,6 +18,9 @@ from tests.test_ntm_pipeline import REGRESSION_MATRIX
 
 @pytest.fixture
 def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
+    async def _no_enrichment(**_kwargs: object) -> list[dict]:
+        return []
+
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(
         engine,
@@ -24,6 +28,32 @@ def memory_sessionmaker(monkeypatch: pytest.MonkeyPatch):
     )
     sm = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     monkeypatch.setattr("app.db.SessionLocal", sm)
+    for target in (
+        "app.services.non_tariff_service.find_rules_for_code",
+        "app.services.non_tariff_service.find_measures_for_code",
+        "app.services.non_tariff_service.find_normative_notes_for_hs",
+        "app.services.non_tariff_service.lookup_tr_ts_acts_by_codes",
+        "app.services.non_tariff_service.get_regulatory_documents_for_hs",
+        "app.services.ntm_v2_legacy_rules_import.get_advisory_legacy_rule_requirements_v2",
+        "app.services.ntm_v2_legacy_rules_import.get_legacy_rule_requirements_for_enforcement",
+        "app.services.ntm_v2_legacy_rules_import.get_legacy_rule_requirements_v2_legacy_shape",
+        "app.services.ntm_v2_official_sgr_import.get_advisory_official_sgr_requirements_v2",
+    ):
+        monkeypatch.setattr(target, lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.enrich_measures_by_description",
+        _no_enrichment,
+    )
+    monkeypatch.setattr(
+        "app.services.non_tariff_service.build_sanctions_risk_block",
+        lambda **_kwargs: SimpleNamespace(model_dump=lambda: {}),
+    )
+    for target in (
+        "app.services.ntm_v2_legacy_rules_import.should_apply_v2_rules_enforcement",
+        "app.services.ntm_v2_official_sgr_import.should_apply_official_sgr_advisory",
+        "app.services.ntm_v2_legacy_measures_enforcement.should_apply_v2_measures_enforcement",
+    ):
+        monkeypatch.setattr(target, lambda *_args, **_kwargs: False)
     return sm
 
 
