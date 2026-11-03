@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "cycle": 435,
+  "task_id": "TARIFF-ETT-PR269-METADATA-RECONCILIATION-20261103",
+  "executor": "/root/scheduled-cycle435-20261103T041418Z",
+  "recorded_at": "2026-11-03T04:22:00Z",
+  "lease": {
+    "generation": 435,
+    "holder": "/root/scheduled-cycle435-20261103T041418Z",
+    "token_verified": true
+  },
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "restored_state": {
+    "main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+    "orchestration_state_before_acquire": "a2fbc74e7c9f62a30be8792f257e2b32dd777789",
+    "coordinator_lease_generation": 435
+  },
+  "defect": {
+    "pull_request": 269,
+    "exact_head": "ded231d0abe6793f4cc2ca110f4a4b11439f8efb",
+    "stale_body_candidate": "957ffae94303499455e3de89ae9309fbfdb97cc2",
+    "stale_claim": "fresh independent A5: PASS",
+    "verified_state": "fresh independent A5 review of current exact head remains pending"
+  },
+  "action": {
+    "type": "pull_request_metadata_update",
+    "code_changed": false,
+    "corrected_exact_head": true,
+    "corrected_review_readiness": true
+  },
+  "verification": {
+    "pull_request_reread": true,
+    "draft": true,
+    "head_sha": "ded231d0abe6793f4cc2ca110f4a4b11439f8efb",
+    "base_sha": "ec51b53d0d266ff146870fc5c17b944023e97264",
+    "review_threads": 0,
+    "submitted_reviews": 0,
+    "exact_head_ci": [
+      {
+        "run_id": 41484321363,
+        "event": "pull_request",
+        "workflow": "ETT offline normalization tool",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 41484307461,
+        "event": "push",
+        "workflow": "ETT offline normalization tool",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 41484307374,
+        "event": "push",
+        "workflow": "Tariff agent safety",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "readiness": "DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING",
+  "boundaries": {
+    "code_commit_created": false,
+    "database_read_or_write_performed": false,
+    "source_download_performed": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "enforcement_changed": false,
+    "live_a6_invoked": false,
+    "permissions_or_secrets_changed": false
+  },
+  "next_safe_step": "Obtain fresh independent exact-head A5 review for PR 269. Keep the PR draft; persistent staging apply and protected merge remain separate owner gates."
+}
