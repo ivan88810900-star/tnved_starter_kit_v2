@@ -76,16 +76,20 @@ class TnvedRecoveryStore:
 
     def children(self, code: str, *, limit: int = 200) -> list[dict[str, Any]]:
         normalized = "".join(ch for ch in str(code) if ch.isdigit())
-        if not normalized or limit < 1:
+        if not normalized:
             return []
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 200:
+            raise ValueError("limit must be an integer between 1 and 200")
         rows = self._conn.execute(
             """SELECT code,label,path_json,edition_id,source_id
                  FROM recovery_nodes
                 WHERE parent_code=?
                 ORDER BY length(code), code
                 LIMIT ?""",
-            (normalized, min(limit, 200)),
+            (normalized, limit + 1),
         ).fetchall()
+        if len(rows) > limit:
+            raise ValueError("child result exceeds limit; refusing partial result")
         return [{**dict(row), "path": json.loads(row["path_json"])} for row in rows]
 
     def search(self, query: str, *, limit: int = 40) -> list[dict[str, Any]]:
@@ -103,3 +107,4 @@ class TnvedRecoveryStore:
             (pattern, pattern, digits, f"{digits}%", digits, f"{digits}%", min(limit, 200)),
         ).fetchall()
         return [{**dict(row), "path": json.loads(row["path_json"])} for row in rows]
+
