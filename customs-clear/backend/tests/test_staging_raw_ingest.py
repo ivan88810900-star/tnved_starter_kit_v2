@@ -226,10 +226,20 @@ class StagingRawIngestTests(unittest.TestCase):
             previous["preceding_context_provenance"]["text"],
         )
         self.assertEqual(previous["duty_text"], "5")
+        self.assertEqual(previous["duty_provenance"]["text"], "5")
         self.assertEqual(previous["duty_provenance"]["rendered_text"], "5")
         self.assertNotIn("note_marker", previous["duty_provenance"])
-        self.assertEqual(target["duty_text"], "5")
-        self.assertEqual(target["duty_provenance"]["text"], "5")
+        self.assertEqual(target["duty_text"], "5 63С)")
+        self.assertEqual(target["duty_provenance"]["text"], "5 63С)")
+        self.assertEqual(
+            target["duty_provenance"]["fragments"], ["5", "63С)"]
+        )
+        self.assertEqual(
+            target["duty_provenance"]["source_lines"], [12, 11]
+        )
+        self.assertEqual(
+            target["duty_provenance"]["physical_source_order_lines"], [11, 12]
+        )
         self.assertEqual(target["duty_provenance"]["rendered_text"], "5 63С)")
         self.assertEqual(
             target["duty_provenance"]["note_marker"]["target_hs_code"],
@@ -245,6 +255,16 @@ class StagingRawIngestTests(unittest.TestCase):
         self.assertEqual(payload["completeness"]["duty_continuation_line_count"], 0)
         self.assertEqual(
             payload["completeness"]["reviewed_duty_note_binding_count"], 1
+        )
+
+        downstream_rows = json.loads(json.dumps(payload, ensure_ascii=False))["batch"][
+            "rows"
+        ]
+        self.assertEqual(downstream_rows[1]["duty_text"], "5")
+        self.assertEqual(downstream_rows[2]["duty_text"], "5 63С)")
+        self.assertEqual(
+            downstream_rows[2]["duty_text"],
+            downstream_rows[2]["duty_provenance"]["text"],
         )
 
     def test_chapter30_profile_rejects_digest_before_parsing(self) -> None:
