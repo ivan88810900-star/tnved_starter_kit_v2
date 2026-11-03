@@ -786,3 +786,15 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Status: **DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING**. No merge, deploy, database/source operation, enforcement change, permission/secret change or A6/provider call occurred.
 - Evidence: `.ai/orchestration/evidence/cycle435_pr269_metadata_reconciliation.json`.
 - Next: obtain a fresh independent exact-head A5 review for PR #269. Keep the PR draft; persistent staging apply and protected merge remain separate owner gates.
+
+## Cycle 437 checkpoint — PR #260 isolated legacy fixture lifecycle (2026-11-03)
+
+- GitHub was reread before action: protected `main` remains `ea633c769863bd55f5d11e4a807ba459f711a4a2`; draft PR #260 advanced by one commit from `22004e5903215ebdc2464d4a93d303d4af83ed68` to exact head `602006fbeae4ea22aa7484830421cff0a3dd1737`.
+- The one-file test delta keeps `DATABASE_URL`, the SQLAlchemy engine/session bind, and `init_db()` on the disposable copied SQLite fixture until class cleanup. Loader/cleanup failures restore the prior environment; mismatched fixture targets fail closed; direct socket egress is blocked during legacy initialization.
+- A bounded A0 review of the one-commit delta found no confirmed defect. This is not fresh independent A5 approval; exact-head A5 remains pending. Review threads: 0; submitted reviews: 0.
+- Exact-head Tariff agent safety is successful for push run [41692656853](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41692656853), job `126114948172`, and pull-request run [41692668610](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41692668610), job `126114991004`.
+- The PR body was reconciled to the current exact head and workflow receipts. PR #260 remains draft and mergeable. The recovery adapter still has no current HTTP, UI or CLI consumer.
+- Evidence: `.ai/orchestration/evidence/cycle437_pr260_isolated_legacy_fixture.json`.
+- No merge, deploy, database/source operation, A6/provider call, permission/secret change or feature-flag change occurred.
+- Next: obtain fresh independent exact-head QA for PR #260. Keep the PR draft; protected merge remains a separate owner gate.
+
