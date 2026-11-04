@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "cycle": 440,
+  "task_id": "TARIFF-ETT-APPEND5-PRODUCTION-ROUTE-COVERAGE-20261104",
+  "executor": "/root/scheduled-cycle440-20261104T161418Z",
+  "started_at": "2026-11-04T16:14:18Z",
+  "completed_at": "2026-11-04T16:39:40.423Z",
+  "lease": {
+    "generation": 440,
+    "holder": "/root/scheduled-cycle440-20261104T161418Z"
+  },
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+  "finding": {
+    "status": "CONFIRMED_FIXED",
+    "reporter": "A5",
+    "review_session": "/root/a5_pr269_review",
+    "description": "append5 success tests used a duplicated synthetic plan and never successfully exercised the production build_offline_artifacts package route",
+    "risk": "green CI did not prove that exact-byte validation and provenance reconstruction could produce the SQL-tested append plan",
+    "old_head": "992838f360637ef13816561d346f7fa95dc7142d",
+    "fix_commits": [
+      "6b2f1a1cabe4de1db5a61960a1b785cc1f58eb54",
+      "7bba6aafc96890e0e7f4ceea69f736f868f2667d"
+    ],
+    "changed_files": [
+      "customs-clear/backend/tests/test_ett_offline_plan_runner.py"
+    ]
+  },
+  "result": {
+    "status": "DRAFT_EXACT_HEAD_A5_PASS_CI_PASS",
+    "pull_request": 269,
+    "draft": true,
+    "base_branch": "agent/ett-legacy-normalization-preview-v1",
+    "base_sha": "ec51b53d0d266ff146870fc5c17b944023e97264",
+    "head_branch": "agent/ett-legacy-normalization-preview-cli-v1",
+    "head_sha": "7bba6aafc96890e0e7f4ceea69f736f868f2667d",
+    "commits_ahead": 30,
+    "changed_files": 8,
+    "behind": 0
+  },
+  "verification": {
+    "independent_a5": "PASS_NO_FINDINGS after repair",
+    "ett_workflow": {
+      "run_id": 41867450599,
+      "conclusion": "success"
+    },
+    "dependency_free": {
+      "job_id": 126705243630,
+      "conclusion": "success",
+      "tests": 56
+    },
+    "postgresql_plan_integration": {
+      "job_id": 126705243224,
+      "conclusion": "success",
+      "result": "production-route apply/replay/conflict/history/schema/append5 PASS"
+    },
+    "safety_workflow": {
+      "run_id": 41867450526,
+      "conclusion": "success"
+    },
+    "offline_safety": {
+      "job_id": 126705243119,
+      "conclusion": "success",
+      "tests": 225
+    },
+    "snapshot_validation": {
+      "job_id": 126705243119,
+      "conclusion": "success",
+      "tests": 5
+    },
+    "intermediate_failure": {
+      "head_sha": "6b2f1a1cabe4de1db5a61960a1b785cc1f58eb54",
+      "cause": "synthetic parent provenance used description-only text instead of the exact physical source row",
+      "superseded": true
+    },
+    "review_threads": 0,
+    "github_reviews": 0
+  },
+  "boundaries": {
+    "retained_private_bytes_accessed": false,
+    "actual_legacy_package_executed": false,
+    "persistent_database_accessed": false,
+    "sql_applied": false,
+    "migration_performed": false,
+    "provider_called": false,
+    "a6_dispatched": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "production_write": false,
+    "staging_write": false,
+    "enforcement_changed": false,
+    "permissions_or_secrets_changed": false,
+    "branch_deleted": false,
+    "tests_weakened": false
+  },
+  "next_safe_step": "Keep PR #269 draft. Any real staging apply and protected merge remain separate owner gates."
+}
