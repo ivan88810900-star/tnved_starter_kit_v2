@@ -1940,8 +1940,8 @@ def _build_legacy_append_offline_artifacts(
         "append_crosswalk_sha256": crosswalk_hash,
         "normalizer_version": ETT_NORMALIZER_VERSION,
         "expected_counts": {
-            "before_results": 619,
-            "after_results": 624,
+            "before_results": 533,
+            "after_results": 538,
             "base_raw": 533,
             "append_raw": 5,
             "parsed": parsed,
