@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "cycle": 439,
+  "task_id": "TARIFF-ETT-APPEND5-SOURCE-SCOPED-COUNTS-20261104",
+  "executor": "/root/scheduled-cycle439-20261104T102723Z",
+  "started_at": "2026-11-04T10:27:23.544Z",
+  "completed_at": "2026-11-04T10:34:32.607Z",
+  "lease": {
+    "generation": 439,
+    "holder": "/root/scheduled-cycle439-20261104T102723Z"
+  },
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+  "defect": {
+    "status": "CONFIRMED_FIXED",
+    "description": "append5 expected_counts used fixture-global normalization totals 619/624 instead of the retained source's exact 533/538 pre/post counts",
+    "risk": "operator receipt depended on unrelated rows in the shared target table and contradicted the source-scoped SQL preflight and invariant",
+    "old_head": "ded231d0abe6793f4cc2ca110f4a4b11439f8efb",
+    "fix_commits": [
+      "c7e3f9ec6801fa55be1693b07b48bfaf19a0f05b",
+      "992838f360637ef13816561d346f7fa95dc7142d"
+    ],
+    "changed_files": [
+      "customs-clear/backend/app/services/staging_ett_offline_plan.py",
+      "customs-clear/backend/tests/test_ett_offline_plan_runner.py"
+    ],
+    "changed_lines": {
+      "additions": 5,
+      "deletions": 5
+    }
+  },
+  "result": {
+    "status": "DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING",
+    "pull_request": 269,
+    "draft": true,
+    "base_branch": "agent/ett-legacy-normalization-preview-v1",
+    "base_sha": "ec51b53d0d266ff146870fc5c17b944023e97264",
+    "head_branch": "agent/ett-legacy-normalization-preview-cli-v1",
+    "head_sha": "992838f360637ef13816561d346f7fa95dc7142d",
+    "commits_ahead": 28,
+    "changed_files": 8,
+    "behind": 0,
+    "mergeability": "GitHub recomputation pending/unknown at checkpoint"
+  },
+  "verification": {
+    "ett_workflow": {
+      "run_id": 41814424009,
+      "conclusion": "success"
+    },
+    "dependency_free": {
+      "job_id": 126521631732,
+      "conclusion": "success",
+      "tests": 56
+    },
+    "postgresql_plan_integration": {
+      "job_id": 126521633987,
+      "conclusion": "success",
+      "result": "apply/replay/conflict/history/schema/append5 PASS"
+    },
+    "safety_workflow": {
+      "run_id": 41814424106,
+      "conclusion": "success"
+    },
+    "offline_safety": {
+      "job_id": 126521659174,
+      "conclusion": "success",
+      "tests": 225
+    },
+    "snapshot_validation": {
+      "job_id": 126521659174,
+      "conclusion": "success",
+      "tests": 5
+    },
+    "review_threads": 0,
+    "github_reviews": 0,
+    "independent_a5": "pending"
+  },
+  "boundaries": {
+    "retained_private_bytes_accessed": false,
+    "actual_legacy_package_executed": false,
+    "database_accessed": false,
+    "sql_applied": false,
+    "migration_performed": false,
+    "provider_called": false,
+    "a6_dispatched": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "production_write": false,
+    "staging_write": false,
+    "enforcement_changed": false,
+    "permissions_or_secrets_changed": false,
+    "branch_deleted": false,
+    "tests_weakened": false
+  },
+  "next_safe_step": "Fresh independent exact-head A5 review of PR #269. Keep draft; persistent staging apply and protected merge remain separate owner gates."
+}
