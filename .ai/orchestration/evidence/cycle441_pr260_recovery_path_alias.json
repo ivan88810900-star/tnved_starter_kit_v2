@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "cycle": 441,
+  "task_id": "TARIFF-TNVED-RECOVERY-PATH-ALIAS-20261104",
+  "executor": "/root/scheduled-cycle441-20261105T011418MSK",
+  "recorded_at": "2026-11-04T22:31:06.055Z",
+  "lease": {
+    "generation": 441,
+    "holder": "/root/scheduled-cycle441-20261105T011418MSK",
+    "token_verified": true
+  },
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "restored_state": {
+    "main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+    "orchestration_state_before_acquire": "5a89ef28277893bd2f2c87b7156b494bbb204d81",
+    "open_pull_request": 260,
+    "prior_head": "602006fbeae4ea22aa7484830421cff0a3dd1737"
+  },
+  "finding": {
+    "status": "CONFIRMED_FIXED",
+    "description": "the recovery CLI allowed --manifest to alias the published SQLite, its temporary build path, either pinned input, or an existing manifest, permitting post-verification overwrite",
+    "risk": "a successful build could destroy the verified artifact or pinned input and leave a misleading result receipt"
+  },
+  "result": {
+    "status": "DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING",
+    "pull_request": 260,
+    "draft": true,
+    "head_branch": "agent/tnved-structure-recovery-v1",
+    "head_sha": "2c1f10c90195fda5785476ff052e079194ba3cdf",
+    "commits": [
+      "e130c55bfc2e7e902b3fa73ac08e620c5dabe052",
+      "b5123dc90565fc643525ca6d19418462bda720e1",
+      "2c1f10c90195fda5785476ff052e079194ba3cdf"
+    ],
+    "changed_files": [
+      "customs-clear/backend/scripts/build_tnved_recovery.py",
+      "customs-clear/backend/tests/test_tnved_recovery_ci.py",
+      "customs-clear/backend/scripts/run_tnved_recovery_ci.py"
+    ]
+  },
+  "verification": {
+    "push": {
+      "run_id": 41925499441,
+      "job_id": 126908706560,
+      "conclusion": "success"
+    },
+    "pull_request": {
+      "run_id": 41925507156,
+      "job_id": 126908734034,
+      "conclusion": "success"
+    },
+    "orchestration_tests": {
+      "tests": 225,
+      "conclusion": "success"
+    },
+    "snapshot_tests": {
+      "tests": 5,
+      "conclusion": "success"
+    },
+    "recovery_gate": {
+      "discovered": 3,
+      "executed": 3,
+      "skipped": 0,
+      "conclusion": "success"
+    },
+    "hermetic_catalog_api": {
+      "tests": 7,
+      "conclusion": "success"
+    },
+    "review_threads": 0,
+    "submitted_reviews": 0,
+    "pr_metadata_reconciled": true
+  },
+  "boundaries": {
+    "persistent_database_accessed": false,
+    "source_download_performed": false,
+    "provider_called": false,
+    "a6_dispatched": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "production_write": false,
+    "staging_write": false,
+    "enforcement_changed": false,
+    "permissions_or_secrets_changed": false,
+    "branch_deleted": false,
+    "tests_weakened": false
+  },
+  "next_safe_step": "Obtain fresh independent A5 review of PR #260 exact head 2c1f10c90195fda5785476ff052e079194ba3cdf; keep the PR draft and require a separate owner decision before any protected merge."
+}
