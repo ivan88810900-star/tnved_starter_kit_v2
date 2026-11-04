@@ -360,9 +360,9 @@ def _build_legacy_package(root: Path, *, append_candidates: bool = False) -> dic
                         "fragments": [spec["description"], spec["continuation"]],
                     },
                     "parent_heading_provenance": {
-                        "text": "" if offset == 2 else spec["parent_description"],
+                        "text": "" if offset == 2 else spec["parent_raw_line"],
                         "source_lines": [] if offset == 2 else [parent_index + 1],
-                        "fragments": [] if offset == 2 else [spec["parent_description"]],
+                        "fragments": [] if offset == 2 else [spec["parent_raw_line"]],
                     },
                     "supplementary_unit": "–",
                     "duty_text": spec["duty_text"],
