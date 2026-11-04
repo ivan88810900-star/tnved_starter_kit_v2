@@ -1,8 +1,8 @@
 {
-  "acquisition_note": "independent exact-head review of PR268 and next safe ETT maintenance step",
-  "expires_at": null,
-  "generation": 440,
-  "holder": null,
+  "acquisition_note": "independent PR260 recovery CLI path-alias defect repair and exact-head verification",
+  "expires_at": "2026-11-04T22:53:08.407Z",
+  "generation": 441,
+  "holder": "/root/scheduled-cycle441-20261105T011418MSK",
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-11-04T16:40:36.895Z"
+  "state": "active",
+  "token": "f3f8dea40bf970fde050fde0e3ea0259",
+  "updated_at": "2026-11-04T22:23:08.407Z"
 }
