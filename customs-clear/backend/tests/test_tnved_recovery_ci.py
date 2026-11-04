@@ -340,6 +340,56 @@ class TnvedRecoveryOfflineCiTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "refusing partial result"):
                     store.children("01", limit=200)
 
+    def test_builder_rejects_manifest_aliases_and_existing_manifest(self) -> None:
+        builder = _builder()
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            catalog, index, catalog_sha, index_sha = _fixture(root)
+            output = root / "recovery.sqlite"
+            arguments = {
+                "catalog_sha256": catalog_sha,
+                "index_sha256": index_sha,
+                "expected_counts": COUNTS,
+                "expected_chapters": CHAPTERS,
+                "expected_section_count": 21,
+            }
+            aliases = (
+                catalog,
+                index,
+                output,
+                output.with_name(f".{output.name}.building"),
+            )
+            for manifest in aliases:
+                with self.subTest(manifest=manifest.name):
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        "manifest path must be distinct",
+                    ):
+                        builder._build_with_pins(
+                            catalog,
+                            index,
+                            output,
+                            manifest,
+                            **arguments,
+                        )
+                    self.assertFalse(output.exists())
+
+            manifest = root / "existing-manifest.json"
+            manifest.write_text("preserve me")
+            with self.assertRaisesRegex(
+                ValueError,
+                "refusing to overwrite existing recovery manifest",
+            ):
+                builder._build_with_pins(
+                    catalog,
+                    index,
+                    output,
+                    manifest,
+                    **arguments,
+                )
+            self.assertEqual(manifest.read_text(), "preserve me")
+            self.assertFalse(output.exists())
+
     def test_builder_rejects_bytes_outside_supplied_pins(self) -> None:
         builder = _builder()
         with tempfile.TemporaryDirectory() as raw:
