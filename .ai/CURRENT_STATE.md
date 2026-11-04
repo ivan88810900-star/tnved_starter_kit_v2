@@ -798,3 +798,14 @@ legacy (сверх structural). Контур по-прежнему **не под
 - No merge, deploy, database/source operation, A6/provider call, permission/secret change or feature-flag change occurred.
 - Next: obtain fresh independent exact-head QA for PR #260. Keep the PR draft; protected merge remains a separate owner gate.
 
+
+
+## Cycle 438 checkpoint — PR #269 append5 scope reconciliation (2026-11-04)
+
+- GitHub was reread before action: main remains `ea633c769863bd55f5d11e4a807ba459f711a4a2`; draft PR #269 remains mergeable at exact head `ded231d0abe6793f4cc2ca110f4a4b11439f8efb`, base and merge-base `ec51b53d0d266ff146870fc5c17b944023e97264`.
+- Confirmed metadata drift: the PR description documented only the legacy 533-row projection although the exact head also contains a separate guarded append5 path in 14 later commits. The body now records both scopes, the 26-commit/8-file exact delta, and the unchanged legal/admission boundary.
+- The append5 description is bound to the reviewed implementation: exact PDF/layout digests, five fixed plus-marker source spans, exact 3-run/533-RAW/533-result pre-state, insert-only 1-run/5-RAW/5-result apply, schema/constraint/trigger/RLS preflight, fail-closed conflict handling, and zero-DML exact replay. All results remain `UNVERIFIED`, `verified=false`, and `admitted=false`.
+- Exact-head pull-request workflow `41484321363`, push workflow `41484307461`, and Tariff safety workflow `41484307374` remain successful. Review threads: 0; submitted reviews: 0. No candidate bytes or CI inputs changed.
+- A bounded A0 review found no confirmed code defect. Fresh independent exact-head A5 remains pending; no earlier review is treated as approval.
+- No retained private object, database/source operation, SQL apply, migration, merge, deploy, enforcement change, permission/secret change, branch deletion, or A6/provider call occurred.
+- Next: obtain fresh independent exact-head A5 review for PR #269. Keep the PR draft; persistent staging apply and protected merge remain separate owner gates.
