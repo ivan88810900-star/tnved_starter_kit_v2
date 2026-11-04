@@ -822,3 +822,18 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Status: **DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING**. No retained private bytes, real package execution, database/source operation, SQL apply, migration, merge, deploy, enforcement change, permission/secret change, branch deletion, or A6/provider call occurred.
 - Evidence: `.ai/orchestration/evidence/cycle439_pr269_source_scoped_append_counts.json`.
 - Next: obtain fresh independent exact-head A5 review for PR #269. Keep the PR draft; persistent staging apply and protected merge remain separate owner gates.
+
+## Cycle 440 checkpoint — PR #269 production append route covered (2026-11-04)
+
+- GitHub was reread before action: protected `main` remains `ea633c769863bd55f5d11e4a807ba459f711a4a2`; coordinator lease generation 440 was acquired and verified by holder `/root/scheduled-cycle440-20261104T161418Z`.
+- Fresh independent A5 found one confirmed coverage defect at PR #269 exact head `992838f360637ef13816561d346f7fa95dc7142d`: append5 success tests and the PostgreSQL probe used a duplicated hand-built plan, while the real `build_offline_artifacts()` append package route only had a failing digest test.
+- Draft PR #269 advanced by two commits to exact head `7bba6aafc96890e0e7f4ceea69f736f868f2667d`. The synthetic exact-byte fixture now derives the fixed-row contract, patches only synthetic artifact identities, invokes the production package builder, and feeds its returned SQL to both unit and disposable PostgreSQL checks. Parent provenance is bound to the exact physical source row.
+- Intermediate head `6b2f1a1cabe4de1db5a61960a1b785cc1f58eb54` correctly failed the new route because the old fixture stored description-only parent text. The final head repairs that fixture mismatch; the failed run is superseded, not ignored.
+- Fresh independent A5 review of the final two-commit delta returned **PASS_NO_FINDINGS**.
+- Exact-head ETT workflow [41867450599](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41867450599) passed: dependency-free job `126705243630` ran 56 tests (OK), and PostgreSQL job `126705243224` passed production-route apply/replay/conflict/history/schema/append5.
+- Exact-head Tariff safety workflow [41867450526](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41867450526) passed: offline-safety job `126705243119` ran 225 orchestration tests plus 5 snapshot tests (OK).
+- PR metadata now matches the exact head and receipts. The branch is 30 commits ahead, 0 behind its exact base/merge-base `ec51b53d0d266ff146870fc5c17b944023e97264`.
+- Status: **DRAFT_EXACT_HEAD_A5_PASS_CI_PASS**. No retained private bytes, real package execution, persistent database/source operation, SQL apply, migration, merge, deploy, enforcement change, permission/secret change, branch deletion, or A6/provider call occurred.
+- Evidence: `.ai/orchestration/evidence/cycle440_pr269_production_append_route.json`.
+- Next: keep PR #269 draft. Persistent staging apply and protected merge remain separate owner gates.
+
