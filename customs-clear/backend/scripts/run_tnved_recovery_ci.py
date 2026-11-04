@@ -10,6 +10,7 @@ from typing import TextIO
 DEFAULT_SUITE = "tests.test_tnved_recovery_ci"
 MANDATORY_SUBJECT_IDS = (
     "tests.test_tnved_recovery_ci.TnvedRecoveryOfflineCiTest.test_builder_is_deterministic_integral_and_readable",
+    "tests.test_tnved_recovery_ci.TnvedRecoveryOfflineCiTest.test_builder_rejects_manifest_aliases_and_existing_manifest",
     "tests.test_tnved_recovery_ci.TnvedRecoveryOfflineCiTest.test_builder_rejects_bytes_outside_supplied_pins",
 )
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
