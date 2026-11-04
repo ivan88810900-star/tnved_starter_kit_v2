@@ -489,7 +489,7 @@ def _build_synthetic_append_plan(root: Path) -> tuple[dict, str]:
         "append_crosswalk_sha256": crosswalk_hash,
         "normalizer_version": ETT_NORMALIZER_VERSION,
         "expected_counts": {
-            "before_results": 619, "after_results": 624, "base_raw": 533,
+            "before_results": 533, "after_results": 538, "base_raw": 533,
             "append_raw": 5, "parsed": 3, "ambiguous": 2,
             "legal": 0, "verified": 0, "admitted": 0,
         },
@@ -731,8 +731,8 @@ class OfflinePlanRunnerTests(unittest.TestCase):
         self.assertEqual(
             plan["expected_counts"],
             {
-                "before_results": 619,
-                "after_results": 624,
+                "before_results": 533,
+                "after_results": 538,
                 "base_raw": 533,
                 "append_raw": 5,
                 "parsed": 3,
