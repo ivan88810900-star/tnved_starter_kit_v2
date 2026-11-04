@@ -263,6 +263,23 @@ def _build_with_pins(
     this private function lets CI execute the real schema/validation/SQLite
     path without publishing the private recovery source snapshot.
     """
+    resolved_inputs = {catalog_path.resolve(), index_path.resolve()}
+    resolved_output = output_path.resolve()
+    _require(
+        resolved_output not in resolved_inputs,
+        "recovery output path must be distinct from input paths",
+    )
+    building_path = output_path.with_name(f".{output_path.name}.building")
+    if manifest_path is not None:
+        resolved_manifest = manifest_path.resolve()
+        _require(
+            resolved_manifest not in resolved_inputs | {resolved_output, building_path.resolve()},
+            "manifest path must be distinct from inputs and recovery output paths",
+        )
+        _require(
+            not manifest_path.exists(),
+            f"refusing to overwrite existing recovery manifest: {manifest_path}",
+        )
     catalog_raw, index_raw = catalog_path.read_bytes(), index_path.read_bytes()
     _require(_sha(catalog_raw) == catalog_sha256, "catalog bytes do not match approved input")
     _require(_sha(index_raw) == index_sha256, "EEC index bytes do not match approved input")
@@ -277,7 +294,6 @@ def _build_with_pins(
     _require(source_by_id["eec-ett-index"]["sha256"] == index_sha256, "catalog/index provenance mismatch")
     _require(not output_path.exists(), f"refusing to overwrite existing recovery output: {output_path}")
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    building_path = output_path.with_name(f".{output_path.name}.building")
     _require(not building_path.exists(), f"refusing to reuse incomplete recovery output: {building_path}")
     conn = sqlite3.connect(building_path)
     try:
