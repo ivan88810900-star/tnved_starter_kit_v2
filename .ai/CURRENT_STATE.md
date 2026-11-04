@@ -837,3 +837,14 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Evidence: `.ai/orchestration/evidence/cycle440_pr269_production_append_route.json`.
 - Next: keep PR #269 draft. Persistent staging apply and protected merge remain separate owner gates.
 
+
+## Cycle 441 checkpoint — PR #260 recovery path alias repair (2026-11-04)
+
+- GitHub truth was restored before action: protected `main` remains `ea633c769863bd55f5d11e4a807ba459f711a4a2`; open draft PRs, exact-head checks, review surfaces, issues, `agent/orchestration-state`, lease and recent commits were reread. Coordinator lease generation 441 was acquired and verified by holder `/root/scheduled-cycle441-20261105T011418MSK`.
+- Independent review confirmed a fail-closed defect in draft PR #260 head `602006fbeae4ea22aa7484830421cff0a3dd1737`: `--manifest` could alias either pinned input, the published SQLite, its temporary build path, or an existing manifest, allowing a successful build to overwrite verified evidence or source bytes.
+- Draft PR #260 advanced by three commits to exact head `2c1f10c90195fda5785476ff052e079194ba3cdf`. The builder rejects resolved path aliases before writing and refuses to replace an existing manifest. The regression is explicitly mandatory in the recovery gate.
+- Exact-head push run [41925499441](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41925499441) / job `126908706560` and pull-request run [41925507156](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41925507156) / job `126908734034` both completed `success`.
+- Each exact-head job passed 225 orchestration tests, 5 snapshot tests, recovery gate `discovered=3 executed=3 skipped=0`, and 7 hermetic catalog API tests. PR metadata now binds the exact head and receipts; review threads and submitted reviews remain zero.
+- Status: **DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING**. No source download, retained private bytes, persistent database operation, staging/production write, A6/provider call, migration, merge, deploy, enforcement change, permission/secret change, branch deletion, force push or test weakening occurred.
+- Evidence: `.ai/orchestration/evidence/cycle441_pr260_recovery_path_alias.json`.
+- Next: obtain fresh independent A5 review of PR #260 exact head `2c1f10c90195fda5785476ff052e079194ba3cdf`. Keep the PR draft; protected merge remains a separate owner gate.
