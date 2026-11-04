@@ -79,4 +79,49 @@ The operator must execute the reviewed SQL inside one explicitly owned,
 authorized transaction. Generation is not execution. All results remain
 technical `UNVERIFIED` data with `verified=false` and `admitted=false`.
 
+## Legacy 533-row preview
+
+A separately recovered legacy chapter-29 envelope can be converted into a
+deterministic JSON-only technical preview:
+
+```bash
+python -S scripts/ett_legacy_normalization_preview.py \
+  --recovery-envelope /authorized/local/recovery-envelope.json \
+  --original /authorized/local/original.pdf \
+  --source-text /authorized/local/source.txt \
+  --output /new/local/preview.json
+```
+
+The command requires the exact original and page-aware source-text bytes that
+were used to reconstruct the recovery envelope. It rejects duplicate JSON keys,
+non-finite JSON numbers, evidence drift, incomplete runs, and any existing
+output path. The completed preview is linked into place atomically and is never
+used to generate SQL or contact a database or network service.
+
+Every preview row retains its legacy run ID, historical parser version, raw-line
+SHA-256, original fields, and page/line provenance. Repeated HS codes remain
+separate when their raw identities differ. All rows and summary counts remain
+technical `UNVERIFIED` results with `verified=0` and `admitted=0`.
+
+## Legacy chapter-29 apply package
+
+The same offline-plan command accepts the narrow
+`ETT_LEGACY_CHAPTER29_APPLY_PACKAGE_V1` package form. It contains the complete
+staged `source_object`, the reviewed recovery envelope, and descriptors for the
+exact original and page-aware source-text bytes. A previously written preview
+JSON is not an input.
+
+The loader rebuilds the existing recovery and preview from those bytes, then
+projects every preview result into the existing 20-column target contract.
+`raw_row_sha256` remains the historical raw-line digest; `result_sha256` is
+separately computed over the persisted target row. The immutable plan includes a
+crosswalk from that persisted digest to the preview digest, legacy run/parser,
+and full provenance.
+
+Legacy SQL requires the target table to exist and contains no DDL. It validates
+the exact three run rows and all 533 RAW rows, locks the target against concurrent
+writers, and preserves the caller-owned transaction, exact replay, conflict
+rollback, schema, trigger, RLS, and post-insert readback gates of the canonical
+path. Generating these artifacts does not authorize or perform a database write.
+
 

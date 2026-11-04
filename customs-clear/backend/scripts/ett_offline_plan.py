@@ -37,21 +37,19 @@ def main(argv: list[str] | None = None) -> int:
     except EttOfflinePlanError as exc:
         print(f"ETT offline plan rejected: {exc}", file=sys.stderr)
         return 2
-    print(
-        json.dumps(
-            {
-                "output_dir": str(args.output_dir),
-                "plan_sha256": plan["plan_sha256"],
-                "normalization_digest": plan["normalization_digest"],
-                "expected_counts": plan["expected_counts"],
-            },
-            ensure_ascii=False,
-            sort_keys=True,
-        )
-    )
+    receipt = {
+        "output_dir": str(args.output_dir),
+        "plan_sha256": plan["plan_sha256"],
+        "expected_counts": plan["expected_counts"],
+    }
+    if "normalization_digest" in plan:
+        receipt["normalization_digest"] = plan["normalization_digest"]
+    else:
+        receipt["append_digest"] = plan["append_digest"]
+        receipt["append_crosswalk_sha256"] = plan["append_crosswalk_sha256"]
+    print(json.dumps(receipt, ensure_ascii=False, sort_keys=True))
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

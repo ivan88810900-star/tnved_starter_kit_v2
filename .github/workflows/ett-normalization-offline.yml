@@ -6,6 +6,7 @@ on:
       - "agent/ett-offline-tool-main-v1"
       - "agent/ett-legacy-recovery-v1"
       - "agent/ett-legacy-normalization-preview-v1"
+      - "agent/ett-legacy-normalization-preview-cli-v1"
     paths:
       - ".github/workflows/ett-normalization-offline.yml"
       - "customs-clear/backend/app/services/staging_ett_normalization_core.py"
@@ -13,16 +14,19 @@ on:
       - "customs-clear/backend/app/services/staging_ett_legacy_recovery.py"
       - "customs-clear/backend/app/services/staging_ett_legacy_normalization_preview.py"
       - "customs-clear/backend/scripts/ett_offline_plan.py"
+      - "customs-clear/backend/scripts/ett_legacy_normalization_preview.py"
       - "customs-clear/backend/scripts/ETT_OFFLINE_PLAN.md"
       - "customs-clear/backend/tests/test_ett_offline_plan_runner.py"
       - "customs-clear/backend/tests/test_ett_legacy_recovery.py"
       - "customs-clear/backend/tests/test_ett_legacy_normalization_preview.py"
+      - "customs-clear/backend/tests/test_ett_legacy_normalization_preview_cli.py"
       - "customs-clear/backend/tests/ett_offline_plan_postgresql_probe.py"
   pull_request:
     branches:
       - main
       - "agent/ett-chapter-boundary-v1"
       - "agent/ett-legacy-recovery-v1"
+      - "agent/ett-legacy-normalization-preview-v1"
     paths:
       - ".github/workflows/ett-normalization-offline.yml"
       - "customs-clear/backend/app/services/staging_ett_normalization_core.py"
@@ -30,10 +34,12 @@ on:
       - "customs-clear/backend/app/services/staging_ett_legacy_recovery.py"
       - "customs-clear/backend/app/services/staging_ett_legacy_normalization_preview.py"
       - "customs-clear/backend/scripts/ett_offline_plan.py"
+      - "customs-clear/backend/scripts/ett_legacy_normalization_preview.py"
       - "customs-clear/backend/scripts/ETT_OFFLINE_PLAN.md"
       - "customs-clear/backend/tests/test_ett_offline_plan_runner.py"
       - "customs-clear/backend/tests/test_ett_legacy_recovery.py"
       - "customs-clear/backend/tests/test_ett_legacy_normalization_preview.py"
+      - "customs-clear/backend/tests/test_ett_legacy_normalization_preview_cli.py"
       - "customs-clear/backend/tests/ett_offline_plan_postgresql_probe.py"
 permissions:
   contents: read
@@ -67,7 +73,8 @@ jobs:
           python -S -m unittest -v \
             tests.test_ett_offline_plan_runner \
             tests.test_ett_legacy_recovery \
-            tests.test_ett_legacy_normalization_preview
+            tests.test_ett_legacy_normalization_preview \
+            tests.test_ett_legacy_normalization_preview_cli
 
   postgresql-plan-integration:
     name: postgresql-plan-integration
