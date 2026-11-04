@@ -384,125 +384,36 @@ def _build_legacy_append_package(root: Path) -> dict:
 
 
 def _build_synthetic_append_plan(root: Path) -> tuple[dict, str]:
+    """Exercise the production append-package route with exact synthetic bytes."""
     package = _build_legacy_append_package(root)
-    append_rows = package["append_rows"]
-    legacy_package = dict(package)
-    legacy_package.pop("append_rows")
-    legacy_package["kind"] = LEGACY_PACKAGE_KIND
-    _write_canonical(root / "package.json", legacy_package)
-    base_plan, _ = build_offline_artifacts(root)
-    source = base_plan["source_object"]
-    append_raw = []
-    crosswalk = []
-    append_results = []
-    for item in append_rows:
-        raw = {
-            "source_id": source["source_id"],
-            "hs_code": item["hs_code"],
-            "description": item["description"],
-            "supplementary_unit": item["supplementary_unit"],
-            "duty_text": item["duty_text"],
-            "raw_line": item["raw_line"],
-            "row_sha256": item["row_sha256"],
-            "status": item["status"],
-            "ordinal": item["storage_ordinal"],
-        }
-        link = {
+    fixed_rows = tuple(
+        {
             "storage_ordinal": item["storage_ordinal"],
-            "source_position": item["source_position"],
+            "hs_code": item["hs_code"],
             "source_line_number": item["source_line_number"],
+            "source_position": item["source_position"],
             "page_number": item["page_number"],
             "line_number": item["line_number"],
-            "hs_code": item["hs_code"],
+            "description_lines": tuple(
+                item["description_provenance"]["source_lines"]
+            ),
+            "parent_lines": tuple(
+                item["parent_heading_provenance"]["source_lines"]
+            ),
+            "duty_text": item["duty_text"],
             "row_sha256": item["row_sha256"],
-            "description_provenance": item["description_provenance"],
-            "parent_heading_provenance": item["parent_heading_provenance"],
         }
-        syntax_status, rate, ambiguous, reason = _parse_rate(raw["duty_text"])
-        payload = {
-            "source_id": source["source_id"],
-            "raw_row_sha256": raw["row_sha256"],
-            "ordinal": raw["ordinal"],
-            "parser_version": ETT_NORMALIZER_VERSION,
-            "source_revision": source["source_revision"],
-            "hs_code": raw["hs_code"],
-            "page_number": link["page_number"],
-            "line_number": link["line_number"],
-            "original_description": link["description_provenance"]["text"],
-            "original_supplementary_unit": raw["supplementary_unit"],
-            "original_duty_text": raw["duty_text"],
-            "original_raw_line": raw["raw_line"],
-            "syntax_status": syntax_status,
-            "normalized_rate_text": rate,
-            "is_ambiguous": ambiguous,
-            "ambiguity_reason": reason,
-            "legal_status": LEGAL_STATUS_UNVERIFIED,
-            "verified": False,
-            "admitted": False,
-        }
-        result = {**payload, "result_sha256": sha256_json(payload)}
-        link["result_sha256"] = result["result_sha256"]
-        append_raw.append(raw)
-        crosswalk.append(link)
-        append_results.append(result)
-    crosswalk_hash = sha256_json(crosswalk)
-    run_identity = {
-        "source_id": source["source_id"],
-        "source_sha256": source["sha256"],
-        "parser_version": LEGACY_APPEND_PARSER_VERSION,
-        "storage_range": [534, 538],
-        "crosswalk_sha256": crosswalk_hash,
-    }
-    append_run = {
-        "run_id": f"ett-append:{sha256_json(run_identity)}",
-        "source_id": source["source_id"],
-        "scope": {
-            "chapter": "29",
-            "append_contract": LEGACY_APPEND_PLAN_KIND,
-            "source_identity": run_identity,
-            "stage_counts": {"normalized": 0, "verified": 0, "admitted": 0},
-            "append_crosswalk_sha256": crosswalk_hash,
-            "append_crosswalk": crosswalk,
-        },
-        "parser_version": LEGACY_APPEND_PARSER_VERSION,
-        "status": COLLECTED_UNVERIFIED,
-        "raw_count": 5,
-        "unique_count": 5,
-        "normalized_count": 0,
-        "rejected_count": 0,
-        "resume_cursor": {"next_ordinal": 539, "raw_count": 5, "complete": True},
-    }
-    plan = {
-        "schema_version": 1,
-        "kind": LEGACY_APPEND_PLAN_KIND,
-        "target": "tariff_staging.tariff_ingest",
-        "transaction_owner": "CALLER",
-        "execution_performed": False,
-        "source_object": source,
-        "base_ingest_runs": base_plan["ingest_runs"],
-        "base_raw_rows": base_plan["raw_rows"],
-        "base_results": base_plan["rows"],
-        "append_ingest_run": append_run,
-        "append_raw_rows": append_raw,
-        "append_results": append_results,
-        "append_crosswalk": crosswalk,
-        "append_crosswalk_sha256": crosswalk_hash,
-        "normalizer_version": ETT_NORMALIZER_VERSION,
-        "expected_counts": {
-            "before_results": 533, "after_results": 538, "base_raw": 533,
-            "append_raw": 5, "parsed": 3, "ambiguous": 2,
-            "legal": 0, "verified": 0, "admitted": 0,
-        },
-        "invariants": ["synthetic SQL renderer fixture only"],
-    }
-    plan["append_digest"] = sha256_json(
-        {"run": append_run, "raw": append_raw, "results": append_results}
+        for item in package["append_rows"]
     )
-    sql = _render_legacy_append_sql(plan)
-    plan["sql_sha256"] = hashlib.sha256(sql.encode()).hexdigest()
-    plan["plan_sha256"] = sha256_json(plan)
-    return plan, sql
-
+    original_sha = hashlib.sha256((root / "original.bin").read_bytes()).hexdigest()
+    source_text_sha = hashlib.sha256((root / "source.txt").read_bytes()).hexdigest()
+    with mock.patch.multiple(
+        "app.services.staging_ett_offline_plan",
+        LEGACY_APPEND_FIXED_ROWS=fixed_rows,
+        LEGACY_APPEND_SOURCE_SHA256=original_sha,
+        LEGACY_APPEND_SOURCE_TEXT_SHA256=source_text_sha,
+    ):
+        return build_offline_artifacts(root)
 
 def _rewrite_package(root: Path, package: dict) -> None:
     _write_canonical(root / "package.json", package)
