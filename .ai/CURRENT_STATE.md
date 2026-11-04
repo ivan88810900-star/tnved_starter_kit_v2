@@ -809,3 +809,16 @@ legacy (сверх structural). Контур по-прежнему **не под
 - A bounded A0 review found no confirmed code defect. Fresh independent exact-head A5 remains pending; no earlier review is treated as approval.
 - No retained private object, database/source operation, SQL apply, migration, merge, deploy, enforcement change, permission/secret change, branch deletion, or A6/provider call occurred.
 - Next: obtain fresh independent exact-head A5 review for PR #269. Keep the PR draft; persistent staging apply and protected merge remain separate owner gates.
+
+
+## Cycle 439 checkpoint — PR #269 source-scoped append receipt counts (2026-11-04)
+
+- GitHub was reread before action: protected `main` remains `ea633c769863bd55f5d11e4a807ba459f711a4a2`; coordinator lease generation 439 was acquired and verified by holder `/root/scheduled-cycle439-20261104T102723Z`.
+- Confirmed defect: append5 `expected_counts` reported fixture-global target totals 619/624 although the package, SQL preflight, and invariant are source-scoped at exactly 533 existing results and 538 after the five-row append.
+- Draft PR #269 advanced by two CAS commits to exact head `992838f360637ef13816561d346f7fa95dc7142d`. The plan and regression expectations now report 533/538. Exact delta from the prior head is two files, 10 changed lines; the stacked branch remains behind zero from base `ec51b53d0d266ff146870fc5c17b944023e97264`.
+- Exact-head ETT workflow `41814424009` passed: dependency-free job `126521631732` ran 56 tests (OK), and PostgreSQL job `126521633987` passed apply/replay/conflict/history/schema/append5.
+- Exact-head Tariff safety workflow `41814424106` passed: offline-safety job `126521659174` ran 225 orchestration tests plus 5 snapshot tests (OK).
+- PR metadata was reconciled to the new exact head and receipts. Review threads: 0; submitted reviews: 0. GitHub mergeability recomputation remained `unknown` at this checkpoint, while exact compare showed the base as merge-base and behind 0.
+- Status: **DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING**. No retained private bytes, real package execution, database/source operation, SQL apply, migration, merge, deploy, enforcement change, permission/secret change, branch deletion, or A6/provider call occurred.
+- Evidence: `.ai/orchestration/evidence/cycle439_pr269_source_scoped_append_counts.json`.
+- Next: obtain fresh independent exact-head A5 review for PR #269. Keep the PR draft; persistent staging apply and protected merge remain separate owner gates.
