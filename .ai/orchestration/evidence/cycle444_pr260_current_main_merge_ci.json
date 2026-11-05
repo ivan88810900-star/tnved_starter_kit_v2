@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "cycle": 444,
+  "task_id": "TARIFF-PR260-CURRENT-MAIN-MERGE-CI-20261105",
+  "executor": "/root/scheduled-cycle444-20261105T191417MSK",
+  "recorded_at": "2026-11-05T16:34:50Z",
+  "lease": {
+    "generation": 444,
+    "holder": "/root/scheduled-cycle444-20261105T191417MSK",
+    "token_verified": true
+  },
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "restored_state": {
+    "main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+    "orchestration_state_before_acquire": "e8f9bcfd6cff3c492baa1386f2789f65d8101820",
+    "prior_cycle": 443,
+    "pull_request": 260,
+    "head_sha": "43d9f594d29bea93c0a0e624991d18123782ddfc",
+    "draft": true,
+    "mergeable": true,
+    "review_threads": 0,
+    "submitted_reviews": 0
+  },
+  "integration": {
+    "synthetic_merge_sha": "665c305d4f1181e4d9545db0234b0748c9cd6c05",
+    "tree_sha": "95a834854f2747f068b81e6f49ac3b26857d843f",
+    "parents": [
+      "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+      "43d9f594d29bea93c0a0e624991d18123782ddfc"
+    ],
+    "verification_branch": "agent/tnved-recovery-main-verification-20261105",
+    "main_only_commits": 11,
+    "main_only_changed_files": 7,
+    "pr_changed_files": 10,
+    "file_overlap": 0,
+    "candidate_head_changed": false
+  },
+  "a5": {
+    "status": "PASS_NO_FINDINGS",
+    "source_cycle": 443,
+    "reviewer": "/root/a5_pr260_cycle443",
+    "reviewed_head_sha": "43d9f594d29bea93c0a0e624991d18123782ddfc",
+    "note": "A5 remains bound to the unchanged PR head; current main-only changes are already trusted on main and file-disjoint from the reviewed PR scope."
+  },
+  "verification": {
+    "run_id": 42065338864,
+    "job_id": 127377783393,
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "665c305d4f1181e4d9545db0234b0748c9cd6c05",
+    "orchestration_tests": {
+      "tests": 225,
+      "conclusion": "success"
+    },
+    "snapshot_tests": {
+      "tests": 5,
+      "conclusion": "success"
+    },
+    "recovery_gate": {
+      "discovered": 4,
+      "executed": 4,
+      "skipped": 0,
+      "conclusion": "success"
+    },
+    "hermetic_catalog_api": {
+      "tests": 7,
+      "conclusion": "success"
+    }
+  },
+  "metadata": {
+    "pr_body_reconciled": true,
+    "pr_updated_at": "2026-11-05T16:34:35Z"
+  },
+  "result": {
+    "status": "DRAFT_CURRENT_MAIN_MERGE_CI_PASS_EXACT_HEAD_A5_PASS",
+    "ready_for_owner_decision": true,
+    "merge_performed": false,
+    "reason": "The unchanged reviewed PR head has a conflict-free, file-disjoint current-main merge result and every mandatory merge-result CI gate passed."
+  },
+  "boundaries": {
+    "source_download_performed": false,
+    "retained_private_bytes_accessed": false,
+    "persistent_database_accessed": false,
+    "staging_write": false,
+    "production_write": false,
+    "provider_called": false,
+    "a6_dispatched": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "migration_performed": false,
+    "enforcement_changed": false,
+    "permissions_or_secrets_changed": false,
+    "branch_deleted": false,
+    "force_push": false,
+    "tests_weakened": false
+  },
+  "next_safe_step": "Keep PR #260 draft until Ivan separately approves or rejects the protected-main merge. Do not auto-merge."
+}
