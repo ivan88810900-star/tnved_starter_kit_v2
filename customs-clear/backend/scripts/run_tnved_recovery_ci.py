@@ -12,6 +12,7 @@ MANDATORY_SUBJECT_IDS = (
     "tests.test_tnved_recovery_ci.TnvedRecoveryOfflineCiTest.test_builder_is_deterministic_integral_and_readable",
     "tests.test_tnved_recovery_ci.TnvedRecoveryOfflineCiTest.test_builder_rejects_manifest_aliases_and_existing_manifest",
     "tests.test_tnved_recovery_ci.TnvedRecoveryOfflineCiTest.test_builder_rejects_bytes_outside_supplied_pins",
+    "tests.test_tnved_recovery_ci.TnvedRecoveryOfflineCiTest.test_gate_rejects_any_subject_test_skipped",
 )
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 
@@ -64,8 +65,8 @@ def run_suite(suite: unittest.TestSuite, *, stream: TextIO = sys.stderr) -> int:
     if result.testsRun != discovered:
         print("RECOVERY_GATE_FAILED: not every discovered subject test executed", file=stream)
         return 3
-    if skipped == result.testsRun:
-        print("RECOVERY_GATE_FAILED: all subject tests skipped", file=stream)
+    if skipped:
+        print("RECOVERY_GATE_FAILED: mandatory subject tests skipped", file=stream)
         return 4
     if not result.wasSuccessful():
         print("RECOVERY_GATE_FAILED: subject test failure", file=stream)
