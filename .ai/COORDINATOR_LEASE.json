@@ -1,8 +1,8 @@
 {
-  "acquisition_note": "independent PR260 recovery CLI path-alias defect repair and exact-head verification",
-  "expires_at": null,
-  "generation": 441,
-  "holder": null,
+  "acquisition_note": "PR260 recovery gate partial-skip defect repair and exact-head verification",
+  "expires_at": "2026-11-05T05:20:17.871471Z",
+  "generation": 442,
+  "holder": "/root/scheduled-cycle442-20261105T071418MSK",
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-11-04T22:31:52.836Z"
+  "state": "active",
+  "token": "fc61770585ab40a182bd356290137db3",
+  "updated_at": "2026-11-05T04:20:17.871471Z"
 }
