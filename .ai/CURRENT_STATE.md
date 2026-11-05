@@ -860,3 +860,14 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Status: **DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING**. No source download, retained private bytes, persistent database operation, staging/production write, A6/provider call, migration, merge, deploy, enforcement change, permission/secret change, branch deletion, force push or test weakening occurred.
 - Evidence: `.ai/orchestration/evidence/cycle442_pr260_recovery_gate_partial_skip.json`.
 - Next: obtain fresh independent A5 review of PR #260 exact head `43d9f594d29bea93c0a0e624991d18123782ddfc`. Keep the PR draft; protected merge remains a separate owner gate.
+
+## Cycle 443 checkpoint — PR #260 exact-head A5 passed (2026-11-05)
+
+- GitHub truth was restored from current `main` `ea633c769863bd55f5d11e4a807ba459f711a4a2`, open PRs/issues, exact-head Actions, review surfaces, `agent/orchestration-state`, lease, `.ai/` and recent commits. Lease generation 443 was acquired and holder/token verified.
+- Fresh independent A5 `/root/a5_pr260_cycle443` reviewed the complete 10-file PR patch, the cycle442 two-file delta and exact workflow at head `43d9f594d29bea93c0a0e624991d18123782ddfc`: **PASS_NO_FINDINGS**.
+- The gate rejects any skipped mandatory subject, including partial skips; missing tests, incomplete execution and failures retain separate nonzero outcomes. The exact workflow invokes `python3 scripts/run_tnved_recovery_ci.py`.
+- Exact-head push run `41967323039` / job `127047429267` and PR run `41967329886` / job `127047454188` remain completed `success`; the recovery gate reported 4 discovered / 4 executed / 0 skipped, alongside 225 orchestration tests, 5 snapshots and 7 hermetic catalog API tests.
+- Review threads and submitted GitHub reviews remain zero. Child GitHub MCP access was unavailable with `unknown tool`; A5 used exact connector-derived patches, workflow, compare metadata and receipts relayed by A0. No local rerun was claimed.
+- Status: **DRAFT_EXACT_HEAD_CI_AND_A5_PASS**, not merge-ready. The candidate is 11 commits behind current `main` (merge-base `e526dfbdb5a31b01bf6f743da0288b88f916de0c`); any integration update creates a new candidate requiring fresh exact-head CI and A5.
+- Evidence: `.ai/orchestration/evidence/cycle443_pr260_exact_head_a5.json`.
+- No source/private-byte access, database or staging/production write, A6/provider call, migration, merge, deploy, enforcement change, permission/secret change, branch deletion, force push or test weakening occurred.
