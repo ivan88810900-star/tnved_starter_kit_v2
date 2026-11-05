@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "cycle": 442,
+  "task_id": "TARIFF-PR260-RECOVERY-GATE-PARTIAL-SKIP-20261105",
+  "executor": "/root/scheduled-cycle442-20261105T071418MSK",
+  "recorded_at": "2026-11-05T04:25:30Z",
+  "lease": {
+    "generation": 442,
+    "holder": "/root/scheduled-cycle442-20261105T071418MSK",
+    "token_verified": true
+  },
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "restored_state": {
+    "main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+    "orchestration_state_before_acquire": "7545e7d7d00139d5bfdd3b00439918bdcb3e79af",
+    "open_pull_request": 260,
+    "prior_head": "2c1f10c90195fda5785476ff052e079194ba3cdf"
+  },
+  "finding": {
+    "status": "CONFIRMED_FIXED",
+    "description": "the mandatory recovery runner rejected only an all-skipped suite, so one skipped mandatory subject plus passing peers returned success",
+    "risk": "a partially unavailable builder or contract test could leave exact-head CI green without executing the complete mandatory recovery gate"
+  },
+  "result": {
+    "status": "DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING",
+    "pull_request": 260,
+    "draft": true,
+    "head_branch": "agent/tnved-structure-recovery-v1",
+    "head_sha": "43d9f594d29bea93c0a0e624991d18123782ddfc",
+    "commits": [
+      "f06ea26ad7780f455e3176d56e16f8e3d0c6de0f",
+      "43d9f594d29bea93c0a0e624991d18123782ddfc"
+    ],
+    "changed_files": [
+      "customs-clear/backend/scripts/run_tnved_recovery_ci.py",
+      "customs-clear/backend/tests/test_tnved_recovery_ci.py"
+    ]
+  },
+  "verification": {
+    "push": {
+      "run_id": 41967323039,
+      "job_id": 127047429267,
+      "conclusion": "success"
+    },
+    "pull_request": {
+      "run_id": 41967329886,
+      "job_id": 127047454188,
+      "conclusion": "success"
+    },
+    "orchestration_tests": {
+      "tests": 225,
+      "conclusion": "success"
+    },
+    "snapshot_tests": {
+      "tests": 5,
+      "conclusion": "success"
+    },
+    "recovery_gate": {
+      "discovered": 4,
+      "executed": 4,
+      "skipped": 0,
+      "conclusion": "success",
+      "partial_skip_regression": "mandatory and passed"
+    },
+    "hermetic_catalog_api": {
+      "tests": 7,
+      "conclusion": "success"
+    },
+    "review_threads": 0,
+    "submitted_reviews": 0,
+    "pr_metadata_reconciled": true
+  },
+  "boundaries": {
+    "source_download_performed": false,
+    "retained_private_bytes_accessed": false,
+    "persistent_database_accessed": false,
+    "staging_write": false,
+    "production_write": false,
+    "provider_called": false,
+    "a6_dispatched": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "migration_performed": false,
+    "enforcement_changed": false,
+    "permissions_or_secrets_changed": false,
+    "branch_deleted": false,
+    "force_push": false,
+    "tests_weakened": false
+  },
+  "next_safe_step": "Obtain fresh independent A5 review of PR #260 exact head 43d9f594d29bea93c0a0e624991d18123782ddfc; keep the PR draft and require a separate owner decision before any protected merge."
+}
