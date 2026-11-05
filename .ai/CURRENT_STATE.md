@@ -1,3 +1,15 @@
+# Cycle 444 checkpoint — PR #260 current-main merge result verified (2026-11-05 16:35 UTC)
+
+- GitHub truth was restored from current `main` `ea633c769863bd55f5d11e4a807ba459f711a4a2`, open PRs/issues, exact-head Actions, review surfaces, `agent/orchestration-state`, lease, `.ai/` and recent commits. Lease generation 444 was acquired and holder/token verified.
+- PR #260 remains draft, mergeable and unchanged at exact head `43d9f594d29bea93c0a0e624991d18123782ddfc`; cycle443 independent A5 remains `PASS_NO_FINDINGS`.
+- GitHub's current synthetic merge `665c305d4f1181e4d9545db0234b0748c9cd6c05` has parents current `main` and the exact PR head. The 11 main-only commits change seven ETT files and have zero file overlap with the PR's ten-file scope.
+- Verification branch `agent/tnved-recovery-main-verification-20261105` points exactly to that existing synthetic merge commit; no candidate commit was created or rewritten.
+- Current-main merge-result workflow [42065338864](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/42065338864), job `127377783393`, completed `success`: 225 orchestration tests, five snapshot tests, recovery gate 4 discovered / 4 executed / 0 skipped, and seven hermetic catalog API tests.
+- PR metadata now records the current-main merge evidence. Status: **DRAFT_CURRENT_MAIN_MERGE_CI_PASS_EXACT_HEAD_A5_PASS / READY_FOR_OWNER_DECISION**.
+- Evidence: `.ai/orchestration/evidence/cycle444_pr260_current_main_merge_ci.json`.
+- No source/private-byte access, database or staging/production write, A6/provider call, migration, merge, deploy, enforcement change, permission/secret change, branch deletion, force push or test weakening occurred.
+- Next: keep PR #260 draft until Ivan separately approves or rejects the protected-main merge. Auto-merge remains prohibited.
+
 # Cycle 436 checkpoint — PR #260 mandatory catalog contracts restored (2026-11-03 16:34 UTC)
 
 - GitHub truth was restored from `main` `ea633c769863bd55f5d11e4a807ba459f711a4a2`, open PRs/issues, exact-head checks, review surfaces, `agent/orchestration-state`, lease and recent commits.
