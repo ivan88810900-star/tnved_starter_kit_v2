@@ -848,3 +848,15 @@ legacy (сверх structural). Контур по-прежнему **не под
 - Status: **DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING**. No source download, retained private bytes, persistent database operation, staging/production write, A6/provider call, migration, merge, deploy, enforcement change, permission/secret change, branch deletion, force push or test weakening occurred.
 - Evidence: `.ai/orchestration/evidence/cycle441_pr260_recovery_path_alias.json`.
 - Next: obtain fresh independent A5 review of PR #260 exact head `2c1f10c90195fda5785476ff052e079194ba3cdf`. Keep the PR draft; protected merge remains a separate owner gate.
+
+
+## Cycle 442 checkpoint — PR #260 recovery gate rejects partial skips (2026-11-05)
+
+- GitHub truth was restored before action: protected `main` remains `ea633c769863bd55f5d11e4a807ba459f711a4a2`; open PRs, exact-head checks, review surfaces, issues, `agent/orchestration-state`, lease, `.ai/` and recent commits were reread. Coordinator lease generation 442 was acquired and verified by holder `/root/scheduled-cycle442-20261105T071418MSK`.
+- Confirmed CI defect: the mandatory recovery runner rejected an all-skipped suite but accepted a partial skip, so one unavailable mandatory subject plus passing peers could leave the recovery gate green.
+- Draft PR #260 advanced by two commits from `2c1f10c90195fda5785476ff052e079194ba3cdf` to exact head `43d9f594d29bea93c0a0e624991d18123782ddfc`. Any mandatory skip now exits 4, and a mandatory regression proves that one passed plus one skipped subject fails closed. The exact delta is two files, 27 changed lines.
+- Exact-head push run [41967323039](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41967323039), job `127047429267`, and pull-request run [41967329886](https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/41967329886), job `127047454188`, completed `success`.
+- Each exact-head job passed 225 orchestration tests, 5 snapshot tests, recovery gate `discovered=4 executed=4 skipped=0`, and 7 hermetic catalog API tests. PR metadata binds the exact head and receipts; review threads and submitted reviews remain zero.
+- Status: **DRAFT_EXACT_HEAD_CI_PASS_A5_PENDING**. No source download, retained private bytes, persistent database operation, staging/production write, A6/provider call, migration, merge, deploy, enforcement change, permission/secret change, branch deletion, force push or test weakening occurred.
+- Evidence: `.ai/orchestration/evidence/cycle442_pr260_recovery_gate_partial_skip.json`.
+- Next: obtain fresh independent A5 review of PR #260 exact head `43d9f594d29bea93c0a0e624991d18123782ddfc`. Keep the PR draft; protected merge remains a separate owner gate.
