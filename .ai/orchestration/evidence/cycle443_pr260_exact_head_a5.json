@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "cycle": 443,
+  "task_id": "TARIFF-PR260-EXACT-HEAD-A5-20261105",
+  "executor": "/root/scheduled-cycle443-20261105T131417MSK",
+  "recorded_at": "2026-11-05T10:27:34.469Z",
+  "lease": {
+    "generation": 443,
+    "holder": "/root/scheduled-cycle443-20261105T131417MSK",
+    "token_verified": true
+  },
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "restored_state": {
+    "main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+    "orchestration_state_before_acquire": "652cd6696a72101a31f5bd48d795a25d04cf1063",
+    "prior_cycle": 442,
+    "pull_request": 260,
+    "head_sha": "43d9f594d29bea93c0a0e624991d18123782ddfc",
+    "draft": true,
+    "review_threads": 0,
+    "submitted_reviews": 0
+  },
+  "exact_head_compare": {
+    "current_main_sha": "ea633c769863bd55f5d11e4a807ba459f711a4a2",
+    "merge_base_sha": "e526dfbdb5a31b01bf6f743da0288b88f916de0c",
+    "ahead_by": 29,
+    "behind_by": 11,
+    "changed_files": 10
+  },
+  "a5": {
+    "status": "PASS_NO_FINDINGS",
+    "reviewer": "/root/a5_pr260_cycle443",
+    "reviewed_head_sha": "43d9f594d29bea93c0a0e624991d18123782ddfc",
+    "reviewed_scope": "full 10-file PR patch plus cycle442 two-file delta and exact workflow",
+    "findings": 0,
+    "conclusion": "The recovery gate fails closed on any skipped mandatory subject while retaining distinct missing, incomplete-execution and failure codes.",
+    "capability_note": "Child GitHub MCP calls returned unknown tool; A0 relayed and materialized connector-derived exact-head patches, workflow, compare metadata and CI receipts. No local checkout existed for an independent rerun."
+  },
+  "verification": {
+    "push": {
+      "run_id": 41967323039,
+      "job_id": 127047429267,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    "pull_request": {
+      "run_id": 41967329886,
+      "job_id": 127047454188,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    "workflow_command": "python3 scripts/run_tnved_recovery_ci.py",
+    "recovery_gate": {
+      "discovered": 4,
+      "executed": 4,
+      "skipped": 0,
+      "conclusion": "success"
+    },
+    "orchestration_tests": {
+      "tests": 225,
+      "conclusion": "success"
+    },
+    "snapshot_tests": {
+      "tests": 5,
+      "conclusion": "success"
+    },
+    "hermetic_catalog_api": {
+      "tests": 7,
+      "conclusion": "success"
+    }
+  },
+  "result": {
+    "status": "DRAFT_EXACT_HEAD_CI_AND_A5_PASS",
+    "merge_readiness_claimed": false,
+    "reason": "The exact head is 11 commits behind current main; any integration update creates a new candidate requiring fresh A5 and exact-head CI."
+  },
+  "boundaries": {
+    "source_download_performed": false,
+    "retained_private_bytes_accessed": false,
+    "persistent_database_accessed": false,
+    "staging_write": false,
+    "production_write": false,
+    "provider_called": false,
+    "a6_dispatched": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "migration_performed": false,
+    "enforcement_changed": false,
+    "permissions_or_secrets_changed": false,
+    "branch_deleted": false,
+    "force_push": false,
+    "tests_weakened": false
+  },
+  "next_safe_step": "Keep PR #260 draft. Before any readiness decision, reconcile its 11-commit drift from main on the agent branch and rerun fresh exact-head CI and independent A5; protected merge remains a separate owner gate."
+}
