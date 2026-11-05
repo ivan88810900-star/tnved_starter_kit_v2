@@ -181,7 +181,25 @@ class TnvedRecoveryOfflineCiTest(unittest.TestCase):
             stream=output,
         )
         self.assertEqual(exit_code, 4)
-        self.assertIn("all subject tests skipped", output.getvalue())
+        self.assertIn("mandatory subject tests skipped", output.getvalue())
+
+    def test_gate_rejects_any_subject_test_skipped(self) -> None:
+        class MixedSubject(unittest.TestCase):
+            def test_ready(self) -> None:
+                pass
+
+            @unittest.skip("synthetic missing fixture")
+            def test_skipped(self) -> None:
+                raise AssertionError("skip did not apply")
+
+        output = io.StringIO()
+        exit_code = _gate_runner().run_suite(
+            unittest.defaultTestLoader.loadTestsFromTestCase(MixedSubject),
+            stream=output,
+        )
+        self.assertEqual(exit_code, 4)
+        self.assertIn("discovered=2 executed=2 skipped=1", output.getvalue())
+        self.assertIn("mandatory subject tests skipped", output.getvalue())
 
     def test_gate_rejects_skipped_builders_even_when_guard_tests_pass(self) -> None:
         class MixedSuite(unittest.TestCase):
@@ -209,7 +227,7 @@ class TnvedRecoveryOfflineCiTest(unittest.TestCase):
         )
         self.assertEqual(exit_code, 4)
         self.assertIn("discovered=2 executed=2 skipped=2", output.getvalue())
-        self.assertIn("all subject tests skipped", output.getvalue())
+        self.assertIn("mandatory subject tests skipped", output.getvalue())
 
     def test_gate_rejects_missing_builders_even_when_guard_tests_remain(self) -> None:
         class GuardOnlySuite(unittest.TestCase):
