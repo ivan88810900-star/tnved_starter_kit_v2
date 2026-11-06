@@ -1,8 +1,8 @@
 {
   "acquisition_note": "PR260 current-main synthetic merge CI verification",
-  "expires_at": "2026-11-06T11:20:54.006421Z",
+  "expires_at": null,
   "generation": 445,
-  "holder": "/root/codex-01a1b044-0f10-7941-b8a5-999cf67f41cc",
+  "holder": null,
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "active",
-  "token": "26c0f570b0f640558c1fec688e4a1a40",
-  "updated_at": "2026-11-06T10:50:54.006421Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-11-06T11:09:25.842796Z"
 }
