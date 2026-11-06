@@ -60,3 +60,53 @@ structural status, lookup, breadcrumb and search. Every lookup explicitly report
 `rates=None` and the snapshot status stays `unverified`. The `tnved_entries`
 table is a compatibility projection for the existing TnvedEntry-shaped read
 path; its `source_revision` is the unverified edition id, not legal admission.
+
+## Local HTTP/UI read profile (2026-11-06)
+
+The explicit `app.recovery_main:create_app` factory serves the **existing**
+recovery store through the existing React dictionary/tree. It does not import
+`app.main`, `app.db`, dotenv, migrations, seeds, schedulers, rate/NTM services,
+or providers. This is a local structural read profile, not a production cutover.
+No ORM catalog or second materialized catalog is created.
+
+Use a dedicated copy of the already accepted SQLite, not the backup itself.
+The caller must supply its explicit SHA-256; startup rejects missing/changed
+files, sidecars, and mismatched pins. Requests fail with 503 if the bound file
+identity changes or sidecars appear. All store connections use SQLite `mode=ro`.
+
+From the repository root, after building `customs-clear/frontend`:
+
+```bash
+TARIFF_PY=/absolute/path/to/isolated/venv/bin/python
+env -i PATH=/usr/bin:/bin PYTHONDONTWRITEBYTECODE=1 \
+  TNVED_RECOVERY_DB=/absolute/path/to/working-copy/tnved-structure.sqlite \
+  TNVED_RECOVERY_SQLITE_SHA256=c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4 \
+  TNVED_RECOVERY_FRONTEND="$PWD/customs-clear/frontend/dist" \
+  "$TARIFF_PY" -m uvicorn app.recovery_main:create_app --factory \
+  --app-dir customs-clear/backend --host 127.0.0.1 --port 18001
+```
+
+Open `http://127.0.0.1:18001/tnved`. The API exposes search, structural detail,
+breadcrumb and direct children using the same snapshot. Health and catalog
+responses identify the pinned SQLite SHA-256. The existing dictionary page
+selects its structural card from the explicit `recovered_catalog` capability.
+The card displays source/edition/page and the full original `path`, including
+uncoded labels. Parent/child navigation follows saved edges; no fake codes or
+new intermediate nodes are synthesized. Rates remain null, dates unknown and
+source status unverified. Other application workflows are outside this profile.
+
+Run regression in `customs-clear/backend`:
+
+```bash
+"$TARIFF_PY" -m unittest -v tests.test_tnved_recovery_http \
+  tests.test_tnved_catalog_api.HermeticTnvedCatalogApiTests
+"$TARIFF_PY" scripts/run_tnved_recovery_ci.py
+```
+
+`frontend/scripts/recovery-browser-check.cjs` drives a real browser against the
+built application without substituting responses. It takes the local base URL,
+a JSON expectation derived read-only from the pinned working SQLite, and an
+output directory. Fields: `snapshot_sha256`, `code`, `name`, `path`, `parent`,
+`parent_name`, `child_codes`. It requires Playwright in `NODE_PATH`; optionally
+set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an installed Chrome binary. The desktop
+bundled Playwright runtime was used for the recorded local acceptance.

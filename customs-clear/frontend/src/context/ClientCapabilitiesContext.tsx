@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client';
+import type { RecoveredCatalogStatus } from '../api/tnvedCatalog';
 
 export type ApiHealthStatus = 'loading' | 'ok' | 'degraded' | 'down';
 
@@ -8,23 +9,27 @@ type ReadyResponse = {
   database?: boolean;
   redis?: boolean | null;
   assistant_llm_configured?: boolean;
+  recovered_catalog?: RecoveredCatalogStatus;
 };
 
 type CapabilitiesValue = {
   health: ApiHealthStatus;
   assistantLlmConfigured: boolean;
   refetchHealth: () => void;
+  recoveredCatalog: RecoveredCatalogStatus | null;
 };
 
 const ClientCapabilitiesContext = createContext<CapabilitiesValue>({
   health: 'loading',
   assistantLlmConfigured: false,
   refetchHealth: () => {},
+  recoveredCatalog: null,
 });
 
 export function ClientCapabilitiesProvider({ children }: { children: React.ReactNode }) {
   const [health, setHealth] = useState<ApiHealthStatus>('loading');
   const [assistantLlmConfigured, setAssistantLlmConfigured] = useState(false);
+  const [recoveredCatalog, setRecoveredCatalog] = useState<RecoveredCatalogStatus | null>(null);
 
   const load = useCallback(() => {
     setHealth('loading');
@@ -34,6 +39,7 @@ export function ClientCapabilitiesProvider({ children }: { children: React.React
         const db = data?.database === true;
         const ready = (data?.status || '') === 'ready';
         setAssistantLlmConfigured(Boolean(data?.assistant_llm_configured));
+        setRecoveredCatalog(data.recovered_catalog ?? null);
         if (db && ready) setHealth('ok');
         else if (db) setHealth('degraded');
         else setHealth('degraded');
@@ -49,8 +55,8 @@ export function ClientCapabilitiesProvider({ children }: { children: React.React
   }, [load]);
 
   const value = useMemo(
-    () => ({ health, assistantLlmConfigured, refetchHealth: load }),
-    [health, assistantLlmConfigured, load],
+    () => ({ health, assistantLlmConfigured, refetchHealth: load, recoveredCatalog }),
+    [health, assistantLlmConfigured, load, recoveredCatalog],
   );
 
   return <ClientCapabilitiesContext.Provider value={value}>{children}</ClientCapabilitiesContext.Provider>;

@@ -2,6 +2,38 @@ import { api } from './client';
 
 const PREFIX = '/v1/tnved';
 
+export type RecoveredCatalogStatus = {
+  catalog_id: string;
+  catalog_sha256: string;
+  snapshot_sha256: string;
+  nodes: number;
+  legal_status: 'unverified';
+  rates_present: false;
+};
+
+export type RecoveredCodeDetail = {
+  code: string;
+  name: string;
+  path: string[];
+  breadcrumb: TnvedBreadcrumbItem[];
+  children: TnvedChildItem[];
+  source_url: string;
+  source_sha256: string;
+  snapshot_sha256: string;
+  edition_id: string;
+  page: number;
+  legal_status: string;
+  valid_from: null;
+  valid_to: null;
+  complete: false;
+  rates: null;
+};
+
+export async function fetchRecoveredCode(code: string): Promise<RecoveredCodeDetail> {
+  const { data } = await api.get<RecoveredCodeDetail>(`${PREFIX}/${encodeURIComponent(code)}`);
+  return data;
+}
+
 // ---------------------------------------------------------------------------
 // Типы
 // ---------------------------------------------------------------------------
@@ -204,8 +236,8 @@ export type TnvedChildItem = {
   is_codeless: boolean;
   is_group?: boolean;
   has_children: boolean;
-  import_duty?: string;
-  duty_rate?: string;
+  import_duty?: string | null;
+  duty_rate?: string | null;
   vat_rate?: number | null;
   children_count?: number;
   section_id?: number;
