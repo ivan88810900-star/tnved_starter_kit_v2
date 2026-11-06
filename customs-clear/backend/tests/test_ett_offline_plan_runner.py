@@ -35,21 +35,33 @@ def _write_canonical(path: Path, value) -> bytes:
     return content
 
 
-def _build_package(root: Path) -> dict:
+def _build_package(
+    root: Path,
+    *,
+    row_count: int = 86,
+    chapter: str = "01",
+    source_id: str = SOURCE_ID,
+    source_revision: str = SOURCE_REVISION,
+) -> dict:
     root.mkdir()
+    source_bytes = (
+        SOURCE_BYTES
+        if chapter == "01"
+        else f"synthetic immutable ETT chapter{chapter} bytes".encode()
+    )
     source_path = root / "original.bin"
-    source_path.write_bytes(SOURCE_BYTES)
-    source_sha = hashlib.sha256(SOURCE_BYTES).hexdigest()
+    source_path.write_bytes(source_bytes)
+    source_sha = hashlib.sha256(source_bytes).hexdigest()
     source = {
-        "source_id": SOURCE_ID,
+        "source_id": source_id,
         "authority": "EEC",
         "dataset": "EEC-ETT",
-        "source_url": "https://eec.eaeunion.org/upload/ett/group01.pdf",
-        "source_revision": SOURCE_REVISION,
+        "source_url": f"https://eec.eaeunion.org/upload/ett/group{chapter}.pdf",
+        "source_revision": source_revision,
         "object_bucket": "official-originals",
-        "object_key": "ett/2022-04-25/group01/original.pdf",
+        "object_key": f"ett/2022-04-25/group{chapter}/original.pdf",
         "sha256": source_sha,
-        "size_bytes": len(SOURCE_BYTES),
+        "size_bytes": len(source_bytes),
         "media_type": "application/pdf",
         "captured_at": "2026-10-30T00:00:00+00:00",
         "status": COLLECTED_UNVERIFIED,
@@ -57,9 +69,10 @@ def _build_package(root: Path) -> dict:
     raw_rows = []
     provenance = []
     extraction_rows = []
-    duties = ["0"] * 30 + ["5"] * 51 + ["5 63С)"] * 5
+    duty_cycle = ["0"] * 30 + ["5"] * 51 + ["5 63С)"] * 5
+    duties = [duty_cycle[index % len(duty_cycle)] for index in range(row_count)]
     for ordinal, duty in enumerate(duties, start=1):
-        hs_code = f"{ordinal:010d}"
+        hs_code = f"{chapter}{ordinal:08d}"
         description = f"Товар №{ordinal} — тест"
         supplementary_unit = "кг" if ordinal % 2 else ""
         page_number = 1 + (ordinal - 1) // 20
@@ -76,7 +89,7 @@ def _build_package(root: Path) -> dict:
         row_sha = sha256_json(hash_payload)
         raw_rows.append(
             {
-                "source_id": SOURCE_ID,
+                "source_id": source_id,
                 "hs_code": hs_code,
                 "description": description,
                 "supplementary_unit": supplementary_unit,
@@ -98,18 +111,18 @@ def _build_package(root: Path) -> dict:
         )
         extraction_rows.append({"ordinal": ordinal, **hash_payload})
     base_scope = {
-        "chapter": "01",
-        "task_id": "synthetic-retained-group01",
+        "chapter": chapter,
+        "task_id": f"synthetic-retained-group{chapter}",
         "manifest": {"schema_version": 1, "kind": "retained"},
-        "extraction": {"schema_version": 1, "rows": 86},
+        "extraction": {"schema_version": 1, "rows": row_count},
         "readback_verified": True,
     }
     identity = {
-        "source_id": SOURCE_ID,
+        "source_id": source_id,
         "source_sha256": source_sha,
-        "source_size_bytes": len(SOURCE_BYTES),
+        "source_size_bytes": len(source_bytes),
         "source_url": source["source_url"],
-        "source_revision": SOURCE_REVISION,
+        "source_revision": source_revision,
         "object_bucket": source["object_bucket"],
         "object_key": source["object_key"],
         "scope": base_scope,
@@ -117,7 +130,7 @@ def _build_package(root: Path) -> dict:
     }
     ingest_run = {
         "run_id": f"ett:{sha256_json(identity)}",
-        "source_id": SOURCE_ID,
+        "source_id": source_id,
         "scope": {
             **base_scope,
             "source_identity": identity,
@@ -126,26 +139,30 @@ def _build_package(root: Path) -> dict:
         },
         "parser_version": identity["parser_version"],
         "status": COLLECTED_UNVERIFIED,
-        "raw_count": 86,
-        "unique_count": 86,
+        "raw_count": row_count,
+        "unique_count": row_count,
         "normalized_count": 0,
         "rejected_count": 0,
-        "resume_cursor": {"next_ordinal": 87, "raw_count": 86, "complete": True},
+        "resume_cursor": {
+            "next_ordinal": row_count + 1,
+            "raw_count": row_count,
+            "complete": True,
+        },
     }
     extraction = {
         "schema_version": 1,
-        "source_id": SOURCE_ID,
-        "source_revision": SOURCE_REVISION,
+        "source_id": source_id,
+        "source_revision": source_revision,
         "rows": extraction_rows,
     }
     extraction_bytes = _write_canonical(root / "extraction.json", extraction)
     extraction_sha = hashlib.sha256(extraction_bytes).hexdigest()
     manifest = {
         "schema_version": 1,
-        "source_id": SOURCE_ID,
-        "source_revision": SOURCE_REVISION,
+        "source_id": source_id,
+        "source_revision": source_revision,
         "source_sha256": source_sha,
-        "source_size_bytes": len(SOURCE_BYTES),
+        "source_size_bytes": len(source_bytes),
         "extraction_sha256": extraction_sha,
         "extraction_size_bytes": len(extraction_bytes),
     }
@@ -160,7 +177,7 @@ def _build_package(root: Path) -> dict:
             "source_bytes": {
                 "path": "original.bin",
                 "sha256": source_sha,
-                "size_bytes": len(SOURCE_BYTES),
+                "size_bytes": len(source_bytes),
             },
             "retained_manifest": {
                 "path": "manifest.json",
@@ -192,6 +209,53 @@ def _replace_manifest(root: Path, package: dict, manifest: dict) -> None:
         size_bytes=len(manifest_bytes),
     )
     _rewrite_package(root, package)
+
+
+def _replace_extraction(root: Path, package: dict, extraction: dict) -> None:
+    extraction_bytes = _write_canonical(root / "extraction.json", extraction)
+    extraction_sha = hashlib.sha256(extraction_bytes).hexdigest()
+    package["artifacts"]["retained_extraction"].update(
+        sha256=extraction_sha,
+        size_bytes=len(extraction_bytes),
+    )
+    manifest_path = root / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if "extraction_sha256" in manifest:
+        manifest.update(
+            extraction_sha256=extraction_sha,
+            extraction_size_bytes=len(extraction_bytes),
+        )
+    else:
+        manifest["objects"]["extraction"].update(
+            sha256=extraction_sha,
+            size_bytes=len(extraction_bytes),
+        )
+    _replace_manifest(root, package, manifest)
+
+
+def _rebind_row_hs_code(
+    root: Path, package: dict, *, ordinal: int, hs_code: str
+) -> None:
+    raw = package["raw_rows"][ordinal - 1]
+    provenance = package["ingest_run"]["scope"]["row_provenance"][ordinal - 1]
+    extraction_path = root / "extraction.json"
+    extraction = json.loads(extraction_path.read_text(encoding="utf-8"))
+    raw["hs_code"] = hs_code
+    raw["raw_line"] = hs_code + "\t" + raw["raw_line"].split("\t", 1)[1]
+    hash_payload = {
+        "hs_code": hs_code,
+        "description": raw["description"],
+        "supplementary_unit": raw["supplementary_unit"],
+        "duty_text": raw["duty_text"],
+        "page_number": provenance["page_number"],
+        "line_number": provenance["line_number"],
+        "raw_line": raw["raw_line"],
+    }
+    row_sha = sha256_json(hash_payload)
+    raw["row_sha256"] = row_sha
+    provenance.update(hs_code=hs_code, row_sha256=row_sha)
+    extraction["rows"][ordinal - 1] = {"ordinal": ordinal, **hash_payload}
+    _replace_extraction(root, package, extraction)
 
 
 def _rebind_scope_identity(package: dict) -> None:
@@ -239,9 +303,11 @@ def _legacy_manifest(package: dict) -> dict:
                 "media_type": "application/json",
                 "sha256": extraction["sha256"],
                 "size_bytes": extraction["size_bytes"],
-                "raw_count": 86,
-                "unique_count": 86,
-                "next_ordinal": 87,
+                "raw_count": package["ingest_run"]["raw_count"],
+                "unique_count": package["ingest_run"]["unique_count"],
+                "next_ordinal": package["ingest_run"]["resume_cursor"][
+                    "next_ordinal"
+                ],
             },
         },
     }
@@ -262,7 +328,7 @@ class OfflinePlanRunnerTests(unittest.TestCase):
         })
         self.assertEqual(
             plan["normalization_digest"],
-            "a8505e8754342f082ce0d1018ba691a64b079e7130facaddf9dbfd51dc27c2f3",
+            "a27ef170c43f6402e308998e4aadbeeaabf5706cbb5573189179ce9a7fd0771f",
         )
         self.assertTrue(all(row["legal_status"] == "UNVERIFIED" for row in plan["rows"]))
         self.assertTrue(all(not row["verified"] and not row["admitted"] for row in plan["rows"]))
@@ -293,6 +359,102 @@ class OfflinePlanRunnerTests(unittest.TestCase):
             sql,
             r"(?im)^\s*(START\s+TRANSACTION|BEGIN\s*;|COMMIT|ROLLBACK|\\connect)\b",
         )
+
+    def test_faithful_533_chapter_plan_and_534_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            package_dir = Path(temporary) / "package"
+            _build_package(
+                package_dir,
+                row_count=533,
+                chapter="29",
+                source_id="synthetic-eec-ett:chapter29",
+                source_revision="synthetic-chapter29-revision",
+            )
+            plan, _ = build_offline_artifacts(package_dir)
+        self.assertEqual(plan["expected_counts"]["raw"], 533)
+        self.assertEqual(
+            plan["expected_counts"]["parsed"]
+            + plan["expected_counts"]["ambiguous"],
+            533,
+        )
+        self.assertTrue(all(row["hs_code"].startswith("29") for row in plan["rows"]))
+        self.assertTrue(all(not row["verified"] for row in plan["rows"]))
+        self.assertTrue(all(not row["admitted"] for row in plan["rows"]))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            package_dir = Path(temporary) / "package"
+            _build_package(
+                package_dir,
+                row_count=534,
+                chapter="29",
+                source_id="synthetic-eec-ett:chapter29",
+                source_revision="synthetic-chapter29-revision",
+            )
+            with self.assertRaisesRegex(
+                EttOfflinePlanError, "raw row count must be between 1 and 533"
+            ):
+                build_offline_artifacts(package_dir)
+
+    def test_rejects_invalid_chapter_and_hs_prefix_mismatch(self):
+        for chapter in ("1", "290", 29, "٢٩"):
+            with self.subTest(chapter=chapter), tempfile.TemporaryDirectory() as temporary:
+                package_dir = Path(temporary) / "package"
+                package = _build_package(package_dir)
+                package["ingest_run"]["scope"]["chapter"] = chapter
+                _rebind_scope_identity(package)
+                _rewrite_package(package_dir, package)
+                with self.assertRaisesRegex(
+                    EttOfflinePlanError, "exact ASCII two-digit string"
+                ):
+                    build_offline_artifacts(package_dir)
+
+        with tempfile.TemporaryDirectory() as temporary:
+            package_dir = Path(temporary) / "package"
+            package = _build_package(package_dir)
+            package["ingest_run"]["scope"]["chapter"] = "29"
+            _rebind_scope_identity(package)
+            _rewrite_package(package_dir, package)
+            with self.assertRaisesRegex(
+                EttOfflinePlanError, "hs_code chapter prefix"
+            ):
+                build_offline_artifacts(package_dir)
+
+    def test_same_hs_with_distinct_identity_is_preserved(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            package_dir = Path(temporary) / "package"
+            package = _build_package(package_dir)
+            repeated_hs = package["raw_rows"][0]["hs_code"]
+            _rebind_row_hs_code(
+                package_dir,
+                package,
+                ordinal=86,
+                hs_code=repeated_hs,
+            )
+            plan, _ = build_offline_artifacts(package_dir)
+        repeated = [row for row in plan["rows"] if row["hs_code"] == repeated_hs]
+        self.assertEqual([row["ordinal"] for row in repeated], [1, 86])
+        self.assertEqual(len({row["raw_row_sha256"] for row in repeated}), 2)
+        self.assertEqual(
+            [row["syntax_status"] for row in repeated],
+            ["PARSED", "AMBIGUOUS"],
+        )
+        self.assertEqual(
+            [row["line_number"] for row in repeated],
+            [1, 86],
+        )
+
+    def test_rejects_duplicate_raw_identity_even_when_provenance_matches(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            package_dir = Path(temporary) / "package"
+            package = _build_package(package_dir)
+            duplicate_sha = package["raw_rows"][0]["row_sha256"]
+            package["raw_rows"][85]["row_sha256"] = duplicate_sha
+            package["ingest_run"]["scope"]["row_provenance"][85][
+                "row_sha256"
+            ] = duplicate_sha
+            _rewrite_package(package_dir, package)
+            with self.assertRaisesRegex(EttOfflinePlanError, "duplicate raw row hash"):
+                build_offline_artifacts(package_dir)
 
     def test_cli_runs_with_site_packages_disabled_and_is_deterministic(self):
         with tempfile.TemporaryDirectory() as temporary:
