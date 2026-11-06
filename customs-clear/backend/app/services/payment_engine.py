@@ -389,8 +389,17 @@ def _resolve_antidumping(
     quantity: float,
 ) -> tuple[float, str, str]:
     """Return (antidumping_amount, antidumping_reason, confidence)."""
-    if antidumping_type == "none" or antidumping_type == "":
+    antidumping_type = str(antidumping_type or "").strip().lower()
+    if antidumping_type in {"none", ""}:
         return 0.0, "Не применяется", "n/a"
+
+    if antidumping_type not in {"percent", "fixed"}:
+        return (
+            0.0,
+            "Требуется ручная проверка: неизвестный тип антидемпинговой ставки "
+            f"«{antidumping_type}»; автоматический расчёт и вывод об отсутствии меры запрещены.",
+            "manual_review",
+        )
 
     # Check country applicability
     applicable_countries = [c.strip().upper() for c in antidumping_countries.split(",") if c.strip()]
@@ -419,14 +428,20 @@ def _resolve_antidumping(
         return amount, reason, "applied"
 
     if antidumping_type == "fixed":
-        amount = antidumping_value * quantity
+        # ``hs_rates`` stores only the numeric fixed value.  It has no typed
+        # currency, source unit or denominator, so the generic invoice
+        # ``quantity`` cannot prove the operand required by a trade-remedy
+        # measure (kg, tonne, item, etc.).  Keep the candidate visible but do
+        # not admit an amount into VAT or the final payable total.
         reason = (
-            f"Применяется фикс. ставка {antidumping_value} руб./ед. × {quantity} ед. "
+            "Требуется ручная проверка: для фиксированной антидемпинговой ставки "
+            f"{antidumping_value} не указаны валюта, единица и знаменатель источника; "
+            f"универсальное количество {quantity} не применяется автоматически. "
             f"{antidumping_condition or ''} Страна: {country}."
         ).strip()
-        return amount, reason, "applied"
+        return 0.0, reason, "manual_review"
 
-    return 0.0, "Не применяется (неизвестный тип)", "n/a"
+    raise AssertionError("unreachable antidumping type")
 
 
 def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
@@ -515,7 +530,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         excise_type = resolved_type
         excise_value = resolved_value
         excise_basis = resolved_basis or excise_basis
-    antidumping_type = (rate.antidumping_type if rate else "none") or "none"
+    antidumping_type = str((rate.antidumping_type if rate else "none") or "none").strip().lower()
     antidumping_value = float(rate.antidumping_value) if rate else 0.0
     antidumping_condition = (rate.antidumping_condition if rate else "") or ""
     antidumping_countries = (rate.antidumping_countries if rate else "") or ""
@@ -673,6 +688,11 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     vat = _num(vat_base) * _num(vat_rate) / 100.0
 
     total = _sum_amounts(customs_fee_amount, duty_amount, excise_amount, antidumping_amount, special_duties_total, vat, recycling_fee_total)
+    # VAT includes antidumping in its tax base.  When the antidumping amount is
+    # unknown, the numeric VAT and total below are only partial arithmetic and
+    # must not be exposed as final amounts.  Keep them under explicitly named
+    # provisional fields for diagnostics while withholding every final signal.
+    antidumping_pending = antidumping_status == "manual_review"
 
     # Sources: интегрированные данные в приложении (без внешних ссылок)
     stats = get_integrated_data_stats()
@@ -710,7 +730,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     tnved_context = get_tnved_context_for_hs(hs_code)
 
     return {
-        "status": "OK",
+        "status": "REVIEW_REQUIRED" if antidumping_pending else "OK",
         "hs_code": hs_code,
         "country": country,
         "customs_value": _round2(customs_value),
@@ -754,10 +774,15 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
             "vat_reason": vat_reason,
             "vat_decree_info": vat_decree_info,
             "vat_pref_comment": vat_pref_comment,
-            "vat_base": _round2(vat_base),
-            "vat": _round2(vat),
+            "vat_base": None if antidumping_pending else _round2(vat_base),
+            "vat": None if antidumping_pending else _round2(vat),
+            "vat_status": "manual_review" if antidumping_pending else "applied",
+            "vat_base_provisional": _round2(vat_base) if antidumping_pending else None,
+            "vat_provisional": _round2(vat) if antidumping_pending else None,
             "recycling_fee": _round2(recycling_fee_total),
-            "total_payable": _round2(total),
+            "total_payable": None if antidumping_pending else _round2(total),
+            "total_payable_status": "withheld" if antidumping_pending else "final",
+            "total_payable_provisional": _round2(total) if antidumping_pending else None,
         },
         "legal_basis": {
             "vat": vat_reason,
