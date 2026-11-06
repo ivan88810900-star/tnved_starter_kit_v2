@@ -2,28 +2,755 @@
 
 from __future__ import annotations
 
+import importlib.util
+import os
+from pathlib import Path
+import shutil
+import socket
+import subprocess
+import sys
+import tempfile
+import types
 import unittest
+from unittest import mock
 
-try:
-    from fastapi.testclient import TestClient
+_LEGACY_DEPS_OK = all(
+    importlib.util.find_spec(name) is not None
+    for name in ("fastapi", "httpx", "sqlalchemy")
+)
+_LEGACY_DATABASE_URL = os.environ.get(
+    "TARIFF_LEGACY_TNVED_FIXTURE_URL", ""
+).strip()
+_LEGACY_TEMP_DIR: tempfile.TemporaryDirectory[str] | None = None
+_LEGACY_APP_DB = None
+_LEGACY_DATABASE_URL_UNSET = object()
+_LEGACY_PREVIOUS_DATABASE_URL: str | None | object = (
+    _LEGACY_DATABASE_URL_UNSET
+)
 
-    from app.db import SessionLocal
-    from app.api.tnved_catalog import _format_duty, clear_preview_cache
-    from app.main import app
-    from app.models.core import ClassificationDecision, HsRate, PreliminaryDecision
-    from app.models.tnved import Chapter, Commodity, Section
-    from app.services.normative_store import init_db
 
-    _OK = True
-except ImportError:
-    _OK = False
+def _restore_legacy_database_url() -> None:
+    global _LEGACY_PREVIOUS_DATABASE_URL
+
+    previous = _LEGACY_PREVIOUS_DATABASE_URL
+    if previous is _LEGACY_DATABASE_URL_UNSET:
+        return
+    try:
+        if previous is None:
+            os.environ.pop("DATABASE_URL", None)
+        else:
+            assert isinstance(previous, str)
+            os.environ["DATABASE_URL"] = previous
+    finally:
+        _LEGACY_PREVIOUS_DATABASE_URL = _LEGACY_DATABASE_URL_UNSET
 
 
-@unittest.skipUnless(_OK, "tnved catalog tests need FastAPI app")
+def _legacy_database_is_safe() -> bool:
+    if os.environ.get("TARIFF_RUN_LEGACY_TNVED_CATALOG") != "1":
+        return False
+    if not _LEGACY_DATABASE_URL.startswith("sqlite:////"):
+        return False
+    database_path = Path(
+        _LEGACY_DATABASE_URL.removeprefix("sqlite:///")
+    ).resolve()
+    default_path = (Path(__file__).resolve().parents[1] / "customs.db").resolve()
+    wal_path = database_path.with_name(f"{database_path.name}-wal")
+    shm_path = database_path.with_name(f"{database_path.name}-shm")
+    return (
+        database_path.is_file()
+        and database_path != default_path
+        and not wal_path.exists()
+        and not shm_path.exists()
+    )
+
+
+_LEGACY_DB_READY = _legacy_database_is_safe()
+
+
+def _load_legacy_dependencies() -> None:
+    global TestClient, SessionLocal, _format_duty, clear_preview_cache, app
+    global ClassificationDecision, HsRate, PreliminaryDecision
+    global Chapter, Commodity, Section, init_db
+    global _LEGACY_TEMP_DIR, _LEGACY_APP_DB
+    global _LEGACY_PREVIOUS_DATABASE_URL
+
+    if not _legacy_database_is_safe():
+        raise RuntimeError("legacy TN VED tests require an explicit isolated SQLite fixture")
+    loaded_db = sys.modules.get("app.db")
+    if loaded_db is not None:
+        loaded_engine = getattr(loaded_db, "engine", None)
+        loaded_session = getattr(loaded_db, "SessionLocal", None)
+        loaded_bind = getattr(loaded_session, "kw", {}).get("bind")
+        if loaded_engine is None or loaded_bind is not loaded_engine:
+            raise RuntimeError("already loaded app.db has an unverifiable engine binding")
+        raise RuntimeError(
+            "legacy TN VED tests require a fresh process before binding a disposable fixture"
+        )
+
+    if _LEGACY_PREVIOUS_DATABASE_URL is not _LEGACY_DATABASE_URL_UNSET:
+        raise RuntimeError(
+            "legacy TN VED fixture environment lifecycle is already active"
+        )
+    source_path = Path(
+        _LEGACY_DATABASE_URL.removeprefix("sqlite:///")
+    ).resolve()
+    temp_dir = tempfile.TemporaryDirectory(prefix="tnved-legacy-")
+    copied_path = Path(temp_dir.name) / "fixture.sqlite"
+    shutil.copy2(source_path, copied_path)
+    copied_url = f"sqlite:///{copied_path}"
+    _LEGACY_PREVIOUS_DATABASE_URL = os.environ.get("DATABASE_URL")
+    os.environ["DATABASE_URL"] = copied_url
+    success = False
+    try:
+        try:
+            from fastapi import FastAPI
+            from fastapi.testclient import TestClient
+
+            def blocked_provider(*args, **kwargs):
+                raise AssertionError("unrelated provider called by legacy catalog tests")
+
+            embedding_stub = types.ModuleType("app.services.embedding_service")
+            embedding_stub.embeddings_stats = lambda: {}
+            embedding_stub.ingest_tnved_embeddings_batch = blocked_provider
+            embedding_stub.semantic_search_tnved = blocked_provider
+            sys.modules["app.services.embedding_service"] = embedding_stub
+
+            security_stub = types.ModuleType("app.security")
+            security_stub.require_admin_token = blocked_provider
+            security_stub.require_authenticated_user = blocked_provider
+            sys.modules["app.security"] = security_stub
+
+            from app.api import tnved as tnved_compat
+            from app.api import tnved_catalog
+            from app.db import SessionLocal
+            from app.models.core import ClassificationDecision, HsRate, PreliminaryDecision
+            from app.models.tnved import Chapter, Commodity, Section
+            from app.services.normative_store import init_db
+
+            _format_duty = tnved_catalog._format_duty
+            clear_preview_cache = tnved_catalog.clear_preview_cache
+            app = FastAPI()
+            app.include_router(tnved_catalog.router, prefix="/api/v1/tnved")
+            app.include_router(tnved_compat.router, prefix="/api/tnved")
+        except ImportError as exc:
+            raise unittest.SkipTest("tnved catalog tests need FastAPI app") from exc
+
+        from app import db as app_db
+
+        engine_path = Path(app_db.engine.url.database).resolve()
+        session_bind = app_db.SessionLocal.kw.get("bind")
+        if (
+            app_db.DATABASE_URL != copied_url
+            or engine_path != copied_path.resolve()
+            or session_bind is not app_db.engine
+        ):
+            raise RuntimeError("legacy TN VED tests resolved an unexpected engine binding")
+        _LEGACY_TEMP_DIR = temp_dir
+        _LEGACY_APP_DB = app_db
+        success = True
+    finally:
+        if not success:
+            try:
+                temp_dir.cleanup()
+            finally:
+                _restore_legacy_database_url()
+
+
+def _run_legacy_init_db() -> None:
+    if _LEGACY_APP_DB is None:
+        raise RuntimeError("legacy fixture engine is not initialized")
+    fixture_engine = _LEGACY_APP_DB.engine
+    session_bind = getattr(SessionLocal, "kw", {}).get("bind")
+    if (
+        os.environ.get("DATABASE_URL") != str(fixture_engine.url)
+        or session_bind is not fixture_engine
+    ):
+        raise RuntimeError(
+            "legacy init_db target does not match the disposable fixture"
+        )
+
+    def blocked_network(*args, **kwargs):
+        raise AssertionError("network access is forbidden during legacy init_db")
+
+    with (
+        mock.patch("socket.socket.connect", blocked_network),
+        mock.patch("socket.socket.connect_ex", blocked_network),
+        mock.patch("socket.socket.sendto", blocked_network),
+        mock.patch("socket.create_connection", blocked_network),
+        mock.patch("socket.getaddrinfo", blocked_network),
+    ):
+        init_db()
+
+
+def _cleanup_legacy_database() -> None:
+    global _LEGACY_TEMP_DIR, _LEGACY_APP_DB
+
+    try:
+        try:
+            if _LEGACY_APP_DB is not None:
+                _LEGACY_APP_DB.engine.dispose()
+        finally:
+            if _LEGACY_TEMP_DIR is not None:
+                _LEGACY_TEMP_DIR.cleanup()
+    finally:
+        _LEGACY_APP_DB = None
+        _LEGACY_TEMP_DIR = None
+        _restore_legacy_database_url()
+
+
+_HERMETIC_API_SCRIPT = r"""
+import os
+from pathlib import Path
+import socket
+import sys
+import types
+
+assert "app.db" not in sys.modules
+database_url = os.environ["DATABASE_URL"]
+assert database_url.startswith("sqlite:////")
+database_path = Path(database_url.removeprefix("sqlite:///")).resolve()
+assert database_path.parent == Path(os.environ["TARIFF_TEST_TMPDIR"]).resolve()
+
+def blocked_network(*args, **kwargs):
+    raise AssertionError("network access is forbidden")
+
+socket.socket.connect = blocked_network
+socket.socket.connect_ex = blocked_network
+socket.socket.sendto = blocked_network
+socket.create_connection = blocked_network
+socket.getaddrinfo = blocked_network
+
+def blocked_provider(*args, **kwargs):
+    raise AssertionError("unrelated provider called by hermetic catalog test")
+
+embedding_stub = types.ModuleType("app.services.embedding_service")
+embedding_stub.embeddings_stats = lambda: {}
+embedding_stub.ingest_tnved_embeddings_batch = blocked_provider
+embedding_stub.semantic_search_tnved = blocked_provider
+sys.modules["app.services.embedding_service"] = embedding_stub
+
+security_stub = types.ModuleType("app.security")
+security_stub.require_admin_token = blocked_provider
+security_stub.require_authenticated_user = blocked_provider
+sys.modules["app.security"] = security_stub
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from app import db as app_db
+from app.api import tnved as tnved_compat
+from app.api import tnved_catalog
+from app.models.tnved import Chapter, Commodity, Section
+from app.services import normative_store, tnved_fts
+
+assert app_db.DATABASE_URL == database_url
+assert Path(app_db.engine.url.database).resolve() == database_path
+assert tnved_catalog.SessionLocal is app_db.SessionLocal
+assert normative_store.SessionLocal is app_db.SessionLocal
+assert tnved_compat.get_db is tnved_catalog.get_db
+for module_name, module in tuple(sys.modules.items()):
+    if not module_name.startswith("app.") or module is None:
+        continue
+    if hasattr(module, "SessionLocal"):
+        assert module.SessionLocal is app_db.SessionLocal, module_name
+    if hasattr(module, "engine"):
+        assert module.engine is app_db.engine, module_name
+
+Section.__table__.create(app_db.engine)
+Chapter.__table__.create(app_db.engine)
+Commodity.__table__.create(app_db.engine)
+
+with app_db.SessionLocal() as db:
+    section = Section(
+        roman_number="TST",
+        title="Synthetic section 99",
+        notes="",
+    )
+    db.add(section)
+    db.flush()
+    chapter = Chapter(
+        section_id=section.id,
+        code="99",
+        title="Synthetic chapter 99",
+        notes="",
+    )
+    db.add(chapter)
+    db.flush()
+    db.add_all(
+        [
+            Commodity(
+                chapter_id=chapter.id,
+                code="9901",
+                description="Synthetic heading",
+                unit="—",
+                import_duty="",
+            ),
+            Commodity(
+                chapter_id=chapter.id,
+                code="9901210000",
+                description="Synthetic parent",
+                unit="—",
+                import_duty="",
+            ),
+            Commodity(
+                chapter_id=chapter.id,
+                code="9901210001",
+                description="Synthetic leaf one",
+                unit="—",
+                import_duty="",
+            ),
+            Commodity(
+                chapter_id=chapter.id,
+                code="9901210002",
+                description="Synthetic leaf two",
+                unit="—",
+                import_duty="",
+            ),
+        ]
+    )
+    db.commit()
+
+tnved_fts.search_commodities_fts = lambda query, limit: None
+tnved_catalog.find_rate_for_hs = lambda code: (None, 0)
+tnved_catalog._permit_flags_for_hs = lambda code: (False, False)
+tnved_catalog._measures_for_api = lambda code: []
+assert normative_store.is_leaf_hs_code("9901210001") is True
+
+api = FastAPI()
+api.include_router(tnved_catalog.router, prefix="/api/v1/tnved")
+api.include_router(tnved_compat.router, prefix="/api/tnved")
+
+def test_db():
+    db = app_db.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+api.dependency_overrides[tnved_catalog.get_db] = test_db
+
+with TestClient(api) as client:
+    exact = client.get("/api/v1/tnved/search", params={"q": "9901210001"})
+    assert exact.status_code == 200, exact.text
+    assert exact.json() == {
+        "status": "OK",
+        "results": [
+            {
+                "code": "9901210001",
+                "name": "Synthetic leaf one",
+                "is_leaf": True,
+            }
+        ],
+    }
+
+    formatted = client.get(
+        "/api/v1/tnved/search",
+        params={"q": "9901 21 000 1"},
+    )
+    assert formatted.status_code == 200, formatted.text
+    assert formatted.json() == exact.json()
+
+    chapter_children = client.get(
+        "/api/tnved/children/99",
+        params={"depth": "direct"},
+    )
+    assert chapter_children.status_code == 200, chapter_children.text
+    assert [item["code"] for item in chapter_children.json()["items"]] == [
+        "9901"
+    ]
+
+    heading_children = client.get(
+        "/api/tnved/children/9901",
+        params={"depth": "direct"},
+    )
+    assert heading_children.status_code == 200, heading_children.text
+    assert [item["code"] for item in heading_children.json()["items"]] == [
+        "9901210000"
+    ]
+
+    parent_children = client.get(
+        "/api/tnved/children/9901210000",
+        params={"depth": "direct"},
+    )
+    assert parent_children.status_code == 200, parent_children.text
+    assert [item["code"] for item in parent_children.json()["items"]] == [
+        "9901210001",
+        "9901210002",
+    ]
+    assert all(item["is_leaf"] for item in parent_children.json()["items"])
+
+    leaf_children = client.get(
+        "/api/tnved/children/9901210001",
+        params={"depth": "direct"},
+    )
+    assert leaf_children.status_code == 200, leaf_children.text
+    assert leaf_children.json()["items"] == []
+
+with app_db.SessionLocal() as db:
+    assert db.query(Section).count() == 1
+    assert db.query(Chapter).count() == 1
+    assert db.query(Commodity).count() == 4
+"""
+
+
+class HermeticTnvedCatalogApiTests(unittest.TestCase):
+
+    def test_legacy_init_target_is_fixture_until_cleanup(self):
+        fixture_url = "sqlite:////private/fixture.sqlite"
+
+        for ambient_url in ("sentinel://ambient-not-a-database", None):
+            for init_raises in (False, True):
+                with self.subTest(
+                    ambient_url=ambient_url,
+                    init_raises=init_raises,
+                ):
+                    seen_targets = []
+                    fake_engine = types.SimpleNamespace(
+                        url=fixture_url,
+                        dispose=mock.Mock(),
+                    )
+                    fake_session = types.SimpleNamespace(
+                        kw={"bind": fake_engine}
+                    )
+                    fake_temp_dir = types.SimpleNamespace(
+                        cleanup=mock.Mock()
+                    )
+
+                    def fake_init_db():
+                        seen_targets.append(
+                            os.environ.get("DATABASE_URL")
+                        )
+                        with self.assertRaisesRegex(
+                            AssertionError,
+                            "network access is forbidden",
+                        ):
+                            socket.create_connection(
+                                ("inert.invalid", 443)
+                            )
+                        if init_raises:
+                            raise RuntimeError("mock migration failure")
+
+                    patched_globals = {
+                        "SessionLocal": fake_session,
+                        "init_db": fake_init_db,
+                        "_LEGACY_APP_DB": types.SimpleNamespace(
+                            engine=fake_engine
+                        ),
+                        "_LEGACY_TEMP_DIR": fake_temp_dir,
+                        "_LEGACY_PREVIOUS_DATABASE_URL": ambient_url,
+                    }
+                    with mock.patch.dict(os.environ, {}, clear=False):
+                        if ambient_url is None:
+                            os.environ.pop("DATABASE_URL", None)
+                        else:
+                            os.environ["DATABASE_URL"] = ambient_url
+                        os.environ["DATABASE_URL"] = fixture_url
+
+                        with mock.patch.dict(
+                            globals(), patched_globals
+                        ):
+                            if init_raises:
+                                with self.assertRaisesRegex(
+                                    RuntimeError,
+                                    "mock migration failure",
+                                ):
+                                    _run_legacy_init_db()
+                            else:
+                                _run_legacy_init_db()
+
+                            self.assertEqual(
+                                os.environ.get("DATABASE_URL"),
+                                fixture_url,
+                            )
+                            _cleanup_legacy_database()
+                            if ambient_url is None:
+                                self.assertNotIn(
+                                    "DATABASE_URL", os.environ
+                                )
+                            else:
+                                self.assertEqual(
+                                    os.environ["DATABASE_URL"],
+                                    ambient_url,
+                                )
+
+                    self.assertEqual(seen_targets, [fixture_url])
+                    fake_engine.dispose.assert_called_once_with()
+                    fake_temp_dir.cleanup.assert_called_once_with()
+
+    def test_legacy_init_rejects_environment_target_mismatch(self):
+        fixture_url = "sqlite:////private/fixture.sqlite"
+        fake_engine = types.SimpleNamespace(url=fixture_url)
+        fake_session = types.SimpleNamespace(kw={"bind": fake_engine})
+        fake_init_db = mock.Mock()
+
+        with mock.patch.dict(
+            os.environ,
+            {"DATABASE_URL": "sentinel://ambient-not-a-database"},
+            clear=False,
+        ):
+            with mock.patch.dict(
+                globals(),
+                {
+                    "SessionLocal": fake_session,
+                    "init_db": fake_init_db,
+                    "_LEGACY_APP_DB": types.SimpleNamespace(
+                        engine=fake_engine
+                    ),
+                },
+            ):
+                with self.assertRaisesRegex(
+                    RuntimeError,
+                    "target does not match",
+                ):
+                    _run_legacy_init_db()
+
+        fake_init_db.assert_not_called()
+
+    def test_legacy_init_rejects_session_bind_mismatch(self):
+        fixture_url = "sqlite:////private/fixture.sqlite"
+        fake_engine = types.SimpleNamespace(url=fixture_url)
+        fake_session = types.SimpleNamespace(
+            kw={"bind": object()}
+        )
+        fake_init_db = mock.Mock()
+
+        with mock.patch.dict(
+            os.environ,
+            {"DATABASE_URL": fixture_url},
+            clear=False,
+        ):
+            with mock.patch.dict(
+                globals(),
+                {
+                    "SessionLocal": fake_session,
+                    "init_db": fake_init_db,
+                    "_LEGACY_APP_DB": types.SimpleNamespace(
+                        engine=fake_engine
+                    ),
+                },
+            ):
+                with self.assertRaisesRegex(
+                    RuntimeError,
+                    "target does not match",
+                ):
+                    _run_legacy_init_db()
+
+        fake_init_db.assert_not_called()
+
+    def test_legacy_cleanup_restores_environment_after_failures(self):
+        ambient_url = "sentinel://ambient-not-a-database"
+        fixture_url = "sqlite:////private/fixture.sqlite"
+
+        for failing_step in ("dispose", "temp_cleanup"):
+            with self.subTest(failing_step=failing_step):
+                fake_engine = types.SimpleNamespace(
+                    url=fixture_url,
+                    dispose=mock.Mock(),
+                )
+                fake_temp_dir = types.SimpleNamespace(
+                    cleanup=mock.Mock()
+                )
+                if failing_step == "dispose":
+                    fake_engine.dispose.side_effect = RuntimeError(
+                        "mock dispose failure"
+                    )
+                else:
+                    fake_temp_dir.cleanup.side_effect = RuntimeError(
+                        "mock temp cleanup failure"
+                    )
+
+                with mock.patch.dict(
+                    os.environ,
+                    {"DATABASE_URL": fixture_url},
+                    clear=False,
+                ):
+                    with mock.patch.dict(
+                        globals(),
+                        {
+                            "_LEGACY_APP_DB": types.SimpleNamespace(
+                                engine=fake_engine
+                            ),
+                            "_LEGACY_TEMP_DIR": fake_temp_dir,
+                            "_LEGACY_PREVIOUS_DATABASE_URL": ambient_url,
+                        },
+                    ):
+                        with self.assertRaisesRegex(
+                            RuntimeError,
+                            f"mock {failing_step.replace('_', ' ')} failure",
+                        ):
+                            _cleanup_legacy_database()
+                        self.assertEqual(
+                            os.environ["DATABASE_URL"],
+                            ambient_url,
+                        )
+                        self.assertIsNone(_LEGACY_APP_DB)
+                        self.assertIsNone(_LEGACY_TEMP_DIR)
+                        self.assertIs(
+                            _LEGACY_PREVIOUS_DATABASE_URL,
+                            _LEGACY_DATABASE_URL_UNSET,
+                        )
+
+                fake_engine.dispose.assert_called_once_with()
+                fake_temp_dir.cleanup.assert_called_once_with()
+
+    def test_legacy_loader_import_failure_restores_environment(self):
+        ambient_url = "sentinel://ambient-not-a-database"
+        fixture_url = "sqlite:////private/source.sqlite"
+        fake_temp_dir = types.SimpleNamespace(
+            name="/private/mock-legacy-temp",
+            cleanup=mock.Mock(),
+        )
+        original_import = __import__
+
+        def fail_fastapi_import(name, *args, **kwargs):
+            if name == "fastapi":
+                raise ImportError("mock fastapi import failure")
+            return original_import(name, *args, **kwargs)
+
+        with mock.patch.dict(
+            os.environ,
+            {
+                "DATABASE_URL": ambient_url,
+                "TARIFF_RUN_LEGACY_TNVED_CATALOG": "1",
+            },
+            clear=False,
+        ):
+            with mock.patch.dict(sys.modules, {}, clear=False):
+                sys.modules.pop("app.db", None)
+                with mock.patch.dict(
+                    globals(),
+                    {
+                        "_LEGACY_DATABASE_URL": fixture_url,
+                        "_LEGACY_PREVIOUS_DATABASE_URL": (
+                            _LEGACY_DATABASE_URL_UNSET
+                        ),
+                    },
+                ):
+                    loader_mocks = {
+                        "_legacy_database_is_safe": mock.Mock(
+                            return_value=True
+                        ),
+                        "tempfile": types.SimpleNamespace(
+                            TemporaryDirectory=mock.Mock(
+                                return_value=fake_temp_dir
+                            )
+                        ),
+                        "shutil": types.SimpleNamespace(
+                            copy2=mock.Mock()
+                        ),
+                    }
+                    with mock.patch.dict(globals(), loader_mocks):
+                        with mock.patch(
+                            "builtins.__import__",
+                            side_effect=fail_fastapi_import,
+                        ):
+                            with self.assertRaisesRegex(
+                                unittest.SkipTest,
+                                "need FastAPI app",
+                            ):
+                                _load_legacy_dependencies()
+
+                    self.assertEqual(
+                        os.environ["DATABASE_URL"],
+                        ambient_url,
+                    )
+                    self.assertIs(
+                        _LEGACY_PREVIOUS_DATABASE_URL,
+                        _LEGACY_DATABASE_URL_UNSET,
+                    )
+
+        fake_temp_dir.cleanup.assert_called_once_with()
+
+    def test_search_to_compat_children_traversal(self):
+        backend_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(prefix="tnved-api-") as tmp:
+            database_path = Path(tmp) / "catalog.sqlite"
+            env = {
+                "DATABASE_URL": f"sqlite:///{database_path}",
+                "LANG": "C.UTF-8",
+                "LC_ALL": "C.UTF-8",
+                "PATH": os.environ.get("PATH", ""),
+                "PYTHONDONTWRITEBYTECODE": "1",
+                "PYTHONPATH": str(backend_root),
+                "TARIFF_TEST_TMPDIR": tmp,
+            }
+            completed = subprocess.run(
+                [sys.executable, "-c", _HERMETIC_API_SCRIPT],
+                cwd=backend_root,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+        self.assertEqual(
+            completed.returncode,
+            0,
+            f"stdout:\n{completed.stdout}\nstderr:\n{completed.stderr}",
+        )
+
+    def test_existing_catalog_contracts_run_hermetically(self):
+        backend_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(prefix="tnved-legacy-seed-") as tmp:
+            fixture_path = Path(tmp) / "empty.sqlite"
+            fixture_path.touch()
+            env = {
+                "LANG": "C.UTF-8",
+                "LC_ALL": "C.UTF-8",
+                "PATH": os.environ.get("PATH", ""),
+                "PYTHONDONTWRITEBYTECODE": "1",
+                "PYTHONPATH": str(backend_root),
+                "TARIFF_LEGACY_TNVED_FIXTURE_URL": f"sqlite:///{fixture_path}",
+                "TARIFF_RUN_LEGACY_TNVED_CATALOG": "1",
+            }
+            seed_independent_tests = [
+                "test_chapters_ok",
+                "test_commodities_ok",
+                "test_detail_10",
+                "test_detail_4_digit_row",
+                "test_format_duty_strips_garbage_and_parses_composite",
+                "test_format_duty_strips_pdf_footnotes",
+                "test_hierarchy_tree_ok",
+                "test_invalid_code_length",
+                "test_node_leaf_rates",
+                "test_preliminary_decisions_empty_message",
+                "test_preliminary_decisions_endpoint",
+                "test_sections_ok",
+            ]
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "unittest",
+                    "-v",
+                    *[
+                        f"tests.test_tnved_catalog_api.TnvedCatalogApiTests.{name}"
+                        for name in seed_independent_tests
+                    ],
+                ],
+                cwd=backend_root,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+        output = f"{completed.stdout}\n{completed.stderr}"
+        self.assertEqual(completed.returncode, 0, output)
+        self.assertIn("Ran 12 tests", output)
+        self.assertNotIn("skipped=", output)
+
+
+@unittest.skipUnless(
+    _LEGACY_DEPS_OK and _LEGACY_DB_READY,
+    "legacy TN VED integration tests require an explicit isolated SQLite fixture",
+)
 class TnvedCatalogApiTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        init_db()
+        _load_legacy_dependencies()
+        cls.addClassCleanup(_cleanup_legacy_database)
+        _run_legacy_init_db()
         cls.client = TestClient(app)
         cls._section_id: int | None = None
         cls._chapter_id: int | None = None
@@ -285,4 +1012,5 @@ class TnvedCatalogApiTests(unittest.TestCase):
         self.assertIn(leaf.get("import_duty"), ("10 %", "10%"))
         self.assertTrue("name" in leaf or "title_ru" in leaf)
         self.assertIn("children", leaf)
+
 
