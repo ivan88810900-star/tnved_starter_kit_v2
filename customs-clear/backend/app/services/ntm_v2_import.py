@@ -170,8 +170,16 @@ SGR_WATER_HINTS: tuple[str, ...] = (
 )
 
 
-def _desc_match_any_substrings(substrings: tuple[str, ...] | list[str]) -> dict[str, Any]:
-    return {"mode": "any_substring", "substrings": list(substrings)}
+def _desc_match_any_substrings(
+    substrings: tuple[str, ...] | list[str],
+    *,
+    whole_tokens: tuple[str, ...] | list[str] = (),
+) -> dict[str, Any]:
+    return {
+        "mode": "any_substring",
+        "substrings": list(substrings),
+        "whole_tokens": list(whole_tokens),
+    }
 
 
 def import_ntm_layers_to_ntm_v2(session: Session | None = None) -> dict[str, Any]:
@@ -204,6 +212,7 @@ def import_ntm_layers_to_ntm_v2(session: Session | None = None) -> dict[str, Any
         }
 
         sgr_desc_triggers = list(ntm_layers_mod.SGR_DESCRIPTION_TRIGGERS)
+        sgr_desc_whole_tokens = list(ntm_layers_mod.SGR_DESCRIPTION_WHOLE_TOKENS)
 
         for measure_kind, permit_type, sample_fn in samples:
             sample = sample_fn()
@@ -214,6 +223,7 @@ def import_ntm_layers_to_ntm_v2(session: Session | None = None) -> dict[str, Any
             if measure_kind == "sgr":
                 meta_extra = {
                     "sgr_description_triggers": sgr_desc_triggers,
+                    "sgr_description_whole_tokens": sgr_desc_whole_tokens,
                     "sgr_water_hints": list(SGR_WATER_HINTS),
                 }
             meta_json = _layer_meta_json(
@@ -437,7 +447,10 @@ def import_ntm_layers_to_ntm_v2(session: Session | None = None) -> dict[str, Any
                     hs_scope_mode="prefix",
                     hs_code="2201",
                     excluded_hs_json=None,
-                    description_match_json=_desc_match_any_substrings(sgr_subs),
+                    description_match_json=_desc_match_any_substrings(
+                        sgr_subs,
+                        whole_tokens=sgr_desc_whole_tokens,
+                    ),
                     applicability="definite",
                     requires_manual_review=False,
                     priority=pri,
@@ -453,7 +466,10 @@ def import_ntm_layers_to_ntm_v2(session: Session | None = None) -> dict[str, Any
             rules_created += 1
         else:
             ex2201.priority = pri
-            ex2201.description_match_json = _desc_match_any_substrings(sgr_subs)
+            ex2201.description_match_json = _desc_match_any_substrings(
+                sgr_subs,
+                whole_tokens=sgr_desc_whole_tokens,
+            )
             ex2201.updated_at = now
             rules_skipped += 1
 
@@ -470,7 +486,10 @@ def import_ntm_layers_to_ntm_v2(session: Session | None = None) -> dict[str, Any
                     hs_scope_mode="prefix",
                     hs_code="",
                     excluded_hs_json=None,
-                    description_match_json=_desc_match_any_substrings(desc_only_subs),
+                    description_match_json=_desc_match_any_substrings(
+                        desc_only_subs,
+                        whole_tokens=sgr_desc_whole_tokens,
+                    ),
                     applicability="definite",
                     requires_manual_review=False,
                     priority=pri,
@@ -486,7 +505,10 @@ def import_ntm_layers_to_ntm_v2(session: Session | None = None) -> dict[str, Any
             rules_created += 1
         else:
             exd.priority = pri
-            exd.description_match_json = _desc_match_any_substrings(desc_only_subs)
+            exd.description_match_json = _desc_match_any_substrings(
+                desc_only_subs,
+                whole_tokens=sgr_desc_whole_tokens,
+            )
             exd.updated_at = now
             rules_skipped += 1
 

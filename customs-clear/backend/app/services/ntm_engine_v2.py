@@ -14,6 +14,7 @@ from sqlalchemy.orm import joinedload
 from .. import db
 from ..models.ntm_v2 import NtmApplicabilityRuleV2, NtmMeasureV2
 from .hs_matching import match_hs_prefix, normalize_hs_code
+from .ntm_description_matching import first_description_match
 from .tr_ts_catalog import TR_TS_FULL_NAMES, get_tr_ts_requirements
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,7 @@ def _parse_layer_measure_meta(measure: NtmMeasureV2) -> dict[str, Any]:
                 "consumer": str(d.get("consumer") or ""),
                 "label": str(d.get("label") or measure.title),
                 "sgr_description_triggers": list(d.get("sgr_description_triggers") or []),
+                "sgr_description_whole_tokens": list(d.get("sgr_description_whole_tokens") or []),
                 "sgr_water_hints": list(d.get("sgr_water_hints") or []),
             }
         except json.JSONDecodeError:
@@ -81,6 +83,7 @@ def _parse_layer_measure_meta(measure: NtmMeasureV2) -> dict[str, Any]:
         "consumer": raw,
         "label": measure.title,
         "sgr_description_triggers": [],
+        "sgr_description_whole_tokens": [],
         "sgr_water_hints": [],
     }
 
@@ -106,8 +109,10 @@ def _rule_description_matches(description_match_json: Any, description: str) -> 
         )
     if mode == "any_substring":
         subs = dm.get("substrings") or []
-        dl = (description or "").lower()
-        return any(str(s).lower() in dl for s in subs)
+        tokens = dm.get("whole_tokens") or []
+        if not isinstance(subs, list) or not isinstance(tokens, list):
+            return False
+        return first_description_match(description, subs, whole_tokens=tokens) is not None
     return True
 
 
@@ -149,12 +154,12 @@ def _rule_matches_runtime(
     return _rule_description_matches(rule.description_match_json, description)
 
 
-def _first_sgr_trigger(description: str, triggers: list[str]) -> str | None:
-    desc_lower = (description or "").lower()
-    for trigger in triggers:
-        if trigger in desc_lower:
-            return trigger
-    return None
+def _first_sgr_trigger(
+    description: str,
+    triggers: list[str],
+    whole_tokens: list[str],
+) -> str | None:
+    return first_description_match(description, triggers, whole_tokens=whole_tokens)
 
 
 def _pick_sgr_rule_for_output(matched: list[NtmApplicabilityRuleV2], matched_prefix: str | None) -> NtmApplicabilityRuleV2:
@@ -184,6 +189,7 @@ def _compute_sgr_public_dict(
     desc_lower = (description or "").lower()
     meta = _parse_layer_measure_meta(matched_sgr_rules[0].measure)
     triggers: list[str] = meta.get("sgr_description_triggers") or []
+    whole_tokens: list[str] = meta.get("sgr_description_whole_tokens") or []
     water_hints: list[str] = meta.get("sgr_water_hints") or []
 
     hs_prefixes = sorted(
@@ -192,7 +198,7 @@ def _compute_sgr_public_dict(
         reverse=True,
     )
     matched_prefix = hs_prefixes[0] if hs_prefixes else None
-    matched_trigger = _first_sgr_trigger(description, triggers)
+    matched_trigger = _first_sgr_trigger(description, triggers, whole_tokens)
 
     if matched_prefix == "2201" and not matched_trigger:
         if not any(h in desc_lower for h in water_hints):
