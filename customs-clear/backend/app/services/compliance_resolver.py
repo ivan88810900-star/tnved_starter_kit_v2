@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -282,6 +283,40 @@ COMPLIANCE_MATRIX: tuple[MatrixRule, ...] = (
 )
 
 
+_CONFORMITY_CERTIFICATE_PATTERN = re.compile(
+    r"СЕРТИФ\w*\s+(?:(?:О|НА)\s+)?"
+    r"СООТВЕТСТВИ(?:ЕМ|Е|Я|Ю|И)"
+)
+
+
+def _is_unicode_token_continuation(char: str) -> bool:
+    """Treat invisible joiners and combining/connector marks as token characters."""
+    if not char:
+        return False
+    category = unicodedata.category(char)
+    return category[0] in {"L", "M", "N"} or category in {"Cf", "Pc"}
+
+
+def _has_token_boundaries(text: str, start: int, end: int) -> bool:
+    before = text[start - 1] if start else ""
+    after = text[end] if end < len(text) else ""
+    return not _is_unicode_token_continuation(before) and not _is_unicode_token_continuation(after)
+
+
+def _contains_standalone_literal(text: str, literal: str) -> bool:
+    return any(
+        _has_token_boundaries(text, match.start(), match.end())
+        for match in re.finditer(re.escape(literal), text)
+    )
+
+
+def _contains_conformity_certificate(text: str) -> bool:
+    return any(
+        _has_token_boundaries(text, match.start(), match.end())
+        for match in _CONFORMITY_CERTIFICATE_PATTERN.finditer(text)
+    )
+
+
 def _permit_doc_types(raw: str) -> set[str]:
     out: set[str] = set()
     for tok in re.split(r"[,;/|]", str(raw or "")):
@@ -290,7 +325,13 @@ def _permit_doc_types(raw: str) -> set[str]:
             continue
         if "ДС" in t or "ДЕКЛАР" in t:
             out.add("ДС")
-        if "СС" in t or "СЕРТИФ" in t:
+        # ``СС`` and ``ВЕТ`` used to be substring checks.  That made a
+        # veterinary/phytosanitary certificate look like a conformity
+        # certificate and even found veterinary control inside
+        # ``соответствия``.  Accept the short conformity code only as a
+        # standalone token; a spelled-out certificate must explicitly say
+        # that it is about conformity.
+        if _contains_standalone_literal(t, "СС") or _contains_conformity_certificate(t):
             out.add("СС")
         if "СГР" in t or "ГОСРЕГ" in t:
             out.add("СГР")
@@ -302,9 +343,9 @@ def _permit_doc_types(raw: str) -> set[str]:
             out.add("Маркировка")
         if t == "РУ" or ("РЕГИСТРАЦ" in t and "УДОСТ" in t):
             out.add("РУ")
-        if "ВЕТ" in t:
+        if _VET_PATTERN.search(t):
             out.add("Ветконтроль")
-        if "ФИТО" in t:
+        if _PHYTO_PATTERN.search(t):
             out.add("Фитоконтроль")
     return out
 
