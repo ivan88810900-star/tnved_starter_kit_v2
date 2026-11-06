@@ -24,7 +24,7 @@ def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
     gross = base.get("weight_gross_kg")
     net = base.get("weight_net_kg")
 
-    rates = get_rates_map()
+    rates = get_rates_map(require_cbrf_provenance=currency != "RUB")
     fx = float(rates.get(currency) or 1.0)
     cv_rub = customs_value * fx
 

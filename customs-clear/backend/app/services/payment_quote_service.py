@@ -322,7 +322,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
     invoice_currency = str(payload.get("invoice_currency") or "RUB").upper().strip()
     user_excise = float(payload["excise"]) if payload.get("excise") is not None else None
 
-    rates = get_rates_map()
+    rates = get_rates_map(require_cbrf_provenance=invoice_currency != "RUB")
     if invoice_currency not in rates:
         raise ValueError(f"Неизвестная валюта инвойса: {invoice_currency}")
 

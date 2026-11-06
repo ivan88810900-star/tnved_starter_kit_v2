@@ -125,8 +125,8 @@ async def compute(req: CalculatorRequest) -> JSONResponse:
                 }
             )
         payload = req.model_dump(exclude={"save_history", "document_id", "user_ref"})
-        rates = get_rates_map()
         invoice_currency = (req.invoice_currency or "RUB").upper().strip()
+        rates = get_rates_map(require_cbrf_provenance=invoice_currency != "RUB")
         if invoice_currency not in rates:
             raise HTTPException(status_code=400, detail=f"Неизвестная валюта инвойса: {invoice_currency}")
         invoice_fx_rate = float(rates.get(invoice_currency) or 1.0)
@@ -193,9 +193,9 @@ async def duty_rule(hs_code: str) -> JSONResponse:
 async def compare(req: CompareRequest) -> PaymentCompareResponse:
     """Сравнение 2–8 кодов ТН ВЭД при общих customs_value / freight / стране и т.д."""
     try:
-        rates = get_rates_map()
         shared = req.shared.model_dump(exclude_none=True)
         invoice_currency = (shared.get("invoice_currency") or "RUB").upper().strip()
+        rates = get_rates_map(require_cbrf_provenance=invoice_currency != "RUB")
         if invoice_currency not in rates:
             raise HTTPException(status_code=400, detail=f"Неизвестная валюта инвойса: {invoice_currency}")
         invoice_fx_rate = float(rates.get(invoice_currency) or 1.0)
@@ -352,4 +352,3 @@ async def calculator_history_item(calc_id: str) -> JSONResponse:
     if not row:
         raise HTTPException(status_code=404, detail="Запись не найдена")
     return JSONResponse({"status": "OK", **row})
-
