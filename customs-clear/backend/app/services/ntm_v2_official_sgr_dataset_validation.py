@@ -19,6 +19,7 @@ WIDE_HS_LEN_WARNING = 4
 
 # Узкие товарные позиции Перечня II, где ``definite`` по HS допустим без description-маркеров.
 DEFINITE_NARROW_HS_ALLOWLIST = frozenset({"3808"})
+AMBIGUOUS_3304_CHILD_MARKERS = frozenset({"дет"})
 
 
 def _rule_signature(row: dict[str, Any]) -> tuple[Any, ...]:
@@ -156,6 +157,19 @@ def validate_official_sgr_dataset(payload: dict[str, Any]) -> dict[str, Any]:
                         "path": path,
                         "rule_id": rule_id,
                         "message": "3304 definite только с детскими маркерами в description",
+                    }
+                )
+            ambiguous_child_markers = sorted(
+                marker for marker in contains if marker.lower() in AMBIGUOUS_3304_CHILD_MARKERS
+            )
+            if hs_scope == "3304" and ambiguous_child_markers:
+                errors.append(
+                    {
+                        "code": "ambiguous_3304_child_marker",
+                        "path": path,
+                        "rule_id": rule_id,
+                        "markers": ambiguous_child_markers,
+                        "message": "3304 definite не должен использовать неоднозначный маркер 'дет'",
                     }
                 )
             if (

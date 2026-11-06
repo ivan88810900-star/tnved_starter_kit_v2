@@ -394,7 +394,7 @@
       "applicability": "definite",
       "requires_manual_review": false,
       "title": "Косметика для детей",
-      "description_contains_any": ["дет", "детск", "младен", "baby"],
+      "description_contains_any": ["детск", "для детей", "детям", "ребен", "ребён", "младен", "baby"],
       "exclude_if_contains_any": ["для взросл"],
       "evidence": "Требования к детскому ассортименту; 3304 с детскими маркерами",
       "notes": "Взрослая косметика 3304 без детских признаков — не definite"
