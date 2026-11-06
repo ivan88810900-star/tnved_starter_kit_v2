@@ -75,9 +75,12 @@ async def _http_get_with_retries(url: str, *, timeout: float) -> httpx.Response:
 
 
 async def sync_eec_snapshot() -> dict[str, Any]:
-    """Обновляет метаданные официального источника ЕЭК ТН ВЭД/ЕТТ.
+    """Наблюдает доступность индексной страницы ЕЭК ТН ВЭД/ЕТТ.
 
-    Ревизия фиксируется по хэшу страницы-индекса.
+    Хэш страницы-индекса не является редакцией ЕТТ и не подтверждает,
+    что локальные тарифные строки соответствуют действующей редакции.
+    Поэтому результат намеренно остаётся stale/partial до отдельной
+    проверки и импорта самого нормативного массива.
     """
     try:
         r = await _http_get_with_retries(EEC_ETT_URL, timeout=25.0)
@@ -88,17 +91,26 @@ async def sync_eec_snapshot() -> dict[str, Any]:
             source_name="ТН ВЭД и ЕТТ ЕАЭС",
             source_url=EEC_ETT_URL,
             revision=digest,
-            is_stale=False,
-            note="Ревизия определена по хэшу страницы ЕЭК.",
+            is_stale=True,
+            note=(
+                "Доступность индексной страницы подтверждена; её хэш не является "
+                "редакцией ЕТТ и не подтверждает актуальность локальных ставок."
+            ),
         )
         append_sync_log(
             source_code="EEC_ETT",
-            status="OK",
+            status="PARTIAL",
             revision=digest,
             rows_affected=0,
-            note="Страница ЕЭК доступна, хэш обновлён.",
+            note="Индексная страница доступна; нормативная редакция и строки ЕТТ не проверены.",
         )
-        return {"status": "OK", "source": "EEC_ETT", "revision": digest}
+        return {
+            "status": "PARTIAL",
+            "source": "EEC_ETT",
+            "revision": digest,
+            "verification_scope": "landing_page_only",
+            "authoritative_currentness_confirmed": False,
+        }
     except Exception as exc:
         upsert_source_status(
             source_code="EEC_ETT",
@@ -120,11 +132,10 @@ async def sync_eec_snapshot() -> dict[str, Any]:
 
 
 async def sync_trade_defense() -> dict[str, Any]:
-    """Обновляет метаданные источника мер торговой защиты ЕЭК.
+    """Наблюдает доступность индексной страницы торговой защиты ЕЭК.
 
-    В MVP фиксируем ревизию по хэшу страницы-индекса торговой защиты.
-    Парсинг конкретных антидемпинговых мер требует отдельной реализации
-    при наличии структурированного источника данных.
+    Индексный хэш не доказывает состав, срок действия или редакцию конкретных
+    мер. До структурированного импорта источник остаётся stale/partial.
     """
     try:
         r = await _http_get_with_retries(TRADE_DEFENSE_URL, timeout=25.0)
@@ -135,17 +146,26 @@ async def sync_trade_defense() -> dict[str, Any]:
             source_name="Меры торговой защиты ЕАЭС",
             source_url=TRADE_DEFENSE_URL,
             revision=digest,
-            is_stale=False,
-            note="Ревизия определена по хэшу страницы торговой защиты ЕЭК.",
+            is_stale=True,
+            note=(
+                "Доступность индексной страницы подтверждена; её хэш не подтверждает "
+                "состав, редакции или сроки действия конкретных мер."
+            ),
         )
         append_sync_log(
             source_code="TRADE_DEFENSE",
-            status="OK",
+            status="PARTIAL",
             revision=digest,
             rows_affected=0,
-            note="Страница мер торговой защиты ЕЭК доступна, хэш обновлён.",
+            note="Индексная страница доступна; конкретные меры и их редакции не проверены.",
         )
-        return {"status": "OK", "source": "TRADE_DEFENSE", "revision": digest}
+        return {
+            "status": "PARTIAL",
+            "source": "TRADE_DEFENSE",
+            "revision": digest,
+            "verification_scope": "landing_page_only",
+            "authoritative_currentness_confirmed": False,
+        }
     except Exception as exc:
         upsert_source_status(
             source_code="TRADE_DEFENSE",
