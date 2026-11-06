@@ -76,6 +76,68 @@ class TestFreshnessCheck:
         assert STALE_THRESHOLD_DAYS == 90
         assert CURRENCY_STALE_HOURS == 48
 
+    def test_future_revision_date_fails_closed(self, tmp_path: Path) -> None:
+        bundle = tmp_path / "future.json"
+        bundle.write_text(
+            json.dumps({"revision": "ett:2999-01-01"}),
+            encoding="utf-8",
+        )
+
+        with (
+            patch(
+                "app.services.data_refresh_service._BACKEND_ROOT",
+                tmp_path,
+            ),
+            patch.dict(
+                "app.services.data_refresh_service._BUNDLE_DOMAINS",
+                {"EEC_ETT": bundle.name},
+                clear=True,
+            ),
+            patch(
+                "app.services.data_refresh_service._check_currency_freshness",
+                return_value={"is_stale": False, "currencies": 1},
+            ),
+        ):
+            report = check_data_freshness()
+
+        domain = report["domains"][0]
+        assert domain["revision_date"] == "2999-01-01"
+        assert domain["age_days"] is None
+        assert domain["is_stale"] is True
+        assert domain["freshness_reason"] == "future_revision_date"
+        assert report["stale_count"] == 1
+        assert report["all_fresh"] is False
+
+    def test_invalid_revision_reason_is_explicit(self, tmp_path: Path) -> None:
+        bundle = tmp_path / "invalid.json"
+        bundle.write_text(
+            json.dumps({"revision": "ett:unknown"}),
+            encoding="utf-8",
+        )
+
+        with (
+            patch(
+                "app.services.data_refresh_service._BACKEND_ROOT",
+                tmp_path,
+            ),
+            patch.dict(
+                "app.services.data_refresh_service._BUNDLE_DOMAINS",
+                {"EEC_ETT": bundle.name},
+                clear=True,
+            ),
+            patch(
+                "app.services.data_refresh_service._check_currency_freshness",
+                return_value={"is_stale": False, "currencies": 1},
+            ),
+        ):
+            report = check_data_freshness()
+
+        domain = report["domains"][0]
+        assert domain["revision_date"] is None
+        assert domain["age_days"] is None
+        assert domain["is_stale"] is True
+        assert domain["freshness_reason"] == "missing_or_invalid_revision"
+
 
 class TestDataRefreshScript:
     def test_script_exists(self) -> None:

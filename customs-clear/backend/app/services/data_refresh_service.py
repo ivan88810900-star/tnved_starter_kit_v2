@@ -62,14 +62,23 @@ def check_data_freshness() -> dict[str, Any]:
             "exists": p.is_file(),
         }
         if rev_date:
-            age_days = (now - rev_date).days
             entry["revision_date"] = rev_date.strftime("%Y-%m-%d")
-            entry["age_days"] = age_days
-            entry["is_stale"] = age_days > STALE_THRESHOLD_DAYS
+            if rev_date > now:
+                # A future-dated source revision cannot prove that the local
+                # bundle is current.  Treat it as invalid provenance instead
+                # of allowing a negative age to pass the freshness threshold.
+                entry["age_days"] = None
+                entry["is_stale"] = True
+                entry["freshness_reason"] = "future_revision_date"
+            else:
+                age_days = (now - rev_date).days
+                entry["age_days"] = age_days
+                entry["is_stale"] = age_days > STALE_THRESHOLD_DAYS
         else:
             entry["revision_date"] = None
             entry["age_days"] = None
             entry["is_stale"] = True
+            entry["freshness_reason"] = "missing_or_invalid_revision"
         if entry["is_stale"]:
             stale_count += 1
         domains.append(entry)
