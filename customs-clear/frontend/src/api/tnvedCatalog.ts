@@ -2,6 +2,41 @@ import { api } from './client';
 
 const PREFIX = '/v1/tnved';
 
+export type RecoveredCatalogStatus = {
+  catalog_id: string;
+  catalog_sha256: string;
+  snapshot_sha256: string;
+  nodes: number;
+  legal_status: 'unverified';
+  rates_present: false;
+};
+
+export type RecoveredCodeDetail = {
+  code: string;
+  name: string;
+  path: string[];
+  breadcrumb: TnvedBreadcrumbItem[];
+  children: TnvedChildItem[];
+  source_url: string;
+  source_sha256: string;
+  snapshot_sha256: string;
+  edition_id: string;
+  page: number | null;
+  printed_code: string;
+  requested_code: string;
+  navigation_alias?: { kind: string; heading_code: string; printed_code: string; resolved_code: string } | null;
+  legal_status: string;
+  valid_from: null;
+  valid_to: null;
+  complete: false;
+  rates: null;
+};
+
+export async function fetchRecoveredCode(code: string): Promise<RecoveredCodeDetail> {
+  const { data } = await api.get<RecoveredCodeDetail>(`${PREFIX}/${encodeURIComponent(code)}`);
+  return data;
+}
+
 // ---------------------------------------------------------------------------
 // Типы
 // ---------------------------------------------------------------------------
@@ -38,6 +73,10 @@ export type TnvedSearchHit = {
   name: string;
   /** Реальный декларируемый лист (не групповой заголовок). */
   is_leaf?: boolean;
+  node_id?: string;
+  is_codeless?: boolean;
+  source_order?: number;
+  path?: string[];
 };
 
 export type TnvedPreview = {
@@ -197,6 +236,8 @@ export async function fetchCommodityByCode(code: string): Promise<TnvedCommodity
 
 export type TnvedChildItem = {
   code: string;
+  node_id?: string;
+  source_order?: number;
   display_code: string;
   name: string;
   level: string;
@@ -204,8 +245,8 @@ export type TnvedChildItem = {
   is_codeless: boolean;
   is_group?: boolean;
   has_children: boolean;
-  import_duty?: string;
-  duty_rate?: string;
+  import_duty?: string | null;
+  duty_rate?: string | null;
   vat_rate?: number | null;
   children_count?: number;
   section_id?: number;
@@ -247,10 +288,12 @@ export type TnvedBreadcrumbItem = {
   hs_code: string;
   title: string;
   level: number;
+  node_id?: string;
+  is_codeless?: boolean;
 };
 
 export async function fetchTnvedBreadcrumb(code: string): Promise<TnvedBreadcrumbItem[]> {
-  const norm = code.replace(/\D/g, '').slice(0, 10);
+  const norm = /^u-[a-f0-9]{24}$/.test(code) ? code : code.replace(/\D/g, '').slice(0, 10);
   if (!norm) return [];
   const { data } = await api.get<{ status: string; breadcrumb: TnvedBreadcrumbItem[] }>(
     `/tnved/breadcrumb/${encodeURIComponent(norm)}`,
@@ -265,6 +308,23 @@ export async function searchTnved(q: string): Promise<TnvedSearchHit[]> {
     `${PREFIX}/search?q=${encodeURIComponent(query)}`,
   );
   return data.results ?? [];
+}
+
+export type TnvedSearchPage = {
+  results: TnvedSearchHit[];
+  total: number | null;
+  offset: number;
+  limit: number;
+  has_more: boolean;
+  next_cursor: string | null;
+  previous_cursor: string | null;
+  last_cursor: string | null;
+};
+
+export async function searchTnvedPage(q: string, cursor?: string | null): Promise<TnvedSearchPage> {
+  const { data } = await api.get<Partial<TnvedSearchPage> & { results: TnvedSearchHit[] }>(`${PREFIX}/search`, { params: { q, ...(cursor ? { cursor } : {}) } });
+  return { results: data.results ?? [], total: data.total ?? null, offset: data.offset ?? 0, limit: data.limit ?? 40,
+    has_more: data.has_more ?? false, next_cursor: data.next_cursor ?? null, previous_cursor: data.previous_cursor ?? null, last_cursor: data.last_cursor ?? null };
 }
 
 export async function fetchTnvedPreview(code: string): Promise<TnvedPreview> {

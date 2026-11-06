@@ -1,0 +1,962 @@
+{
+  "index_url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+  "index_sha256": "7c3c3b636066d9f633d7d283c3cfedf52d863620d4986a9caef990e2bdc9c2d5",
+  "collected_at_utc": "2026-11-06T11:46:12.069382+00:00",
+  "sections": [
+    {
+      "code": "I",
+      "title": "Живые животные; продукты животного происхождения"
+    },
+    {
+      "code": "II",
+      "title": "Продукты растительного происхождения"
+    },
+    {
+      "code": "III",
+      "title": "Жиры и масла животного, растительного или микробиологического происхождения и продукты их расщепления; готовые пищевые жиры; воски животного или растительного происхождения"
+    },
+    {
+      "code": "IV",
+      "title": "Готовые пищевые продукты; алкогольные и безалкогольные напитки и уксус; табак и промышленные заменители табака; продукция, содержащая или не содержащая никотин, предназначенная для вдыхания без горения; прочая продукция, содержащая никотин и предназначенная для поступления никотина в организм человека"
+    },
+    {
+      "code": "V",
+      "title": "Минеральные продукты"
+    },
+    {
+      "code": "VI",
+      "title": "Продукция химической и связанных с ней отраслей промышленности"
+    },
+    {
+      "code": "VII",
+      "title": "Пластмассы и изделия из них; каучук, резина и изделия из них"
+    },
+    {
+      "code": "VIII",
+      "title": "Необработанные шкуры, выделанная кожа, натуральный мех и изделия из них; шорно-седельные изделия и упряжь; дорожные принадлежности, сумки и аналогичные им товары; изделия из внутренних органов животных (кроме шелкоотделительных желез шелкопряда)"
+    },
+    {
+      "code": "IX",
+      "title": "Древесина и изделия из нее; древесный уголь; пробка и изделия из нее; изделия из соломы, альфы или из прочих материалов для плетения; корзиночные и другие плетеные изделия"
+    },
+    {
+      "code": "X",
+      "title": "Масса из древесины или из других волокнистых целлюлозных материалов; регенерируемые бумага или картон (макулатура и отходы); бумага, картон и изделия из них"
+    },
+    {
+      "code": "XI",
+      "title": "Текстильные материалы и текстильные изделия"
+    },
+    {
+      "code": "XII",
+      "title": "Обувь, головные уборы, зонты, солнцезащитные зонты, трости, трости-сиденья, хлысты, кнуты и их части; обработанные перья и изделия из них; искусственные цветы; изделия из человеческого волоса"
+    },
+    {
+      "code": "XIII",
+      "title": "Изделия из камня, гипса, цемента, асбеста, слюды или аналогичных материалов; керамические изделия; стекло и изделия из него"
+    },
+    {
+      "code": "XIV",
+      "title": "Жемчуг природный или культивированный, драгоценные или полудрагоценные камни, драгоценные металлы, металлы, плакированные драгоценными металлами, и изделия из них; бижутерия; монеты"
+    },
+    {
+      "code": "XV",
+      "title": "Недрагоценные металлы и изделия из них"
+    },
+    {
+      "code": "XVI",
+      "title": "Машины, оборудование и механизмы; электротехническое оборудование; их части; звукозаписывающая и звуковоспроизводящая аппаратура, аппаратура для записи и воспроизведения телевизионного изображения и звука, их части и принадлежности"
+    },
+    {
+      "code": "XVII",
+      "title": "Средства наземного транспорта, летательные аппараты, плавучие средства и относящиеся к транспорту устройства и оборудование"
+    },
+    {
+      "code": "XVIII",
+      "title": "Инструменты и аппараты оптические, фотографические, кинематографические, измерительные, контрольные, прецизионные, медицинские или хирургические; часы всех видов; музыкальные инструменты; их части и принадлежности"
+    },
+    {
+      "code": "XIX",
+      "title": "Оружие и боеприпасы; их части и принадлежности"
+    },
+    {
+      "code": "XX",
+      "title": "Разные промышленные товары"
+    },
+    {
+      "code": "XXI",
+      "title": "Произведения искусства, предметы коллекционирования и антиквариат"
+    }
+  ],
+  "legal_status": "unverified",
+  "valid_from": null,
+  "collection_manifest_sha256": "baa2708f444176a493c2553972b20516bc6473d6e83348db4f9929e27dd2faa2",
+  "source_corpus_sha256": "b7db29fd5992dcc3b61abe746509293fdd0ba347ce7efc3b6eb578fe15a6c275",
+  "headers_policy": "Headers/cookies omitted; canonical collection manifest remains local, hash-bound.",
+  "chapters": [
+    {
+      "chapter": "01",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.01_2022_25.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.01_2022_25.04.2022.pdf",
+      "title": "Живые животные",
+      "status": "collected",
+      "bytes": 168285,
+      "sha256": "7942d2176d8c728dde35f55cc4871ba230fdef721b30d5c191fd444cd55537c9"
+    },
+    {
+      "chapter": "02",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.02_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.02_2022.pdf",
+      "title": "Мясо и пищевые мясные субпродукты",
+      "status": "collected",
+      "bytes": 474466,
+      "sha256": "d026efa23a48105a80f4a9194525f454d36884d7cbc94abaa5843a4fcc871b74"
+    },
+    {
+      "chapter": "03",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.03_2022_28.03.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.03_2022_28.03.2022.pdf",
+      "title": "Рыба и ракообразные, моллюски и прочие водные беспозвоночные",
+      "status": "collected",
+      "bytes": 438928,
+      "sha256": "8f5cb9bf465b882778d0530f64221b6fa7b4aaafea492a032be66991115dd059"
+    },
+    {
+      "chapter": "04",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.04_2022_25.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.04_2022_25.04.2022.pdf",
+      "title": "Молочная продукция; яйца птиц; мед натуральный; пищевые продукты животного происхождения, в другом месте не поименованные или не включенные",
+      "status": "collected",
+      "bytes": 257546,
+      "sha256": "5b94a99f1784e8f82d77883235360b96440781fab68c76c15bdb06a516584277"
+    },
+    {
+      "chapter": "05",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.05_2022_28.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.05_2022_28.04.2022.pdf",
+      "title": "Продукты животного происхождения, в другом месте не поименованные или не включенные",
+      "status": "collected",
+      "bytes": 149757,
+      "sha256": "2e7670fe509fe6ce6175f3edd6ed52a29cb1aca1644cbcdc77ffd2fcbdce6a4a"
+    },
+    {
+      "chapter": "06",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.06_2022_25.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.06_2022_25.04.2022.pdf",
+      "title": "Живые деревья и другие растения; луковицы, корни и прочие аналогичные части растений; срезанные цветы и декоративная зелень",
+      "status": "collected",
+      "bytes": 155179,
+      "sha256": "6cd11b8b134d4f3712137966bdb757d81bc9720e3da6abb5c6183ad1960bbbf3"
+    },
+    {
+      "chapter": "07",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.07_2022_08.05.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.07_2022_08.05.2022.pdf",
+      "title": "Овощи и некоторые съедобные корнеплоды и клубнеплоды",
+      "status": "collected",
+      "bytes": 190992,
+      "sha256": "75080d3883897f0d697347093454326d6ba05f0e9796d6eeb97bc15dbe1e3f88"
+    },
+    {
+      "chapter": "08",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.08_2022_28.07.2024.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.08_2022_28.07.2024.pdf",
+      "title": "Съедобные фрукты и орехи; кожура цитрусовых плодов или корки дынь",
+      "status": "collected",
+      "bytes": 376659,
+      "sha256": "e4c6e8d764375e793281554732cde740411d4faa0abd80bfe4b5250994f60bd4"
+    },
+    {
+      "chapter": "09",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.09_2022_25.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.09_2022_25.04.2022.pdf",
+      "title": "Кофе, чай, мате, или парагвайский чай, и пряности",
+      "status": "collected",
+      "bytes": 157910,
+      "sha256": "1efd21071ce9701f1d42f7ceca100d0fff2d951e454f9274759ca66d85d6efa6"
+    },
+    {
+      "chapter": "10",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.10_2022_25.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.10_2022_25.04.2022.pdf",
+      "title": "Злаки",
+      "status": "collected",
+      "bytes": 172905,
+      "sha256": "22986cc7cbca59417296f14dbe5668dbcd10cf585ae9e9ad6dabad1eeaadc887"
+    },
+    {
+      "chapter": "11",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.11_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.11_2022_08.03.2026.pdf",
+      "title": "Продукция мукомольно-крупяной промышленности; солод; крахмалы; инулин; пшеничная клейковина",
+      "status": "collected",
+      "bytes": 312326,
+      "sha256": "260c816907338028f08ac33d3b3389c2d2ac8097fbc95eb70f74ec405fa299e6"
+    },
+    {
+      "chapter": "12",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.12_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.12_2022_08.03.2026.pdf",
+      "title": "Масличные семена и плоды; прочие семена, плоды и зерно; лекарственные растения и растения для технических целей; солома и фураж",
+      "status": "collected",
+      "bytes": 491821,
+      "sha256": "bfdc6f500387a69c116d8ce16a8a15c06fc8af00ecc7419e66aa31686db27650"
+    },
+    {
+      "chapter": "13",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.13_2022_25.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.13_2022_25.04.2022.pdf",
+      "title": "Шеллак природный неочищенный; камеди, смолы и прочие растительные соки и экстракты",
+      "status": "collected",
+      "bytes": 135110,
+      "sha256": "ddc4cd6b3dd7d78fc856ffb7bee7bf308144df500e206a22e883b15dbf7f25b1"
+    },
+    {
+      "chapter": "14",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.14_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.14_2022_08.03.2026.pdf",
+      "title": "Растительные материалы для изготовления плетеных изделий; прочие продукты растительного происхождения, в другом месте не поименованные или не включенные",
+      "status": "collected",
+      "bytes": 210230,
+      "sha256": "6589f39bda3dec76d4167e7bd6fed0ba81ca87444860f3cecc4f3e6f85ccc64d"
+    },
+    {
+      "chapter": "15",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.15_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.15_2022_08.03.2026.pdf",
+      "title": "Жиры и масла животного, растительного или микробиологического происхождения и продукты их расщепления; готовые пищевые жиры; воски животного или растительного происхождения",
+      "status": "collected",
+      "bytes": 467620,
+      "sha256": "7ae3b93d5011cda4449d75039dbcbb6cd8e8853b8ffa6698db22960476c1553a"
+    },
+    {
+      "chapter": "16",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.16_2022_10.09.2023.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.16_2022_10.09.2023.pdf",
+      "title": "Готовые продукты из мяса, рыбы, ракообразных, моллюсков или прочих водных беспозвоночных или насекомых",
+      "status": "collected",
+      "bytes": 202361,
+      "sha256": "15570c27486bbae4e5545cb2cc92eeb0775262c730c0622af03ce324e46a5061"
+    },
+    {
+      "chapter": "17",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.17_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.17_2022_08.03.2026.pdf",
+      "title": "Сахар и кондитерские изделия из сахара",
+      "status": "collected",
+      "bytes": 391910,
+      "sha256": "dfd21c0be4bad3d6306a8298a20ad4ff6df4f4a207bbae82236a89772136ea36"
+    },
+    {
+      "chapter": "18",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.18_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.18_2022_08.03.2026.pdf",
+      "title": "Какао и продукты из него",
+      "status": "collected",
+      "bytes": 232425,
+      "sha256": "90eee6f644e866ab2d06ee26fed1b4fa54f21f7f6cb4cfb10461051a80335816"
+    },
+    {
+      "chapter": "19",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.19_2022_25.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.19_2022_25.04.2022.pdf",
+      "title": "Готовые продукты из зерна злаков, муки, крахмала или молока; мучные кондитерские изделия",
+      "status": "collected",
+      "bytes": 169395,
+      "sha256": "1eeee5eadd2d095038b287ddae6756d0ff580013f9f0ee6085aece474aec5f55"
+    },
+    {
+      "chapter": "20",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.20_2022_12.06.2025.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.20_2022_12.06.2025.pdf",
+      "title": "Продукты переработки овощей, фруктов, орехов или прочих частей растений",
+      "status": "collected",
+      "bytes": 841198,
+      "sha256": "0d766331e83704cdaf0b260c4968e8e10cb2ee122261a1be1bacec4b8d332a37"
+    },
+    {
+      "chapter": "21",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.21_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.21_2022_08.03.2026.pdf",
+      "title": "Разные пищевые продукты",
+      "status": "collected",
+      "bytes": 289751,
+      "sha256": "acb6761fd931e6e0ab07b3974bd3291b962bb6ad6c0617a7461acced446de85f"
+    },
+    {
+      "chapter": "22",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.22_2022_25.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.22_2022_25.04.2022.pdf",
+      "title": "Алкогольные и безалкогольные напитки и уксус",
+      "status": "collected",
+      "bytes": 315516,
+      "sha256": "d36ff91756bda80cf54895843e8c5fca75897b26d6e77596f29a885f06b375d7"
+    },
+    {
+      "chapter": "23",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.23_2022_19.02.2023.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.23_2022_19.02.2023.pdf",
+      "title": "Остатки и отходы пищевой промышленности; готовые корма для животных",
+      "status": "collected",
+      "bytes": 183547,
+      "sha256": "8f11edeb8907b0f325c3c492943880fa6872839f05cac57d3701de066bbee775"
+    },
+    {
+      "chapter": "24",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.24_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.24_2022.pdf",
+      "title": "Табак и промышленные заменители табака; продукция, содержащая или не содержащая никотин, предназначенная для вдыхания без горения; прочая продукция, содержащая никотин и предназначенная для поступления никотина в организм человека",
+      "status": "collected",
+      "bytes": 150663,
+      "sha256": "2b4d840d43b2ba88fdf1870d006e1248927b5120b3806c4822ca96d6a24e688b"
+    },
+    {
+      "chapter": "25",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.25_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.25_2022_08.03.2026.pdf",
+      "title": "Соль; сера; земли и камень; штукатурные материалы, известь и цемент",
+      "status": "collected",
+      "bytes": 314259,
+      "sha256": "9dbc2532eca36d9a36831bf5904f1c97e1554ea52ace97143e72673e62be0bee"
+    },
+    {
+      "chapter": "26",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.26_2022_24.08.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.26_2022_24.08.2026.pdf",
+      "title": "Руды, шлак и зола",
+      "status": "collected",
+      "bytes": 258613,
+      "sha256": "0320d5f9fee587babbeab24af8a45dd02a6f77c58ef0d7061f1436643015ecf4"
+    },
+    {
+      "chapter": "27",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.27_2022_11.07.2026.pdf",
+      "title": "Топливо минеральное, нефть и продукты их перегонки; битуминозные вещества; воски минеральные",
+      "status": "collected",
+      "bytes": 461645,
+      "sha256": "ab6399bf237c14e85a2ca51ac97cefe7922ba84745854f3cffc550f6f15f4927"
+    },
+    {
+      "chapter": "28",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.28_2022_17.08.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.28_2022_17.08.2026.pdf",
+      "title": "Продукты неорганической химии; соединения неорганические или органические драгоценных металлов, редкоземельных металлов, радиоактивных элементов или изотопов",
+      "status": "collected",
+      "bytes": 560509,
+      "sha256": "0e606d00ec3d60c340d509f483411a078cb40bdded6f494c196a335d9e7b08f8"
+    },
+    {
+      "chapter": "29",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_11.07.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.29_2022_11.07.2026.pdf",
+      "title": "Органические химические соединения",
+      "status": "collected",
+      "bytes": 958765,
+      "sha256": "4da4173e26b840bbc6cfb8d19c3f8d078514f1826f36e017e984dc52f96b365e"
+    },
+    {
+      "chapter": "30",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.30_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.30_2022_08.03.2026.pdf",
+      "title": "Фармацевтическая продукция",
+      "status": "collected",
+      "bytes": 346952,
+      "sha256": "5f4ea9bc3534c7d01b314eb7fd9219a38d8dd74d69960394f55c929f686d0249"
+    },
+    {
+      "chapter": "31",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.31_2022_03.12.2023.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.31_2022_03.12.2023.pdf",
+      "title": "Удобрения",
+      "status": "collected",
+      "bytes": 155278,
+      "sha256": "e2787e2b31953994570aef12659aae04aef69b87dd172b44123552fa56472a97"
+    },
+    {
+      "chapter": "32",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_01.07.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.32_2022_01.07.2026.pdf",
+      "title": "Экстракты дубильные или красильные; таннины и их производные; красители, пигменты и прочие красящие вещества; краски и лаки; шпатлевки и прочие мастики; полиграфическая краска, чернила, тушь",
+      "status": "collected",
+      "bytes": 311286,
+      "sha256": "645cc95586cabb4bf6fafb353c5b99d79cbd13183dd4560ab28e19f1a791da84"
+    },
+    {
+      "chapter": "33",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.33_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.33_2022_08.03.2026.pdf",
+      "title": "Эфирные масла и резиноиды; парфюмерные, косметические или туалетные средства",
+      "status": "collected",
+      "bytes": 263836,
+      "sha256": "26eb35574b88e98b4e0a041350eef22cfde7ad98f740464dd5837085bcc51dc3"
+    },
+    {
+      "chapter": "34",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.34_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.34_2022_08.03.2026.pdf",
+      "title": "Мыло, поверхностно-активные органические вещества, моющие средства, смазочные материалы, искусственные и готовые воски, составы для чистки или полировки, свечи и аналогичные изделия, пасты для лепки, пластилин, \"зубоврачебный воск\" и зубоврачебные составы на основе гипса",
+      "status": "collected",
+      "bytes": 262876,
+      "sha256": "d055b4b41bf8f72b131d08b77982a61f9231843b2e896fa61170f3f75c71532b"
+    },
+    {
+      "chapter": "35",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.35_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.35_2022_08.03.2026.pdf",
+      "title": "Белковые вещества; модифицированные крахмалы; клеи; ферменты",
+      "status": "collected",
+      "bytes": 258661,
+      "sha256": "199b267433c23f0eccb35d9695ef4bb6ec6dc8e31dd9e7f7efda94dc49fd65c5"
+    },
+    {
+      "chapter": "36",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.36_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.36_2022.pdf",
+      "title": "Взрывчатые вещества; пиротехнические изделия; спички; пирофорные сплавы; некоторые горючие вещества",
+      "status": "collected",
+      "bytes": 135604,
+      "sha256": "1be7c23e6d14a48cff9302a011805dbe9bb37946c619ef2953172255a203f716"
+    },
+    {
+      "chapter": "37",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.37_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.37_2022_08.03.2026.pdf",
+      "title": "Фото- и кинотовары",
+      "status": "collected",
+      "bytes": 250540,
+      "sha256": "998fca6b6aa238f91b65ea1e852767f9e286cfbee500f32fa5ad81b619ab1918"
+    },
+    {
+      "chapter": "38",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.38_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.38_2022_08.03.2026.pdf",
+      "title": "Прочие химические продукты",
+      "status": "collected",
+      "bytes": 557755,
+      "sha256": "4d8798483fbe725cb05142a953493b93f6b8ad87ae4f545c8664fada59215c1d"
+    },
+    {
+      "chapter": "39",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.39_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.39_2022_08.03.2026.pdf",
+      "title": "Пластмассы и изделия из них",
+      "status": "collected",
+      "bytes": 863350,
+      "sha256": "b31bc592790137114e151ddd628ed54082e24b01b1c8245ecc24cb2f84413b5a"
+    },
+    {
+      "chapter": "40",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.40_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.40_2022_08.03.2026.pdf",
+      "title": "Каучук, резина и изделия из них",
+      "status": "collected",
+      "bytes": 368363,
+      "sha256": "57bced8470cc8bbd88d79038374015bdba68c35d5592166002c5ac9115eddbb1"
+    },
+    {
+      "chapter": "41",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.41_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.41_2022.pdf",
+      "title": "Hеобработанные шкуры (кроме натурального меха) и выделанная кожа",
+      "status": "collected",
+      "bytes": 181138,
+      "sha256": "871219209cdca4e6b730b52d2e664ed85e09b5ad698fa2b3528ec88414ce3af7"
+    },
+    {
+      "chapter": "42",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.42_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.42_2022.pdf",
+      "title": "Изделия из кожи; шорно-седельные изделия и упряжь; дорожные принадлежности, сумки и аналогичные им товары; изделия из внутренних органов животных (кроме шелкоотделительных желез шелкопряда)",
+      "status": "collected",
+      "bytes": 161971,
+      "sha256": "5f2f383ca3831c8dbd4afe9ecc6adef5f28bf7b5bce53d28dc072630482db3db"
+    },
+    {
+      "chapter": "43",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.43_2022_25.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.43_2022_25.04.2022.pdf",
+      "title": "Натуральный и искусственный мех; изделия из него",
+      "status": "collected",
+      "bytes": 172505,
+      "sha256": "8fe23e71527ed8a4283c5dfb5f1146580ccb191362275887241f83862b997f1f"
+    },
+    {
+      "chapter": "44",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.44_2022_01.11.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.44_2022_01.11.2026.pdf",
+      "title": "Древесина и изделия из нее; древесный уголь",
+      "status": "collected",
+      "bytes": 1152640,
+      "sha256": "8b4e020efcd88c782089f2b9a0e1ce2689ea012694b23d80ff253ca6ef1281ab"
+    },
+    {
+      "chapter": "45",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.45_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.45_2022_08.03.2026.pdf",
+      "title": "Пробка и изделия из нее",
+      "status": "collected",
+      "bytes": 207255,
+      "sha256": "700a1770a9bb19d9ed00f4e9f5a8d4a55089ee58dfd2e871f79678774f6114ce"
+    },
+    {
+      "chapter": "46",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.46_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.46_2022.pdf",
+      "title": "Изделия из соломы, альфы или прочих материалов для плетения; корзиночные изделия и плетеные изделия",
+      "status": "collected",
+      "bytes": 143119,
+      "sha256": "a3653ef57d917f00208cf66cb054f8706bec89706f17e7a3bb1011b48eae38d6"
+    },
+    {
+      "chapter": "47",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.47_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.47_2022_08.03.2026.pdf",
+      "title": "Масса из древесины или из других волокнистых целлюлозных материалов; регенерируемые бумага или картон (макулатура и отходы)",
+      "status": "collected",
+      "bytes": 234188,
+      "sha256": "d6218c263892b8d5b49981961c0a903d62376aefe8d5efe9a3aab10e92a3d8ca"
+    },
+    {
+      "chapter": "48",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.48_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.48_2022_08.03.2026.pdf",
+      "title": "Бумага и картон; изделия из бумажной массы, бумаги или картона",
+      "status": "collected",
+      "bytes": 511843,
+      "sha256": "a5ec4385eee6bcefc9b4893c54f4ed3d8453050f01bcc4cf8f0c7f226985dbdb"
+    },
+    {
+      "chapter": "49",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.49_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.49_2022_08.03.2026.pdf",
+      "title": "Печатные книги, газеты, репродукции и другие изделия полиграфической промышленности; рукописи, машинописные тексты и планы",
+      "status": "collected",
+      "bytes": 232682,
+      "sha256": "293ab81b29eb3c426d406c83a75bfea1f66da1d4171c39a8927b91ec7d57bb50"
+    },
+    {
+      "chapter": "50",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.50_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.50_2022.pdf",
+      "title": "Шелк",
+      "status": "collected",
+      "bytes": 186643,
+      "sha256": "bbf3618a251f6f77ba04ae264c655f195650c8fe1935c7a891e3a16738c89b96"
+    },
+    {
+      "chapter": "51",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.51_2022_07.02.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.51_2022_07.02.2026.pdf",
+      "title": "Шерсть, тонкий или грубый волос животных; пряжа и ткань, из конского волоса",
+      "status": "collected",
+      "bytes": 294225,
+      "sha256": "ba5550a5cb109903ab86c093200cbffd117e24d22bcc62680cd209659d75dbc7"
+    },
+    {
+      "chapter": "52",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.52_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.52_2022_08.03.2026.pdf",
+      "title": "Хлопок",
+      "status": "collected",
+      "bytes": 381504,
+      "sha256": "4b19108a916debb82a65ff59b64519e3b7313896332e6a104555236d4a72e0fd"
+    },
+    {
+      "chapter": "53",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.53_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.53_2022_08.03.2026.pdf",
+      "title": "Прочие растительные текстильные волокна; бумажная пряжа и ткани из бумажной пряжи",
+      "status": "collected",
+      "bytes": 251726,
+      "sha256": "a55360f52aad508eaae0ee8134b2ee33ab174b7febb0e6a12a1a2d63507aeaa8"
+    },
+    {
+      "chapter": "54",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.54_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.54_2022_08.03.2026.pdf",
+      "title": "Химические нити; плоские и аналогичные нити из химических текстильных материалов",
+      "status": "collected",
+      "bytes": 300554,
+      "sha256": "6bf4a879ad72a599ce73af61c6ff05f935671f99ace9287ffa9f6b08740e3ed3"
+    },
+    {
+      "chapter": "55",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.55_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.55_2022_08.03.2026.pdf",
+      "title": "Химические волокна",
+      "status": "collected",
+      "bytes": 544245,
+      "sha256": "b06b50075fc8e20711530f606f0cf8029c2db405f90e0d5c0e0000455c6719ad"
+    },
+    {
+      "chapter": "56",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.56_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.56_2022_08.03.2026.pdf",
+      "title": "Вата, войлок или фетр и нетканые материалы; специальная пряжа; бечевки, веревки, канаты и тросы и изделия из них",
+      "status": "collected",
+      "bytes": 293929,
+      "sha256": "90391acfeb92de823141bda0eafe794e87c103d51fbe34f0537968ad9830c784"
+    },
+    {
+      "chapter": "57",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.57_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.57_2022.pdf",
+      "title": "Ковры и прочие текстильные напольные покрытия",
+      "status": "collected",
+      "bytes": 151232,
+      "sha256": "825d136aedef63d3a5eb7d3729bda93d3d7ba1c74cf5893bdb578fdb63a24fc2"
+    },
+    {
+      "chapter": "58",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.58_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.58_2022_08.03.2026.pdf",
+      "title": "Специальные ткани; тафтинговые текстильные материалы; кружева; гобелены; отделочные материалы; вышивки",
+      "status": "collected",
+      "bytes": 262970,
+      "sha256": "d024829230be6af70a96744558e3957e7aa5f6a61fc7c487efb6e234fe3281cb"
+    },
+    {
+      "chapter": "59",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.59_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.59_2022_08.03.2026.pdf",
+      "title": "Текстильные материалы, пропитанные, с покрытием или дублированные; текстильные изделия технического назначения",
+      "status": "collected",
+      "bytes": 287186,
+      "sha256": "9515bd420c1a050cbe436401d46c59e9e986ce2869af75ff3d917ebb46f9b0d4"
+    },
+    {
+      "chapter": "60",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.60_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.60_2022_08.03.2026.pdf",
+      "title": "Трикотажные полотна машинного или ручного вязания",
+      "status": "collected",
+      "bytes": 269184,
+      "sha256": "bd4449385b0dc86f6dff307cce0874a6d8f6f85ec03444601a3874860164f916"
+    },
+    {
+      "chapter": "61",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.61_2022_01.11.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.61_2022_01.11.2026.pdf",
+      "title": "Предметы одежды и принадлежности к одежде, трикотажные машинного или ручного вязания",
+      "status": "collected",
+      "bytes": 447201,
+      "sha256": "9bc193ec03b69f1f456ab280800622d0d437518c2bbeaab70a6eb0e04f0f6a05"
+    },
+    {
+      "chapter": "62",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.62_2022_01.11.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.62_2022_01.11.2026.pdf",
+      "title": "Предметы одежды и принадлежности к одежде, кроме трикотажных машинного или ручного вязания",
+      "status": "collected",
+      "bytes": 465152,
+      "sha256": "be2edb92224fa7209746cb1d0313ea262d96e124adb77893edec9f281246872e"
+    },
+    {
+      "chapter": "63",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.63_2022_12.06.2025.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.63_2022_12.06.2025.pdf",
+      "title": "Прочие готовые текстильные изделия; наборы; одежда и текстильные изделия, бывшие в употреблении; тряпье",
+      "status": "collected",
+      "bytes": 328999,
+      "sha256": "d31cb8950e5f88e9fdf70ee3c2635c9f28ba8a0be4b3aa54cbbb929fede3491e"
+    },
+    {
+      "chapter": "64",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.64_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.64_2022.pdf",
+      "title": "Обувь, гетры и аналогичные изделия; их детали",
+      "status": "collected",
+      "bytes": 189095,
+      "sha256": "2a8b54c1915d42c698b88e803ce68c226731e13228e03069c631c89d2dc32e74"
+    },
+    {
+      "chapter": "65",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.65_2022_01.11.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.65_2022_01.11.2026.pdf",
+      "title": "Головные уборы и их части",
+      "status": "collected",
+      "bytes": 219732,
+      "sha256": "bf721e97afb6125f2fb846a7d29adcd9a398f3d52203c8e59429b95f943a89eb"
+    },
+    {
+      "chapter": "66",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.66_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.66_2022.pdf",
+      "title": "Зонты, солнцезащитные зонты, трости, трости-сиденья, хлысты, кнуты для верховой езды и их части",
+      "status": "collected",
+      "bytes": 132356,
+      "sha256": "f673510605765d131b90d2d817a8bd0f2450c682f65a16a3efc05d8f83cdcf54"
+    },
+    {
+      "chapter": "67",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.67_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.67_2022.pdf",
+      "title": "Обработанные перья и пух и изделия из перьев или пуха; искусственные цветы; изделия из человеческого волоса",
+      "status": "collected",
+      "bytes": 134754,
+      "sha256": "fb0913b9dd8de7f43828b3eae59669e5c5fd89fc087cce78d73459191f641ac7"
+    },
+    {
+      "chapter": "68",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.68_2022_25.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.68_2022_25.04.2022.pdf",
+      "title": "Изделия из камня, гипса, цемента, асбеста, слюды или аналогичных материалов",
+      "status": "collected",
+      "bytes": 185791,
+      "sha256": "e6adc19e62c8bdf6530d40994eaef74e2c46ece905bbd6f5109b5850db41461f"
+    },
+    {
+      "chapter": "69",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.69_2022_08.05.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.69_2022_08.05.2022.pdf",
+      "title": "Керамические изделия",
+      "status": "collected",
+      "bytes": 178322,
+      "sha256": "11daa8f36a456ee363b6eefc3abb52d2d2b1627a4e9ac6db1f383e625716e443"
+    },
+    {
+      "chapter": "70",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.70_2022_17.03.2024.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.70_2022_17.03.2024.pdf",
+      "title": "Стекло и изделия из него",
+      "status": "collected",
+      "bytes": 630647,
+      "sha256": "772ddd017b6a480b18433d524194b0fb1b3c230859d6ce8f5025e4eca3c862c3"
+    },
+    {
+      "chapter": "71",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.71_2022_25.01.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.71_2022_25.01.2026.pdf",
+      "title": "Жемчуг природный или культивированный, драгоценные или полудрагоценные камни, драгоценные металлы, металлы, плакированные драгоценными металлами, и изделия из них; бижутерия; монеты",
+      "status": "collected",
+      "bytes": 349297,
+      "sha256": "62c4d3031fc503134c10eb478532cb47e61a4a32daba7cb1b033ec6667dbdabd"
+    },
+    {
+      "chapter": "72",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.72_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.72_2022_08.03.2026.pdf",
+      "title": "Черные металлы",
+      "status": "collected",
+      "bytes": 794761,
+      "sha256": "6581d927c6fe0e0cfae11b7411885da7aec9e73f3be28186a170f88b624f05f4"
+    },
+    {
+      "chapter": "73",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.73_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.73_2022_08.03.2026.pdf",
+      "title": "Изделия из черных металлов",
+      "status": "collected",
+      "bytes": 724871,
+      "sha256": "47f6b05c2530b409ce33ae2f18316ceecb0ba9bd30a3ebca5e7f056defed5b55"
+    },
+    {
+      "chapter": "74",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.74_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.74_2022_08.03.2026.pdf",
+      "title": "Медь и изделия из нее",
+      "status": "collected",
+      "bytes": 295630,
+      "sha256": "5ceba359c9edf064f17b922cf980af1b13438110705150b57235e0e34dcc8fa4"
+    },
+    {
+      "chapter": "75",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.75_2022_25.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.75_2022_25.04.2022.pdf",
+      "title": "Никель и изделия из него",
+      "status": "collected",
+      "bytes": 144963,
+      "sha256": "6f09acf17937deb9bcb9f33150189e7c68889fdfeaa3498f37e8fc324ca36d5a"
+    },
+    {
+      "chapter": "76",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.76_2022_08.05.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.76_2022_08.05.2022.pdf",
+      "title": "Алюминий и изделия из него",
+      "status": "collected",
+      "bytes": 195821,
+      "sha256": "57ea41461e8587664197fd7d2a6ec6d8ca13ad3498b4c6b6d93191bb988cc9cb"
+    },
+    {
+      "chapter": "78",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.78_2022_25.04.2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.78_2022_25.04.2022.pdf",
+      "title": "Свинец и изделия из него",
+      "status": "collected",
+      "bytes": 142170,
+      "sha256": "afbb5b896009016ce781160166d24b6246797edd901b7fe22a945f48be808a82"
+    },
+    {
+      "chapter": "79",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.79_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.79_2022.pdf",
+      "title": "Цинк и изделия из него",
+      "status": "collected",
+      "bytes": 135204,
+      "sha256": "ed572511f422cc933154f5175177bab8dd140c58ed5ad22c6fe8852d3bd7da15"
+    },
+    {
+      "chapter": "80",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.80_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.80_2022.pdf",
+      "title": "Олово и изделия из него",
+      "status": "collected",
+      "bytes": 133721,
+      "sha256": "abda2734e52a5288d925eff96259cf42f993b2657a22d1c8548a5bc19fce5b15"
+    },
+    {
+      "chapter": "81",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.81_2022_08.10.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.81_2022_08.10.2026.pdf",
+      "title": "Прочие недрагоценные металлы; металлокерамика; изделия из них",
+      "status": "collected",
+      "bytes": 295563,
+      "sha256": "4dff7eab93412d80152165e7dba364a42783e940e4dbb78b9f91266073222ac0"
+    },
+    {
+      "chapter": "82",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.82_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.82_2022_08.03.2026.pdf",
+      "title": "Инструменты, приспособления, ножевые изделия, ложки и вилки из недрагоценных металлов; их части из недрагоценных металлов",
+      "status": "collected",
+      "bytes": 337080,
+      "sha256": "7fb742d0c4368b9b20785b8904b4ec98eee4fbb20ec3745de0e3e1aa6672ad15"
+    },
+    {
+      "chapter": "83",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.83_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.83_2022_08.03.2026.pdf",
+      "title": "Прочие изделия из недрагоценных металлов",
+      "status": "collected",
+      "bytes": 268523,
+      "sha256": "7d056d47ceb1ab22dd151f2b104e354d17593eea0ed02e59c8d281900a093ad6"
+    },
+    {
+      "chapter": "84",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.84_2022_01.11.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.84_2022_01.11.2026.pdf",
+      "title": "Реакторы ядерные, котлы, оборудование и механические устройства; их части",
+      "status": "collected",
+      "bytes": 2330352,
+      "sha256": "5b9c1fbf0f274f306c8b9b51f386eefa1e62984da0f06acdd9be8072062a2186"
+    },
+    {
+      "chapter": "85",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.85_2022_01.11.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.85_2022_01.11.2026.pdf",
+      "title": "Электрические машины и оборудование, их части; звукозаписывающая и звуковоспроизводящая аппаратура, аппаратура для записи и воспроизведения телевизионного изображения и звука, их части и принадлежности",
+      "status": "collected",
+      "bytes": 2014548,
+      "sha256": "e71d9ac193ab2a03f391f69fe859845a5fe1650d032d70ab9632529a2227571d"
+    },
+    {
+      "chapter": "86",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.86_2022_20.03.2023.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.86_2022_20.03.2023.pdf",
+      "title": "Железнодорожные локомотивы или моторные вагоны трамвая, подвижной состав и их части; путевое оборудование и устройства для железных дорог или трамвайных путей и их части; механическое (включая электромеханическое) сигнальное оборудование всех видов",
+      "status": "collected",
+      "bytes": 176506,
+      "sha256": "42454a7fca6cdf3d9e05002c9330d2843e6bc318d5e3b3e81e319fc9e64f84c6"
+    },
+    {
+      "chapter": "87",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.87_2022_22.01.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.87_2022_22.01.2026.pdf",
+      "title": "Средства наземного транспорта, кроме железнодорожного или трамвайного подвижного состава, и их части и принадлежности",
+      "status": "collected",
+      "bytes": 1510170,
+      "sha256": "4c705ac9b62fd54b57ff40bb6aa88c17e2109a3bf3d00e706ded973e74071016"
+    },
+    {
+      "chapter": "88",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.88_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.88_2022.pdf",
+      "title": "Летательные аппараты, космические аппараты, и их части",
+      "status": "collected",
+      "bytes": 202550,
+      "sha256": "5892440f247df978f86dfa3028d49e33e38698672754ce8f3f50f8cf948a41e9"
+    },
+    {
+      "chapter": "89",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.89_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.89_2022.pdf",
+      "title": "Суда, лодки и плавучие конструкции",
+      "status": "collected",
+      "bytes": 153932,
+      "sha256": "11e79dd4052c88cb6b2b312ab48171629959ec13a6bf1ad0514486def86548bb"
+    },
+    {
+      "chapter": "90",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.90_2022_01.11.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.90_2022_01.11.2026.pdf",
+      "title": "Инструменты и аппараты оптические, фотографические, кинематографические, измерительные, контрольные, прецизионные, медицинские или хирургические; их части и принадлежности",
+      "status": "collected",
+      "bytes": 591310,
+      "sha256": "6a07fee0a4a5e462ef97c9fe981ed1a7eac1daf7de9827ea198e95be0e630d1f"
+    },
+    {
+      "chapter": "91",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.91_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.91_2022.pdf",
+      "title": "Часы всех видов и их части",
+      "status": "collected",
+      "bytes": 157959,
+      "sha256": "5766f7126e770f6d5cace523fde8a05fe67061e8e7a28bdaee247e18cbf2cc53"
+    },
+    {
+      "chapter": "92",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.92_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.92_2022.pdf",
+      "title": "Инструменты музыкальные; их части и принадлежности",
+      "status": "collected",
+      "bytes": 147025,
+      "sha256": "c2f818b1a4ebc2d9eb86ee4d417e96273a19bdf3a88b3257fad02fadf0ae77da"
+    },
+    {
+      "chapter": "93",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.93_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.93_2022.pdf",
+      "title": "Оружие и боеприпасы; их части и принадлежности",
+      "status": "collected",
+      "bytes": 148789,
+      "sha256": "6135fcf97bee5bb1e6e7bc777b737bd24d795bd2919fff925caa57e0a44bf4e2"
+    },
+    {
+      "chapter": "94",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.94_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.94_2022_08.03.2026.pdf",
+      "title": "Мебель; постельные принадлежности, матрацы, основы матрацные, диванные подушки и аналогичные набивные принадлежности мебели; светильники и осветительное оборудование, в другом месте не поименованные или не включенные; световые вывески, световые таблички с именем или названием, или адресом и аналогичные изделия; сборные строительные конструкции",
+      "status": "collected",
+      "bytes": 487732,
+      "sha256": "e87d6249bc007ce274fe3d3ffe575559c65340393100bfdb1ef4ff12c9b232bd"
+    },
+    {
+      "chapter": "95",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.95_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.95_2022.pdf",
+      "title": "Игрушки, игры и спортивный инвентарь; их части и принадлежности",
+      "status": "collected",
+      "bytes": 187451,
+      "sha256": "a1ed9abdcd300c8ea9fd6657ca332fa11d366cdca34ef25ac975f96bfa109f2c"
+    },
+    {
+      "chapter": "96",
+      "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.96_2022_08.03.2026.pdf",
+      "url_final": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.96_2022_08.03.2026.pdf",
+      "title": "Разные готовые изделия",
+      "status": "collected",
+      "bytes": 336032,
+      "sha256": "1e63c350ad03d60f77c4c8a9e21c47b94f9a294dd01b277345817ba1b4ec1d4b"
+    },
+    {
+      "chapter": "97",
+      "url": "https://eec.eaeunion.org/upload/files/catr/ett/ru.97_2022.pdf",
+      "url_final": "https://eec.eaeunion.org/upload/files/catr/ett/ru.97_2022.pdf",
+      "title": "Произведения искусства, предметы коллекционирования и антиквариат",
+      "status": "collected",
+      "bytes": 138718,
+      "sha256": "ab11deb403161e8c5be060888029491685cba27b980c908988d1fb97e4d7156e"
+    }
+  ]
+}

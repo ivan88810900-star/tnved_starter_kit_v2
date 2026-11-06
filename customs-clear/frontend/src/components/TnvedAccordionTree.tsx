@@ -6,7 +6,8 @@ import {
   fetchTnvedChildren,
   formatCode,
   isFullTnvedCode,
-  searchTnved,
+  searchTnvedPage,
+  type TnvedSearchPage,
   type TnvedBreadcrumbItem,
   type TnvedChildItem,
   type TnvedSearchHit,
@@ -43,8 +44,11 @@ function isRomanSection(code: string): boolean {
 }
 
 function nodeKey(item: TnvedChildItem, index: number): string {
-  return `${item.code}-${item.is_codeless ? 'h' : 'n'}-${index}`;
+  return item.node_id || `${item.code}-${item.is_codeless ? 'h' : 'n'}-${index}`;
 }
+
+function identity(item: TnvedChildItem | TnvedSearchHit): string { return item.node_id || item.code; }
+function sourceName(item: TnvedChildItem | TnvedSearchHit): string { return item.source_order == null ? formatTnvedCommodityName(item.name) : item.name; }
 
 function displayLabel(item: TnvedChildItem): string {
   if (item.level === 'section') return `Раздел ${item.display_code || item.code}`;
@@ -81,6 +85,8 @@ function LeafRow({ item, depth, inCodelessBranch, onSelectLeaf }: LeafRowProps) 
     >
       <button
         type="button"
+        data-node-id={identity(item)}
+        data-code={item.code}
         onClick={() => onSelectLeaf(codeDigits)}
         style={inCodelessBranch ? { paddingLeft: depth * INDENT_PX + 8 } : undefined}
         className={
@@ -93,18 +99,19 @@ function LeafRow({ item, depth, inCodelessBranch, onSelectLeaf }: LeafRowProps) 
           <span className="shrink-0 select-none text-[11px] font-medium text-[var(--cargo-light)]">– –</span>
         ) : null}
         <span
-          className={`min-w-[110px] shrink-0 font-mono text-[13px] font-semibold text-[var(--cargo-trust)]${
+          className={`min-w-[110px] shrink-0 whitespace-nowrap font-mono text-[13px] font-semibold text-[var(--cargo-trust)]${
             inCodelessBranch ? '' : ' tree-code leaf'
           }`}
         >
           {formatCode(codeDigits)}
         </span>
         <span
+          style={item.source_order != null ? { whiteSpace: 'normal', overflow: 'visible', textOverflow: 'clip' } : undefined}
           className={`min-w-0 flex-1 truncate text-[12px] text-[var(--cargo-mid)] ${TNVED_COMMODITY_NAME_CLASS}${
             inCodelessBranch ? '' : ' tree-name'
           }`}
         >
-          {formatTnvedCommodityName(item.name)}
+          {sourceName(item)}
         </span>
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
           {duty ? (
@@ -162,6 +169,8 @@ type TreeNodeProps = {
   expanded: Set<string>;
   loadingNodes: Set<string>;
   childrenCache: Map<string, TnvedChildItem[]>;
+  loadErrors: Map<string, string>;
+  onRetry: (item: TnvedChildItem) => void;
   onToggle: (item: TnvedChildItem) => void;
   onSelectLeaf: (code: string) => void;
   inCodelessBranch?: boolean;
@@ -191,11 +200,13 @@ function TreeNode({
   expanded,
   loadingNodes,
   childrenCache,
+  loadErrors,
+  onRetry,
   onToggle,
   onSelectLeaf,
   inCodelessBranch = false,
 }: TreeNodeProps) {
-  const cacheKey = item.code;
+  const cacheKey = identity(item);
   const isExpanded = expanded.has(cacheKey);
   const children = childrenCache.get(cacheKey) ?? [];
   const canExpand = !!item.has_children;
@@ -203,7 +214,12 @@ function TreeNode({
 
   const renderChildList = (childInCodelessBranch: boolean) => {
     const childrenContent =
-      isLoading ? (
+      loadErrors.has(cacheKey) ? (
+        <div role="alert" className="my-2 rounded border border-red-300 p-3 text-sm text-red-900">
+          <p>Не удалось загрузить дочерние узлы.</p>
+          <button type="button" className="mt-1 underline" onClick={() => onRetry(item)}>Повторить загрузку</button>
+        </div>
+      ) : isLoading || !childrenCache.has(cacheKey) ? (
         <p className="py-2 text-xs text-cargo-mid" style={{ paddingLeft: (depth + 1) * INDENT_PX + 8 }}>
           Загрузка…
         </p>
@@ -222,6 +238,8 @@ function TreeNode({
               expanded={expanded}
               loadingNodes={loadingNodes}
               childrenCache={childrenCache}
+              loadErrors={loadErrors}
+              onRetry={onRetry}
               onToggle={onToggle}
               onSelectLeaf={onSelectLeaf}
               inCodelessBranch={childInCodelessBranch}
@@ -252,6 +270,8 @@ function TreeNode({
     const toggleButton = (
       <button
         type="button"
+        data-node-id={identity(item)}
+        data-code=""
         onClick={() => onToggle(item)}
         style={{ paddingLeft: depth * INDENT_PX + 8 }}
         className={`flex w-full items-center gap-2 rounded py-1.5 transition-colors ${
@@ -276,7 +296,7 @@ function TreeNode({
               : 'text-[var(--cargo-mid)]'
           } ${TNVED_COMMODITY_NAME_CLASS}`}
         >
-          {formatTnvedCommodityName(item.name)}
+          {sourceName(item)}
         </span>
       </button>
     );
@@ -312,7 +332,7 @@ function TreeNode({
         <CodelessDotRing />
         <span className="select-none font-medium text-[var(--cargo-light)]">–</span>
         <span className={`text-[11px] italic text-[var(--cargo-mid)] ${TNVED_COMMODITY_NAME_CLASS}`}>
-          {formatTnvedCommodityName(item.name)}
+          {sourceName(item)}
         </span>
       </motion.div>
     );
@@ -333,6 +353,8 @@ function TreeNode({
     <motion.div variants={itemVariants} style={{ marginLeft: depth * INDENT_PX }}>
       <button
         type="button"
+        data-node-id={identity(item)}
+        data-code={item.code}
         className="tree-node-branch !items-start"
         onClick={() => onToggle(item)}
         aria-expanded={isExpanded}
@@ -341,9 +363,9 @@ function TreeNode({
           size={16}
           className={`tree-chevron mt-1 shrink-0${isExpanded ? ' expanded' : ''}`}
         />
-        <span className="tree-code">{displayLabel(item)}</span>
+        <span className="tree-code shrink-0 whitespace-nowrap">{displayLabel(item)}</span>
         <span className={BRANCH_NAME_CLASS}>
-          {formatTnvedCommodityName(item.name)}
+          {sourceName(item)}
         </span>
       </button>
 
@@ -359,6 +381,8 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
   const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set());
   const [childrenCache, setChildrenCache] = React.useState<Map<string, TnvedChildItem[]>>(() => new Map());
   const [loadingNodes, setLoadingNodes] = React.useState<Set<string>>(() => new Set());
+  const [loadErrors, setLoadErrors] = React.useState<Map<string, string>>(() => new Map());
+  const [rootAttempt, setRootAttempt] = React.useState(0);
 
   const [search, setSearch] = React.useState('');
   const [searchHits, setSearchHits] = React.useState<TnvedSearchHit[]>([]);
@@ -366,6 +390,8 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
   const [searchLoading, setSearchLoading] = React.useState(false);
   const [searchErr, setSearchErr] = React.useState<string | null>(null);
   const [activeSearchIdx, setActiveSearchIdx] = React.useState(-1);
+  const [searchCursor, setSearchCursor] = React.useState<string | null>(null);
+  const [searchPage, setSearchPage] = React.useState<TnvedSearchPage | null>(null);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
   const appliedInitialSearch = React.useRef(false);
@@ -386,6 +412,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
     if (cached) return cached;
 
     setLoadingNodes((prev) => new Set(prev).add(code ?? ''));
+    setLoadErrors((prev) => { const next = new Map(prev); next.delete(code ?? ''); return next; });
     try {
       const res = await fetchTnvedChildren(code, 'direct');
       const items = res.items ?? [];
@@ -395,6 +422,9 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
         return next;
       });
       return items;
+    } catch (error) {
+      setLoadErrors((prev) => new Map(prev).set(code ?? '', 'failed'));
+      throw error;
     } finally {
       setLoadingNodes((prev) => {
         const next = new Set(prev);
@@ -427,11 +457,11 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [rootAttempt]);
 
   const handleToggle = React.useCallback(
     (item: TnvedChildItem) => {
-      const key = item.code;
+      const key = identity(item);
       setExpanded((prev) => {
         const next = new Set(prev);
         if (next.has(key)) {
@@ -442,7 +472,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
         return next;
       });
       if (!childrenCache.has(key)) {
-        void loadChildren(key);
+        void loadChildren(key).catch(() => {});
       }
     },
     [childrenCache, loadChildren],
@@ -450,7 +480,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
 
   const expandAlongPath = React.useCallback(
     async (crumb: TnvedBreadcrumbItem[]) => {
-      const codes = crumb.map((c) => c.hs_code);
+      const codes = crumb.map((c) => c.node_id || c.hs_code).filter(Boolean);
       await loadChildren(undefined);
       for (const code of codes) {
         await loadChildren(code);
@@ -472,17 +502,20 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
     let cancelled = false;
     setSearchLoading(true);
     const t = window.setTimeout(() => {
-      searchTnved(trimmed)
-        .then(async (hits) => {
+      searchTnvedPage(trimmed, searchCursor)
+        .then(async (page) => {
           if (cancelled) return;
+          const hits = page.results;
+          setSearchPage(page);
           setSearchHits(hits);
           setSearchErr(null);
           const paths: Record<string, string> = {};
           await Promise.all(
             hits.slice(0, 8).map(async (hit) => {
               try {
-                const crumb = await fetchTnvedBreadcrumb(hit.code);
-                paths[hit.code] = crumb.map((b) => b.title || b.hs_code).join(' › ');
+                if (hit.path) { paths[identity(hit)] = hit.path.join(' › '); return; }
+                const crumb = await fetchTnvedBreadcrumb(identity(hit));
+                paths[identity(hit)] = crumb.map((b) => b.title || b.hs_code).join(' › ');
               } catch {
                 /* ignore */
               }
@@ -505,7 +538,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
       cancelled = true;
       window.clearTimeout(t);
     };
-  }, [trimmed]);
+  }, [trimmed, searchCursor]);
 
   React.useEffect(() => {
     setActiveSearchIdx(searchHits.length ? 0 : -1);
@@ -513,6 +546,8 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
 
   const clearSearch = React.useCallback(() => {
     setSearch('');
+    setSearchCursor(null);
+    setSearchPage(null);
     setSearchHits([]);
     setSearchPaths({});
     setSearchErr(null);
@@ -525,7 +560,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
       const d = digitsOnly(hit.code);
       if (hit.is_leaf === true || isFullTnvedCode(d)) {
         try {
-          const nodeRes = await fetchTnvedChildren(hit.code, 'direct');
+          const nodeRes = await fetchTnvedChildren(identity(hit), 'direct');
           if (nodeRes.items.length === 0 && isFullTnvedCode(d)) {
             onSelectCode(d);
             clearSearch();
@@ -537,7 +572,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
       }
 
       try {
-        const crumb = await fetchTnvedBreadcrumb(hit.code);
+        const crumb = await fetchTnvedBreadcrumb(identity(hit));
         await expandAlongPath(crumb);
         clearSearch();
         if (hit.is_leaf === true || isFullTnvedCode(d)) {
@@ -551,7 +586,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
   );
 
   return (
-    <div className="flex h-full flex-col gap-3">
+    <div className="flex h-full flex-col gap-3" data-testid="tnved-tree">
       <div className="relative shrink-0">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cargo-light" />
         <input
@@ -561,7 +596,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
           autoComplete="off"
           placeholder="Поиск по коду или наименованию…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setSearchCursor(null); setSearchPage(null); }}
           onKeyDown={(e) => {
             if (trimmed.length < 2 || searchHits.length === 0) {
               if (e.key === 'Escape') clearSearch();
@@ -610,22 +645,29 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
             <p className="py-6 text-center text-sm text-cargo-mid">{searchErr || 'Ничего не найдено'}</p>
           ) : (
             <>
-              <p className="text-[11px] text-cargo-light">Найдено: {searchHits.length}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2" aria-label="Страницы результатов">
+                <p className="text-xs text-cargo-mid" data-testid="search-total">{searchPage?.total != null ? `Найдено: ${searchPage.total}. Показано ${searchPage.offset + 1}–${searchPage.offset + searchHits.length}` : `Показано: ${searchHits.length}`}</p>
+                <div className="flex gap-3 text-sm">
+                  <button type="button" disabled={!searchPage?.previous_cursor} onClick={() => setSearchCursor(searchPage?.previous_cursor ?? null)}>Назад</button>
+                  <button type="button" disabled={!searchPage?.next_cursor} onClick={() => setSearchCursor(searchPage?.next_cursor ?? null)}>Далее</button>
+                  <button type="button" disabled={!searchPage?.has_more || !searchPage.last_cursor} onClick={() => setSearchCursor(searchPage?.last_cursor ?? null)}>Последняя страница</button>
+                </div>
+              </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 {searchHits.map((hit, idx) => (
-                  <PremiumCard key={`${hit.code}-${idx}`} index={idx} onClick={() => void navigateToSearchHit(hit)}>
-                    <div className="p-4">
+                  <PremiumCard key={`${identity(hit)}-${idx}`} index={idx} onClick={() => void navigateToSearchHit(hit)}>
+                    <div className="p-4" data-search-id={identity(hit)}>
                       <div className="flex items-start justify-between gap-2">
-                        <span className="font-mono text-base font-semibold text-cargo-trust">{formatCode(hit.code)}</span>
+                        <span className="whitespace-nowrap font-mono text-base font-semibold text-cargo-trust">{hit.is_codeless ? 'Без кода' : formatCode(hit.code)}</span>
                         {hit.is_leaf === false ? (
                           <span className="shrink-0 rounded bg-cargo-cloud px-1.5 py-0.5 text-[10px] text-cargo-mid">группа</span>
                         ) : null}
                       </div>
                       <p className={`mt-1 text-[13px] text-cargo-deep ${TNVED_COMMODITY_NAME_CLASS}`}>
-                        {formatTnvedCommodityName(hit.name || '') || 'Описание отсутствует'}
+                        {sourceName(hit) || 'Описание отсутствует'}
                       </p>
-                      {searchPaths[hit.code] ? (
-                        <p className="mt-2 truncate text-[11px] text-cargo-light">{searchPaths[hit.code]}</p>
+                      {searchPaths[identity(hit)] ? (
+                        <p className="mt-2 truncate text-[11px] text-cargo-light">{searchPaths[identity(hit)]}</p>
                       ) : null}
                     </div>
                   </PremiumCard>
@@ -638,7 +680,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
         <div className="min-h-0 flex-1 overflow-y-auto">
           {loadErr ? (
             <div className="mb-2 rounded-lg border border-cargo-alert/30 bg-cargo-alert-light px-3 py-2 text-xs text-cargo-alert">
-              {loadErr}
+              {loadErr}<button type="button" className="ml-3 underline" onClick={() => setRootAttempt((value) => value + 1)}>Повторить загрузку разделов</button>
             </div>
           ) : null}
 
@@ -659,6 +701,8 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
                     expanded={expanded}
                     loadingNodes={loadingNodes}
                     childrenCache={childrenCache}
+                    loadErrors={loadErrors}
+                    onRetry={(item) => { void loadChildren(identity(item)).catch(() => {}); }}
                     onToggle={handleToggle}
                     onSelectLeaf={onSelectCode}
                   />
