@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import unittest
+from unittest.mock import patch
 
 import pandas as pd
 
@@ -56,7 +57,11 @@ class ScenarioCompareTests(unittest.TestCase):
                 {"name": "DE", "country_of_origin": "DE"},
             ],
         }
-        out = compare_scenarios_extended(payload)
+        with patch(
+            "app.services.scenario_compare_service.get_rates_map",
+            return_value={"USD": 92.0, "RUB": 1.0},
+        ):
+            out = compare_scenarios_extended(payload)
         self.assertEqual(out["status"], "OK")
         self.assertEqual(len(out["scenarios"]), 2)
         self.assertIn("best_scenario", out)

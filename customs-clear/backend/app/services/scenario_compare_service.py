@@ -8,6 +8,7 @@ from typing import Any
 
 from ..db import SessionLocal
 from .exchange_rates import get_rates_map
+from .payment_engine import _resolve_fx_rate
 from .payment_engine_compat import compute_payments
 from .rop_calculator import calculate_rop
 
@@ -25,7 +26,7 @@ def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
     net = base.get("weight_net_kg")
 
     rates = get_rates_map()
-    fx = float(rates.get(currency) or 1.0)
+    fx = _resolve_fx_rate(currency, rates)
     cv_rub = customs_value * fx
 
     out: list[dict[str, Any]] = []
@@ -43,6 +44,7 @@ def compare_scenarios_extended(payload: dict[str, Any]) -> dict[str, Any]:
                 "customs_value": cv_rub,
                 "invoice_currency": "RUB",
                 "country": country or None,
+                "_fx_rates": rates,
             }
             if net is not None:
                 pay_in["net_weight_kg"] = float(net)
