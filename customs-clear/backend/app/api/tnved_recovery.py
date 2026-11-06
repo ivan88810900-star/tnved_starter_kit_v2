@@ -32,19 +32,24 @@ def recovery_router(database: Path, snapshot_sha256: str) -> APIRouter:
         unchanged()
 
     def normalized(code: str) -> str:
+        if re.fullmatch(r"u-[a-f0-9]{24}", code):
+            return code
         value = re.sub(r"\s+", "", code).upper()
         if not (re.fullmatch(r"[IVX]+", value) or re.fullmatch(r"[0-9]{2,10}", value)):
             raise HTTPException(422, "Некорректный код")
         return value
 
     def item(store, row, *, section=False):
-        code = row["code"]
-        children = bool(store.chapters(code)) if section else store.has_children(code)
+        node_id = row.get("id") or row["code"]
+        code = row["code"] or ""
+        children = bool(store.chapters(node_id)) if section else store.has_children(node_id)
         return {
-            "code": code, "display_code": code, "name": row["label"],
+            "code": node_id if section else code, "node_id": node_id,
+            "display_code": row.get("printed_code") or code or (node_id if section else ""), "name": row["label"],
             "level": "section" if section else f"code{len(code)}",
             "is_leaf": not section and len(code) == 10 and not children,
-            "is_codeless": False, "is_group": children, "has_children": children,
+            "is_codeless": row.get("kind") in ("codeless", "caption"), "is_group": children, "has_children": children,
+            **({"source_order": row["source_order"], "source_row_id": row.get("source_row_id")} if "source_order" in row else {}),
             "import_duty": None, "duty_rate": None, "vat_rate": None,
         }
 
@@ -68,18 +73,22 @@ def recovery_router(database: Path, snapshot_sha256: str) -> APIRouter:
         rows = store.breadcrumb(code)
         if not rows:
             raise HTTPException(404, "Код не найден")
+        if store.navigation_enabled:
+            return [{"hs_code": row["code"] or (row["node_id"] if row["kind"] == "section" else ""), "node_id": row["node_id"], "title": row["label"], "level": index, "is_codeless": row["kind"] in ("codeless", "caption")} for index, row in enumerate(rows)]
         section = store.section_for(code)
         return ([{"hs_code": section["code"], "title": section["label"], "level": 0}] if section else []) + [
             {"hs_code": row["code"], "title": row["label"], "level": len(row["code"])} for row in rows
         ]
 
     @router.get("/api/v1/tnved/search")
-    def search(q: str = Query(min_length=2, max_length=200)):
+    def search(q: str = Query(min_length=2, max_length=200), cursor: str | None = Query(default=None, max_length=100), limit: int = Query(default=40, ge=1, le=200)):
         with open_store() as store:
-            return {"status": "OK", "snapshot_sha256": snapshot_sha256, "results": [
-                {"code": row["code"], "name": row["label"], "is_leaf": not store.has_children(row["code"]) and len(row["code"]) == 10}
-                for row in store.search(q)
-            ]}
+            try:
+                page = store.search_page(q, cursor=cursor, limit=limit)
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
+            page["results"] = [{**item(store, row), "path": row["path"]} for row in page["results"]]
+            return {"status": "OK", "snapshot_sha256": snapshot_sha256, **page}
 
     @router.get("/api/tnved/children")
     @router.get("/api/tnved/children/{code}")
@@ -101,13 +110,15 @@ def recovery_router(database: Path, snapshot_sha256: str) -> APIRouter:
             if row is None:
                 raise HTTPException(404, "Код не найден")
             return {
-                "status": "OK", "code": code, "name": row["label"], "path": row["path"],
+                "status": "OK", "code": row["code"] or "", "name": row["label"], "path": row["path"],
                 "breadcrumb": breadcrumb(store, code), "children": children(store, code),
                 "source_url": row["source_url"], "source_sha256": row["source_sha256"],
                 "edition_id": row["edition_id"], "page": row["page"],
                 "legal_status": row["chain_status"], "valid_from": row["valid_from"],
                 "valid_to": row["valid_to"], "complete": row["complete"], "rates": None,
                 "snapshot_sha256": snapshot_sha256,
+                "node_id": row.get("node_id", code), "printed_code": row.get("printed_code", code),
+                "requested_code": row.get("requested_code", code), "navigation_alias": row.get("navigation_alias"),
             }
 
     return router

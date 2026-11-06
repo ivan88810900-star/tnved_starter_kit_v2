@@ -110,3 +110,78 @@ output directory. Fields: `snapshot_sha256`, `code`, `name`, `path`, `parent`,
 `parent_name`, `child_codes`. It requires Playwright in `NODE_PATH`; optionally
 set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an installed Chrome binary. The desktop
 bundled Playwright runtime was used for the recorded local acceptance.
+
+## Official tree fidelity candidate (2026-11-06)
+
+The historical acceptance above remains scoped to its original bytes. The next
+local candidate is built from all actual chapter links on the saved official EEC
+index, with separate accepted/current source hashes. See
+`docs/operations/TARIFF_TREE_FIDELITY_20261106.md` and its per-chapter ledger.
+The accepted builder entry point and its immutable pins are unchanged.
+
+`app.services.tnved_fidelity` extracts header-gated PDF table cells with Poppler
+word coordinates. `audit_tnved_official.py` independently checks layout code-cell
+occurrences and the pinned retained physical-cell inventory, then compares every
+source row/edge/name/path/order/page with HTTP. It exits nonzero on proof failures.
+Rates columns and prose references cannot introduce codes. Reserved bracketed
+positions are recorded separately and do not become active tariff codes.
+
+From `customs-clear/backend`, with read-only source directories and NEW outputs:
+
+```bash
+"$TARIFF_PY" scripts/audit_tnved_official.py \
+  --accepted-root "$ACCEPTED" --current-root "$OFFICIAL" \
+  --baseline "$ACCEPTED_SQLITE_COPY" --output "$AUDIT" --pdftotext "$PDFTOTEXT"
+"$TARIFF_PY" scripts/build_tnved_fidelity.py \
+  --source-root "$OFFICIAL" --rows-root "$AUDIT/source-rows" \
+  --accepted-catalog "$ACCEPTED/data/tnved/catalog.json" \
+  --accepted-catalog-sha256 c7e4e5bb52b103d8b13554b4e25bf12ea0d09b4d67494e236a55cc276a173d41 \
+  --manifest-sha256 baa2708f444176a493c2553972b20516bc6473d6e83348db4f9929e27dd2faa2 \
+  --output "$NEW_SQLITE"
+```
+
+The candidate reuses the recovery schema and validator. Its navigation tables
+are a source-derived projection in that SAME SQLite, not a second live catalog.
+Use the resulting manifest's SQLite SHA in the existing local factory command.
+The recorded candidate hash is
+`725b784d8185c2f9a6a0378886199e01e19df9501688e1dbdbc3fe803a153591`.
+No application/persistent database is opened. Existing outputs are never replaced.
+
+Navigation identifies actual printed codes by their exact strings and uncoded
+rows by stable `u-` IDs bound to source PDF hash/page/baseline. Uncoded rows have
+no HS code. Equal labels remain distinct. `source_order` determines children;
+all breadcrumbs include uncoded source ancestors. A unique depth-zero combined
+printed row can have an explicit four-digit heading alias; detail returns the
+actual code and `navigation_alias`, never a substituted normative identity.
+
+Numeric search matches code prefixes only. Text search matches labels/paths.
+Search returns `total`, `offset`, `limit`, `mode`, and snapshot/query-bound
+next/previous/last cursors; invalid cursors return 422. Children either return
+the complete direct list or fail explicitly. The UI separates loading, loaded,
+empty and failed states, with a retry that calls the real endpoint.
+
+```bash
+"$TARIFF_PY" -m unittest -v tests.test_tnved_fidelity \
+  tests.test_tnved_recovery_http \
+  tests.test_tnved_catalog_api.HermeticTnvedCatalogApiTests
+"$TARIFF_PY" scripts/run_tnved_recovery_ci.py
+"$TARIFF_PY" scripts/audit_tnved_official.py \
+  --accepted-root "$ACCEPTED" --current-root "$OFFICIAL" \
+  --baseline "$ACCEPTED_SQLITE_COPY" --output "$AUDIT" --pdftotext "$PDFTOTEXT" \
+  --candidate "$NEW_SQLITE" --url http://127.0.0.1:18001
+```
+
+`frontend/scripts/fidelity-browser-check.cjs BASE_URL SOURCE_EXPECTATIONS OUT`
+drives real Chrome against the built app. Expectations come from independently
+extracted source rows/index, not candidate HTTP responses or SQLite. It checks
+all 96 titles, expanded 01/30/84/85/94/95, source paths/cards, clipboard leading
+zeroes, complete numeric pagination and a separate failed-request/retry case.
+Successful responses are never replaced. The 125% case uses a 1024 CSS-pixel
+viewport with DPR 1.25 to represent a physical 1280-pixel desktop viewport.
+The earlier `recovery-browser-check.cjs` is the limited historical c595 profile
+check; it is not the all-chapter acceptance.
+
+Historical notes/provenance remain stored, but the UI does not admit them as
+current law. Legal applicability, completeness, dates and rates remain unverified.
+The official index/PDF Latin-H versus Cyrillic-Н title discrepancy in chapter 41
+is retained in the report; the chapter navigation takes the index title.

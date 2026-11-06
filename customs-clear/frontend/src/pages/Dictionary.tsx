@@ -88,7 +88,7 @@ export const Dictionary: React.FC = () => {
             <div className="flex items-center justify-between border-b border-cargo-border px-4 py-4 sm:px-5">
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-cargo-light">Карточка товара</p>
-                <p className="mt-1 font-mono text-2xl font-medium text-cargo-trust" data-testid="selected-code">{selectedCode}</p>
+                <p className="mt-1 font-mono text-2xl font-medium text-cargo-trust" data-testid="selected-code">{selectedCode.startsWith('u-') ? 'Бескодовая группировка' : selectedCode}</p>
               </div>
               <button
                 type="button"
