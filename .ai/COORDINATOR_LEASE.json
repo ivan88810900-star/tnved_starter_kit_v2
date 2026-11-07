@@ -1,8 +1,8 @@
 {
   "acquisition_note": "PR260 current-main synthetic merge CI verification",
-  "expires_at": "2026-11-07T05:21:42.718Z",
+  "expires_at": null,
   "generation": 448,
-  "holder": "/root/scheduled-cycle448-20261107T071417MSK",
+  "holder": null,
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -24,8 +24,8 @@
     "verified_by_connector": true
   },
   "previous_holder_end": {
-    "generation": 442,
-    "holder": "/root/scheduled-cycle442-20261105T071418MSK"
+    "generation": 448,
+    "holder": "/root/scheduled-cycle448-20261107T071417MSK"
   },
   "schema_version": 1,
   "serialization_repair": {
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "active",
-  "token": "2965bf50b5099c0e5528bb1e4c7698a8",
-  "updated_at": "2026-11-07T04:21:42.718Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-11-07T04:23:13.303Z"
 }
