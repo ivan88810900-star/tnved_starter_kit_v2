@@ -1,8 +1,8 @@
 {
-  "acquisition_note": "PR260 current-main synthetic merge CI verification",
-  "expires_at": null,
-  "generation": 448,
-  "holder": null,
+  "acquisition_note": "Port verified A6 owner-command gate onto current main",
+  "expires_at": "2026-11-08T10:52:45.278Z",
+  "generation": 449,
+  "holder": "/root/scheduled-cycle449-20261108T131417MSK",
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-11-07T04:23:13.303Z"
+  "state": "active",
+  "token": "4dda59b8a9afa1c068d6a094399077a6",
+  "updated_at": "2026-11-08T10:22:45.278Z"
 }
