@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-A6-COMMAND-GATE-CURRENT-MAIN-20261108",
+  "observed_at": "2026-11-08T10:26:30.000Z",
+  "executor": "/root/scheduled-cycle449-20261108T131417MSK",
+  "lease_generation": 449,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "eeef5028d45ea14af09e0afb01f600bca5602316",
+  "orchestration_state_pre_write_sha": "325b6c616f34544d824b4ae034c55ad8f4200a26",
+  "defect": {
+    "status": "CONFIRMED",
+    "mechanism": "The main A6 issue_comment workflow lacked the job-level exact owner-command predicate, so ordinary issue comments started context-gate and produced false failed workflow runs.",
+    "evidence_runs": [
+      42226303139,
+      42224070584,
+      42222592810
+    ],
+    "regression_contract": "tests/agent_orchestration/test_audit_bridge.py::AuditBridgeTests::test_workflow_has_static_security_boundary"
+  },
+  "replacement": {
+    "stale_pr_closed": 261,
+    "draft_pr": 271,
+    "branch": "agent/a6-command-trigger-filter-main-20261108",
+    "head_sha": "b211c746ffaa003138abdc0c6a792bf1369cd641",
+    "base_sha": "eeef5028d45ea14af09e0afb01f600bca5602316",
+    "changed_files": [
+      ".github/workflows/tariff-a6-live.yml"
+    ],
+    "source_workflow_blob_sha": "28ea3075838446a5ea6f63e544d29581f7d1c4c2",
+    "ahead_by": 1,
+    "behind_by": 0,
+    "mergeable": true,
+    "review_threads": 0,
+    "submitted_reviews": 0
+  },
+  "exact_head_ci": [
+    {
+      "run_id": 42471279440,
+      "event": "pull_request",
+      "job_id": 128702362782,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "run_id": 42471254959,
+      "event": "push",
+      "job_id": 128702479545,
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "verification": {
+    "orchestration_tests": "225 PASS",
+    "snapshot_tests": "5 PASS",
+    "recovery_gate": "4 discovered / 4 executed / 0 skipped",
+    "hermetic_catalog_tests": "7 PASS",
+    "provider_call_performed": false
+  },
+  "boundaries": {
+    "live_a6_request_created": false,
+    "live_a6_invoked": false,
+    "provider_call_performed": false,
+    "merge_performed": false,
+    "deploy_performed": false,
+    "permissions_or_secrets_changed": false,
+    "tests_weakened": false
+  },
+  "status": "DRAFT_EXACT_HEAD_CI_PASS_OWNER_MERGE_GATE",
+  "next_step": "Keep PR #271 draft. Protected-main merge requires a separate explicit owner decision; do not invoke live A6 for this maintenance repair."
+}
