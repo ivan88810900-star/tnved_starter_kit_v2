@@ -1,3 +1,16 @@
+# Cycle 449 checkpoint — current-main A6 command gate restored (2026-11-08 10:26 UTC)
+
+- GitHub truth was reread before action: `main` remains `eeef5028d45ea14af09e0afb01f600bca5602316`; open PRs, issues, exact-head checks, review surfaces, `agent/orchestration-state`, released generation-448 lease, `.ai/` and recent commits were reconciled. Generation 449 was acquired and verified before writes.
+- Confirmed defect: current `main` still started the trusted A6 `issue_comment` workflow for ordinary comments. Those comments entered `context-gate`, failed, and created false failed Actions runs; examples are `42226303139`, `42224070584` and `42222592810`. The current-main regression test already requires the missing early owner-command predicate and fixed run name.
+- Stale draft PR #261 was 41 commits behind `main`. Its reviewed workflow blob was ported unchanged onto fresh branch `agent/a6-command-trigger-filter-main-20261108`; PR #261 was closed without merge to avoid duplication.
+- New draft PR #271 is one commit/file ahead and zero behind `main` at exact head `b211c746ffaa003138abdc0c6a792bf1369cd641`. It is mergeable; review threads and submitted reviews are zero.
+- Exact-head pull-request run `42471279440` / job `128702362782` and push run `42471254959` / job `128702479545` completed `success`. Each passed 225 orchestration tests, 5 snapshot tests, recovery gate 4/4 with zero skips, and 7 hermetic catalog API tests.
+- No live A6 request/provider call, merge, deploy, database/source operation, enforcement change, permission/secret change, force push, branch deletion or test weakening occurred.
+- Evidence: `.ai/orchestration/evidence/cycle449_a6_command_gate_current_main.json`.
+- Next: keep PR #271 draft. Merge to protected `main` is a separate owner gate; do not invoke live A6 for this repair.
+
+---
+
 # Cycle 448 checkpoint — PR #270 persistent-state reconciliation (2026-11-07 04:22 UTC)
 
 - GitHub truth was reread before action: `main` remains `eeef5028d45ea14af09e0afb01f600bca5602316`; 52 pull requests and 7 issues are open.
