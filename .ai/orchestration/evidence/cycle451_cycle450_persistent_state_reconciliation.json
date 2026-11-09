@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "task_id": "TARIFF-CYCLE450-PERSISTENT-STATE-RECONCILIATION-20261109",
+  "observed_at": "2026-11-09T10:21:30Z",
+  "executor": "/root/scheduled-cycle451-20261109T131417MSK",
+  "lease_generation": 451,
+  "repository": "ivan88810900-star/tnved_starter_kit_v2",
+  "main_sha": "eeef5028d45ea14af09e0afb01f600bca5602316",
+  "orchestration_state_pre_write_sha": "5100265859c2d5117b304584a3f10cdb26044d51",
+  "open_pr_count": 52,
+  "open_issue_count": 7,
+  "cycle450": {
+    "lease_acquire_sha": "85d7367acbbaa6a2a1b7bbca77e7114b93a9b7ce",
+    "lease_release_sha": "4044aae6a45a55ec1a2306dde01a3c058cee6545",
+    "durable_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6736345134",
+    "status": "VERIFIED_IMPLEMENTATION_AND_CI_WITHOUT_STATE_CHECKPOINT"
+  },
+  "pr270": {
+    "state": "open",
+    "draft": true,
+    "mergeable": true,
+    "mergeable_state": "clean",
+    "base_sha": "eeef5028d45ea14af09e0afb01f600bca5602316",
+    "head_sha": "46506d04a84dd15dbc5670a4a1c4c52dafb2a4ba",
+    "tree_sha": "df93b1f34403ba2b4464ff1e813e0926ceeb9dc6",
+    "commits": 4,
+    "changed_files": 27,
+    "review_threads": 0,
+    "submitted_reviews": 0,
+    "exact_head_runs": [
+      {
+        "id": 42590337559,
+        "event": "push",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 42590344585,
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "adjudication": {
+      "audited_predecessor_head": "7be5b40adf8bc1b7e7e6afdb4611ce41b0f4b00f",
+      "confirmed_repaired": [
+        "F002 PDF word joins",
+        "F004 source dash depth/caption rendering"
+      ],
+      "open_contract_questions": [
+        "F001 reserved gap markers",
+        "F003 rich typography/note references"
+      ],
+      "candidate_snapshot_sha256": "99f70ee34caa30637663c4c1a4e847958bfcfe663f4f5136e3d0b02725e0ef1f",
+      "independent_targeted_recheck": "PREPARED_NOT_RUN",
+      "live_a6_or_provider_invoked": false
+    },
+    "verification": {
+      "orchestration_tests": "225 PASS",
+      "snapshot_tests": "5 PASS",
+      "recovery_gate": "4/4 PASS, 0 skipped",
+      "http_catalog_fidelity_tests": "18 PASS",
+      "final_head_ci": "PASS",
+      "earlier_environment_failure": "Python 3.14.4 rejected before dependency install at head 0ad69a3731a56a10dee81de926dd5f40cd977fbf",
+      "environment_repair": "ubuntu-24.04 plus commit-pinned official setup-python 3.12.15; guards and tests retained"
+    }
+  },
+  "pr271": {
+    "state": "open",
+    "draft": true,
+    "mergeable": true,
+    "mergeable_state": "clean",
+    "base_sha": "eeef5028d45ea14af09e0afb01f600bca5602316",
+    "head_sha": "b211c746ffaa003138abdc0c6a792bf1369cd641",
+    "review_threads": 0,
+    "submitted_reviews": 0,
+    "exact_head_ci": "PASS",
+    "status": "OWNER_MERGE_GATE_UNCHANGED"
+  },
+  "state_drift": {
+    "confirmed": true,
+    "detail": "Cycle 450 acquired and released the coordinator lease and recorded the verified PR270 receipt in issue 257, but .ai/CURRENT_STATE.md and .ai/orchestration/evidence still ended at cycle 449."
+  },
+  "action": "Persist cycle450 reconciliation evidence and prepend a cycle451 checkpoint only; no candidate, PR metadata, workflow, product data, tests, provider, flag, deployment, database or protected branch changed.",
+  "boundaries": {
+    "merge_performed": false,
+    "deploy_performed": false,
+    "enforcement_changed": false,
+    "live_a6_request_created": false,
+    "provider_call_performed": false,
+    "permissions_or_secrets_changed": false,
+    "tests_weakened": false
+  },
+  "status": "PERSISTENT_STATE_RECONCILED_READ_ONLY_PRODUCT",
+  "next_step": "Keep PR270 draft. Its new head is not independently rechecked; the prepared targeted recheck is an owner/existing-Claude-session action. PR271 remains a separate protected-main owner merge gate."
+}
