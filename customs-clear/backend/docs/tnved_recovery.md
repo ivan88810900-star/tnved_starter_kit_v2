@@ -185,3 +185,30 @@ Historical notes/provenance remain stored, but the UI does not admit them as
 current law. Legal applicability, completeness, dates and rates remain unverified.
 The official index/PDF Latin-H versus Cyrillic-Н title discrepancy in chapter 41
 is retained in the report; the chapter navigation takes the index title.
+
+## Claude findings: source text projection (2026-11-09)
+
+The audited `725b784d...` snapshot and audit packet remain unchanged. A NEW local
+candidate has SHA-256
+`99f70ee34caa30637663c4c1a4e847958bfcfe663f4f5136e3d0b02725e0ef1f`.
+See `docs/operations/TARIFF_CLAUDE_ADJUDICATION_20261109.md` for adjudication,
+source coverage limits, commands and the requirement for targeted Claude recheck.
+
+The source build now also requires `requirements-tnved-source.txt` (pdfplumber
+and pdfminer pins). Use a separate source-build Python environment for
+`audit_tnved_official.py`; HTTP and synthetic CI do not import these libraries.
+The prepared source runtime was used without installing anything in the HTTP venv.
+
+Wrapped lexical hyphens keep their glyph without an inserted space. Suspended
+forms such as `газо- или` retain their separator. Unhyphenated split words join
+only with matching PDF character evidence that no separator was encoded. A space
+just beyond the final word's ink is included even beyond the nominal text-column
+cutoff. Unknown character boundaries prevent building a candidate.
+
+`recovery_source_text` is a provenance/display projection inside the SAME new
+SQLite, with raw label, original lines/page/baseline/character evidence and dash
+depth. API detail exposes `raw_name`, `source_lines`, `dash_depth`, `kind`; children
+expose depth/kind. Captions have no dash, and the tree renders the source depth
+instead of a fixed one/two-dash placeholder. Node identity/edges/order/aliases do
+not change. Reserved positions and footnote/index typography remain separate
+open presentation questions; no active code or legal meaning is invented.

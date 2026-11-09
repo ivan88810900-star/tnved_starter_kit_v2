@@ -7,7 +7,7 @@ import unittest
 
 from fastapi.testclient import TestClient
 from app.recovery_main import create_recovery_app
-from app.services.tnved_fidelity import NAVIGATION_SCHEMA, printed_code
+from app.services.tnved_fidelity import NAVIGATION_SCHEMA, SOURCE_TEXT_SCHEMA, printed_code, join_source_lines, source_line_tail
 from tests import test_tnved_recovery_http as http_fixture
 
 
@@ -45,8 +45,9 @@ class FidelityNavigationTests(unittest.TestCase):
         add("0100000000", "0100000000", "Текстовое упоминание 85", "01", "01", 0)
         with sqlite3.connect(self.database) as db:
             db.execute("PRAGMA foreign_keys=ON")
-            db.executescript(NAVIGATION_SCHEMA)
+            db.executescript(NAVIGATION_SCHEMA + SOURCE_TEXT_SCHEMA)
             db.executemany("INSERT INTO recovery_navigation VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+            db.executemany("INSERT INTO recovery_source_text VALUES (?,?,?,?)", [(r[0], r[2], '[]', None if r[9] in ('section', 'chapter') else 2) for r in rows])
             db.execute("INSERT INTO recovery_heading_aliases VALUES (?,?)", ("8503", "850300"))
         self.pin = hashlib.sha256(self.database.read_bytes()).hexdigest()
         self.client = TestClient(create_recovery_app(self.database, self.pin))
@@ -104,6 +105,39 @@ class FidelityNavigationTests(unittest.TestCase):
         self.assertEqual(card["code"], "0100000000")
         self.assertEqual(card["snapshot_sha256"], self.pin)
         self.assertEqual(hashlib.sha256(self.database.read_bytes()).hexdigest(), self.pin)
+
+    def test_raw_source_and_dash_depth_are_available_without_changing_identity(self):
+        card = self.client.get('/api/v1/tnved/8503001000').json()
+        self.assertEqual(card['raw_name'], 'Кольца')
+        self.assertEqual(card['dash_depth'], 2)
+        self.assertEqual(card['kind'], 'coded')
+        child = self.client.get('/api/tnved/children/850300').json()['items'][0]
+        self.assertEqual(child['dash_depth'], 2)
+        self.assertEqual(child['node_id'], '8503001000')
+
+
+class SourceTextProjectionTests(unittest.TestCase):
+    def test_wrapped_compounds_and_split_words_keep_encoded_separators(self):
+        def joined(left, right, separator):
+            return join_source_lines([{'text': left, 'trailing_space': separator}, {'text': right}])
+        self.assertEqual(joined('для научно-', 'исследовательских целей', False), 'для научно-исследовательских целей')
+        self.assertEqual(joined('аминогидроксинафталинсульфо-', 'кислоты', True), 'аминогидроксинафталинсульфо-кислоты')
+        self.assertEqual(joined("и 4,4'-", 'метилендициклогексилдиизоцианата', False), "и 4,4'-метилендициклогексилдиизоцианата")
+        self.assertEqual(joined('метилендициклогексилдиизоци', 'аната в виде раствора', False), 'метилендициклогексилдиизоцианата в виде раствора')
+        self.assertEqual(joined('спиро[изобенз', 'офуран-1(3Н)', False), 'спиро[изобензофуран-1(3Н)')
+        self.assertEqual(joined('менее', '0,94', True), 'менее 0,94')
+        self.assertEqual(joined('без какого-', 'либо покрытия', False), 'без какого-либо покрытия')
+        self.assertEqual(joined('неизвестный', 'разрыв', None), 'неизвестный разрыв')
+
+    def test_suspended_hyphen_and_source_dash_are_not_word_joins(self):
+        for separator in [True, False, None]:
+            self.assertEqual(join_source_lines([{'text':'газо-', 'trailing_space':separator}, {'text':'или дымоанализаторы'}]), 'газо- или дымоанализаторы')
+        self.assertEqual(join_source_lines([{'text':'–', 'trailing_space':False}, {'text':'прочие'}]), '– прочие')
+
+    def test_trailing_pdf_space_beyond_ink_is_not_clipped_at_column_boundary(self):
+        words = [(392, 100, 400, 113, 'м')]
+        chars = [{'x0':392, 'bottom':113, 'height':13, 'text':'м'}, {'x0':400.05, 'bottom':113, 'height':13, 'text':' '}]
+        self.assertTrue(source_line_tail(chars,113,words)['trailing_space'])
 
 
 if __name__ == "__main__":

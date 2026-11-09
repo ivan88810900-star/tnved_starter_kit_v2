@@ -49,6 +49,7 @@ def recovery_router(database: Path, snapshot_sha256: str) -> APIRouter:
             "level": "section" if section else f"code{len(code)}",
             "is_leaf": not section and len(code) == 10 and not children,
             "is_codeless": row.get("kind") in ("codeless", "caption"), "is_group": children, "has_children": children,
+            "kind": row.get("kind"), "dash_depth": row.get("dash_depth"),
             **({"source_order": row["source_order"], "source_row_id": row.get("source_row_id")} if "source_order" in row else {}),
             "import_duty": None, "duty_rate": None, "vat_rate": None,
         }
@@ -119,6 +120,8 @@ def recovery_router(database: Path, snapshot_sha256: str) -> APIRouter:
                 "snapshot_sha256": snapshot_sha256,
                 "node_id": row.get("node_id", code), "printed_code": row.get("printed_code", code),
                 "requested_code": row.get("requested_code", code), "navigation_alias": row.get("navigation_alias"),
+                "kind": row.get("kind"), "dash_depth": row.get("dash_depth"),
+                "raw_name": row.get("raw_label", row["label"]), "source_lines": row.get("raw_lines", []),
             }
 
     return router

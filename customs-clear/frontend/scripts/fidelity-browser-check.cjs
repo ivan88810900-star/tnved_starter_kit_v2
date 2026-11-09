@@ -6,7 +6,7 @@ async function run(){
  const [base,expectedFile,out]=process.argv.slice(2),expected=JSON.parse(fs.readFileSync(expectedFile));
  fs.mkdirSync(out,{recursive:true});
  const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:{})});
- const report={snapshot_sha256:expected.snapshot_sha256,source_corpus_sha256:expected.source_corpus_sha256,positive:[],negative:null};
+ const report={snapshot_sha256:expected.snapshot_sha256,source_corpus_sha256:expected.source_corpus_sha256,expectations_sha256:crypto.createHash('sha256').update(fs.readFileSync(expectedFile)).digest('hex'),source_depth_check:expected.source_depth_check??null,caption_checked:expected.caption_id??null,independent_audit:false,positive:[],negative:null};
  try{
   for(const [width,zoom] of [[1440,1],[1280,1],[1280,1.25]]){
    // Desktop zoom equivalence: CSS viewport shrinks while physical output
@@ -54,6 +54,17 @@ async function run(){
     assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),code);
     checked.push(code);if(code.startsWith('01'))await page.screenshot({path:prefix+'-01-codeless-card.png'});
     await page.getByRole('button',{name:'Закрыть',exact:true}).click();
+   }
+   if(expected.source_depth_check){
+    await reveal(expected.source_depth_check.node_id);
+    const mark=node(expected.source_depth_check.node_id).locator(`[data-source-depth="${expected.source_depth_check.depth}"]`);
+    assert.equal(await mark.count(),1);
+    assert.equal((await mark.textContent()).match(/–/g).length,expected.source_depth_check.depth);
+    const codeBox=await node(expected.source_depth_check.node_id).locator('span').filter({hasText:expected.source_depth_check.printed_code}).first().boundingBox();
+    assert(codeBox&&codeBox.x+codeBox.width<=Math.round(width/zoom)+1);
+    await reveal(expected.caption_id);assert.equal(await node(expected.caption_id).locator('[data-source-depth]').count(),0);
+    const q=encodeURIComponent('научно-исследовательских');const result=await(await context.request.get(base+'/api/v1/tnved/search?q='+q)).json();
+    assert(result.results.some(r=>r.code==='0106141010'));
    }
    const search=page.getByPlaceholder('Поиск по коду или наименованию…');await search.fill('85');
    await page.getByTestId('search-total').filter({hasText:`Найдено: ${expected.search85_total}.`}).waitFor();

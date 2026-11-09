@@ -50,6 +50,11 @@ function nodeKey(item: TnvedChildItem, index: number): string {
 function identity(item: TnvedChildItem | TnvedSearchHit): string { return item.node_id || item.code; }
 function sourceName(item: TnvedChildItem | TnvedSearchHit): string { return item.source_order == null ? formatTnvedCommodityName(item.name) : item.name; }
 
+function SourceDashes({ item, legacy = 0 }: { item: TnvedChildItem; legacy?: number }) {
+  const count = item.kind === 'caption' ? 0 : item.dash_depth ?? (item.source_order == null ? legacy : 0);
+  return count > 0 ? <span data-source-depth={count} aria-label={`Уровень источника: ${count}`} className="shrink-0 whitespace-nowrap select-none text-[11px] font-medium text-[var(--cargo-light)]">{Array.from({ length: count }, () => '–').join(' ')}</span> : null;
+}
+
 function displayLabel(item: TnvedChildItem): string {
   if (item.level === 'section') return `Раздел ${item.display_code || item.code}`;
   const d = digitsOnly(item.code);
@@ -95,9 +100,7 @@ function LeafRow({ item, depth, inCodelessBranch, onSelectLeaf }: LeafRowProps) 
             : 'tree-node-leaf flex items-center gap-2 text-left'
         }
       >
-        {inCodelessBranch ? (
-          <span className="shrink-0 select-none text-[11px] font-medium text-[var(--cargo-light)]">– –</span>
-        ) : null}
+        <SourceDashes item={item} legacy={inCodelessBranch ? 2 : 0} />
         <span
           className={`min-w-[110px] shrink-0 whitespace-nowrap font-mono text-[13px] font-semibold text-[var(--cargo-trust)]${
             inCodelessBranch ? '' : ' tree-code leaf'
@@ -282,15 +285,9 @@ function TreeNode({
         aria-expanded={isExpanded}
       >
         {isExpanded ? <CodelessDotFilled /> : <CodelessDotRing />}
+        <SourceDashes item={item} legacy={1} />
         <span
-          className={`select-none font-medium ${
-            isExpanded ? 'font-semibold text-[var(--cargo-trust)]' : 'text-[var(--cargo-light)]'
-          }`}
-        >
-          –
-        </span>
-        <span
-          className={`text-[13px] italic ${
+          className={`text-[13px] ${item.kind === 'caption' ? 'font-semibold' : 'italic'} ${
             isExpanded
               ? 'font-medium text-[var(--cargo-trust)]'
               : 'text-[var(--cargo-mid)]'
@@ -330,7 +327,7 @@ function TreeNode({
         className="flex items-center gap-2 py-0.5"
       >
         <CodelessDotRing />
-        <span className="select-none font-medium text-[var(--cargo-light)]">–</span>
+        <SourceDashes item={item} legacy={1} />
         <span className={`text-[11px] italic text-[var(--cargo-mid)] ${TNVED_COMMODITY_NAME_CLASS}`}>
           {sourceName(item)}
         </span>
@@ -363,6 +360,7 @@ function TreeNode({
           size={16}
           className={`tree-chevron mt-1 shrink-0${isExpanded ? ' expanded' : ''}`}
         />
+        <SourceDashes item={item} />
         <span className="tree-code shrink-0 whitespace-nowrap">{displayLabel(item)}</span>
         <span className={BRANCH_NAME_CLASS}>
           {sourceName(item)}

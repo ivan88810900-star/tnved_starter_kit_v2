@@ -238,6 +238,8 @@ export type TnvedChildItem = {
   code: string;
   node_id?: string;
   source_order?: number;
+  kind?: string;
+  dash_depth?: number | null;
   display_code: string;
   name: string;
   level: string;

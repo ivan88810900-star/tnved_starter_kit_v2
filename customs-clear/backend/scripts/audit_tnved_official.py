@@ -23,8 +23,8 @@ def digest(value):
 
 def proof(row):
     return {"page": row["page"], "depth": row["depth"],
-            "labelSha256": digest(compact(row["label"]).encode()),
-            "pathSha256": digest(json.dumps([compact(v) for v in row["path"]], ensure_ascii=False, separators=(",", ":")).encode())}
+            "labelSha256": digest(compact(row.get("raw_label", row["label"])).encode()),
+            "pathSha256": digest(json.dumps([compact(v) for v in row.get("raw_path", row["path"])], ensure_ascii=False, separators=(",", ":")).encode())}
 
 
 def layout_codes(pdf, chapter, executable):
@@ -94,11 +94,11 @@ def run(accepted_root, current_root, baseline, output, executable):
             difference("extra_coded_row", code, None, actual[code]["label"], actual[code]["page"], "extraction")
         for code in sorted(set(actual) & set(old_by_code)):
             a, e = actual[code], old_by_code[code]
-            if compact(a["label"]) != compact(e["label"]):
-                difference("changed_label", code, e["label"], a["label"], e["page"], "extraction")
+            if compact(a["label"]) != compact(e["raw_label"]):
+                difference("changed_label", code, e["raw_label"], a["label"], e["page"], "extraction")
             if a["parent_code"] != e["code_parent"]:
                 difference("coded_parent", code, e["code_parent"], a["parent_code"], e["page"])
-            source_path = [compact(v) for v in e["path"]]
+            source_path = [compact(v) for v in e["raw_path"]]
             if [compact(v) for v in json.loads(a["path_json"])[1:]] != source_path:
                 difference("source_path", code, e["path"], json.loads(a["path_json"])[1:], e["page"], "extraction")
         title_row = next(r for r in baseline_rows if r["code"] == chapter)
@@ -136,6 +136,9 @@ def run(accepted_root, current_root, baseline, output, executable):
             "retained_independent_codeless_proof_match": uncoded_proof == retained["uncodedRows"],
             "retained_independent_reserved_match": old["reserved"] == retained["reserved"],
             "parse_issues": new["issues"], "before_discrepancies": len(discrepancies),
+            "text_projection_version": new["text_projection_version"],
+            "labels_with_source_join_correction": sum(r["label"] != r["raw_label"] for r in new["rows"]),
+            "unknown_line_separator_evidence": sum(line["trailing_space"] is None for r in new["rows"] for line in r["raw_lines"]),
             "edition_delta_counts": {k: len(v) for k, v in edition_delta.items()},
         }
         print(chapter, summary["printed_coded_rows"], summary["codeless_rows"], "proof", summary["retained_independent_coded_proof_match"], "layout", summary["layout_vs_bbox_codes_match"], flush=True)
@@ -202,6 +205,9 @@ def audit_candidate(candidate, current_root, rows_root, url, output):
                     if detail.get(key) != value:
                         differences.append({"kind": "detail_content", "node": parent, "page": row["page"], "field": key, "expected": value, "actual": detail.get(key)})
                 if parent != chapter:
+                    for field, value in (("raw_name", row["raw_label"]), ("dash_depth", row["depth"]), ("kind", row["kind"])):
+                        if detail.get(field) != value:
+                            differences.append({"kind": "source_text_projection", "node": parent, "field": field, "expected": value, "actual": detail.get(field)})
                     for field, value in (("source_sha256", chapter_meta["sha256"]), ("source_url", chapter_meta["url"]), ("page", row["page"])):
                         if detail.get(field) != value:
                             differences.append({"kind": "wrong_source_reference", "node": parent, "field": field, "expected": value, "actual": detail.get(field)})

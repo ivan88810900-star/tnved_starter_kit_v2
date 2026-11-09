@@ -20,6 +20,7 @@ class TnvedRecoveryStore:
         self._conn = sqlite3.connect(uri, uri=True)
         self._conn.row_factory = sqlite3.Row
         self.navigation_enabled = self._conn.execute("SELECT 1 FROM sqlite_master WHERE name='recovery_navigation'").fetchone() is not None
+        self.source_text_enabled = self._conn.execute("SELECT 1 FROM sqlite_master WHERE name='recovery_source_text'").fetchone() is not None
 
     def close(self) -> None:
         self._conn.close()
@@ -39,6 +40,7 @@ class TnvedRecoveryStore:
             "rates_present": metadata["rates_present"] == "true",
             "nodes": self._conn.execute("SELECT count(*) FROM recovery_nodes").fetchone()[0],
             "navigation_enabled": self.navigation_enabled,
+            "source_text_enabled": self.source_text_enabled,
             "navigation_nodes": self._conn.execute("SELECT count(*) FROM recovery_navigation").fetchone()[0] if self.navigation_enabled else None,
         }
 
@@ -84,12 +86,20 @@ class TnvedRecoveryStore:
             row = self._conn.execute("SELECT n.* FROM recovery_heading_aliases a JOIN recovery_navigation n ON n.id=a.node_id WHERE a.heading_code=?", (value,)).fetchone()
         return row
 
+    def _with_source_text(self, row: dict) -> dict:
+        if self.source_text_enabled:
+            source = self._conn.execute("SELECT raw_label,raw_lines_json,dash_depth FROM recovery_source_text WHERE node_id=?", (row["id"],)).fetchone()
+            if source is None:
+                raise ValueError("Missing source text provenance")
+            row.update(raw_label=source["raw_label"], raw_lines=json.loads(source["raw_lines_json"]), dash_depth=source["dash_depth"])
+        return row
+
     def lookup(self, code: str) -> dict[str, Any] | None:
         if self.navigation_enabled:
             row = self._navigation_row(code)
             if row is None:
                 return None
-            value = dict(row)
+            value = self._with_source_text(dict(row))
             source = dict(self._conn.execute("SELECT url,sha256 FROM recovery_sources WHERE id=?", (row["source_id"],)).fetchone())
             edition = self._conn.execute("SELECT edition_id FROM recovery_nodes WHERE code=?", (row["chapter"],)).fetchone()
             parent = self._conn.execute("SELECT code FROM recovery_navigation WHERE id=?", (row["parent_id"],)).fetchone()
@@ -158,7 +168,7 @@ class TnvedRecoveryStore:
             rows = self._conn.execute("SELECT * FROM recovery_navigation WHERE parent_id=? ORDER BY source_order LIMIT ?", (parent["id"], limit + 1)).fetchall()
             if len(rows) > limit:
                 raise ValueError("child result exceeds limit; refusing partial result")
-            return [{**dict(row), "path": json.loads(row["path_json"])} for row in rows]
+            return [self._with_source_text({**dict(row), "path": json.loads(row["path_json"])}) for row in rows]
         normalized = "".join(ch for ch in str(code) if ch.isdigit())
         if not normalized:
             return []
