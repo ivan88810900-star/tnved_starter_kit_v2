@@ -13,12 +13,15 @@ concurrency:
   cancel-in-progress: false
 jobs:
   offline-safety:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12.15'
       - name: Deterministic control and adapter tests (no credentials)
         env:
           PYTHONDONTWRITEBYTECODE: '1'

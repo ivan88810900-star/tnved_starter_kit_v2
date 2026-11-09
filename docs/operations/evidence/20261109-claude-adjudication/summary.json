@@ -1336,5 +1336,16 @@
     "no enforcement",
     "no new agents/chats/schedules",
     "no A6/provider calls"
-  ]
+  ],
+  "CI_environment_followup": {
+    "first_repair_head": "0ad69a3731a56a10dee81de926dd5f40cd977fbf",
+    "failed_runs": [
+      42589830958,
+      42589837362
+    ],
+    "cause": "ubuntu-latest Python3.14.4 rejected by existing <3.14 guard before HTTP tests",
+    "fix": "same workflow pinned ubuntu24.04/Python3.12.15; official setup-python v6 exact commit",
+    "guard_and_tests_preserved": true,
+    "final_exact_head_CI": "recorded in queue257 receipt"
+  }
 }
