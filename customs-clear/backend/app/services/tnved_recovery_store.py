@@ -14,6 +14,10 @@ import sqlite3
 from typing import Any
 
 
+class SourceTextProvenanceError(RuntimeError):
+    """The enabled source-text projection is internally incomplete."""
+
+
 class TnvedRecoveryStore:
     def __init__(self, path: str | Path) -> None:
         uri = f"file:{Path(path).resolve()}?mode=ro"
@@ -90,7 +94,7 @@ class TnvedRecoveryStore:
         if self.source_text_enabled:
             source = self._conn.execute("SELECT raw_label,raw_lines_json,dash_depth FROM recovery_source_text WHERE node_id=?", (row["id"],)).fetchone()
             if source is None:
-                raise ValueError("Missing source text provenance")
+                raise SourceTextProvenanceError("Missing source text provenance")
             row.update(raw_label=source["raw_label"], raw_lines=json.loads(source["raw_lines_json"]), dash_depth=source["dash_depth"])
         return row
 

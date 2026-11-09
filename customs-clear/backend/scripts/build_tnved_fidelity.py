@@ -64,7 +64,7 @@ def build(source_root: Path, rows_root: Path, output: Path, manifest_pin: str, a
         if entry.get("status") != "collected" or sha(pdf.read_bytes()) != entry["sha256"]:
             raise ValueError("Official PDF pin mismatch: " + ch)
         result = json.loads((rows_root / ("current-" + ch + ".json")).read_text())
-        if result["source_sha256"] != entry["sha256"] or result["issues"] or result.get("text_projection_version") != 2:
+        if result["source_sha256"] != entry["sha256"] or result["issues"] or result.get("text_projection_version") != 3:
             raise ValueError("Unresolved source extraction: " + ch)
         rows = result["rows"]
         if any(line["trailing_space"] is None for row in rows for line in row["raw_lines"]):
@@ -125,7 +125,7 @@ def build(source_root: Path, rows_root: Path, output: Path, manifest_pin: str, a
         db.execute("VACUUM")
     temporary.replace(output)
     output.chmod(0o444)
-    report = {"sqlite_sha256": sha(output.read_bytes()), "source_corpus_sha256": corpus_sha, "collection_manifest_sha256": manifest_pin, "accepted_catalog_sha256": accepted_pin, "counts": counts, "navigation_nodes": len(navigation), "codeless_nodes": sum(row[9] in ("codeless", "caption") for row in navigation), "heading_aliases": len(aliases), "unresolved_aliases": unresolved, "legal_status": "unverified", "rates_present": False, "preserved_historical_notes": len(retained_notes), "notes_admitted": False, "text_projection_version": 2, "source_text_records": len(source_text)}
+    report = {"sqlite_sha256": sha(output.read_bytes()), "source_corpus_sha256": corpus_sha, "collection_manifest_sha256": manifest_pin, "accepted_catalog_sha256": accepted_pin, "counts": counts, "navigation_nodes": len(navigation), "codeless_nodes": sum(row[9] in ("codeless", "caption") for row in navigation), "heading_aliases": len(aliases), "unresolved_aliases": unresolved, "legal_status": "unverified", "rates_present": False, "preserved_historical_notes": len(retained_notes), "notes_admitted": False, "text_projection_version": 3, "source_text_records": len(source_text)}
     output.with_suffix(".manifest.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     return report
 

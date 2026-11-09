@@ -25,14 +25,10 @@ def join_source_lines(lines: list[dict]) -> str:
     for previous, following in zip(lines, lines[1:]):
         left, right = previous["text"].rstrip(), following["text"].lstrip()
         lexical_edge = bool(re.search(r"[\w\])\u2032'\-\u2010\u2011]$", left) and re.match(r"[\w\[(]", right))
-        # A line boundary alone cannot tell a split word from two words.
-        # Keep lexical hyphens, but preserve suspended forms such as "газо- или".
-        # Without a hyphen, require matching PDF character evidence of NO space.
-        suspended = bool(re.match(r"(?:и|или)(?:\s|$)", right, re.I)) or (previous.get("trailing_space") is not False and bool(re.match(r"либо(?:\s|$)", right, re.I)))
-        hyphenated = not suspended and bool(re.search(r"[\w\])\u2032'][-\u2010\u2011]$", left) and re.match(r"[\w\[(]", right))
-        if suspended and left.endswith(("-", "\u2010", "\u2011")):
-            lexical_edge = False
-        separator = "" if hyphenated or previous.get("trailing_space") is False and lexical_edge else " "
+        # The same encoded separator rule applies with or without a hyphen.
+        # Suspended forms need no word list: the PDF contains their space.
+        # Unknown boundaries stay separate; the builder rejects unknown evidence.
+        separator = "" if previous.get("trailing_space") is False and lexical_edge else " "
         value += separator + right
     return value
 
@@ -138,7 +134,7 @@ def extract_pdf_rows(pdf: Path, chapter: str, pdftotext: str) -> dict:
         row["raw_path"] = [item["raw_label"] for item in stack] + [row["raw_label"]]
         row["code_parent"] = next((item["code"] for item in reversed(stack) if item["code"]), chapter)
         stack.append(row)
-    return {"chapter": chapter, "source_sha256": source_sha, "pages": len(pages), "table_pages": table_pages, "rows": rows, "reserved": reserved, "issues": issues, "text_projection_version": 2}
+    return {"chapter": chapter, "source_sha256": source_sha, "pages": len(pages), "table_pages": table_pages, "rows": rows, "reserved": reserved, "issues": issues, "text_projection_version": 3}
 
 
 NAVIGATION_SCHEMA = """

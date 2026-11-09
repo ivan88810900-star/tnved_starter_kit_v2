@@ -7,7 +7,7 @@ import re
 
 from fastapi import APIRouter, HTTPException, Query
 
-from ..services.tnved_recovery_store import TnvedRecoveryStore
+from ..services.tnved_recovery_store import SourceTextProvenanceError, TnvedRecoveryStore
 
 
 def recovery_router(database: Path, snapshot_sha256: str) -> APIRouter:
@@ -27,8 +27,11 @@ def recovery_router(database: Path, snapshot_sha256: str) -> APIRouter:
     @contextmanager
     def open_store():
         unchanged()
-        with TnvedRecoveryStore(database) as store:
-            yield store
+        try:
+            with TnvedRecoveryStore(database) as store:
+                yield store
+        except SourceTextProvenanceError as exc:
+            raise HTTPException(503, "В снимке отсутствует исходный текст узла; требуется проверить целостность набора") from exc
         unchanged()
 
     def normalized(code: str) -> str:

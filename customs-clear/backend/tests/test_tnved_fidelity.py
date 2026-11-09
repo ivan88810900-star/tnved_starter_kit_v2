@@ -115,13 +115,27 @@ class FidelityNavigationTests(unittest.TestCase):
         self.assertEqual(child['dash_depth'], 2)
         self.assertEqual(child['node_id'], '8503001000')
 
+    def test_missing_source_text_is_a_service_failure_for_children_and_cards(self):
+        # Delete only from this disposable fixture, then pin the inconsistent
+        # snapshot before startup so the file-change guard is not the failure.
+        self.client.close()
+        with sqlite3.connect(self.database) as db:
+            db.execute("DELETE FROM recovery_source_text WHERE node_id='8503001000'")
+        pin = hashlib.sha256(self.database.read_bytes()).hexdigest()
+        with TestClient(create_recovery_app(self.database, pin)) as client:
+            for url in ('/api/tnved/children/850300', '/api/v1/tnved/8503001000', '/api/v1/tnved/850300'):
+                with self.subTest(url=url):
+                    response = client.get(url)
+                    self.assertEqual(response.status_code, 503)
+                    self.assertIn('отсутствует исходный текст узла', response.json()['detail'])
+
 
 class SourceTextProjectionTests(unittest.TestCase):
     def test_wrapped_compounds_and_split_words_keep_encoded_separators(self):
         def joined(left, right, separator):
             return join_source_lines([{'text': left, 'trailing_space': separator}, {'text': right}])
         self.assertEqual(joined('для научно-', 'исследовательских целей', False), 'для научно-исследовательских целей')
-        self.assertEqual(joined('аминогидроксинафталинсульфо-', 'кислоты', True), 'аминогидроксинафталинсульфо-кислоты')
+        self.assertEqual(joined('аминогидроксинафталинсульфо-', 'кислоты', True), 'аминогидроксинафталинсульфо- кислоты')
         self.assertEqual(joined("и 4,4'-", 'метилендициклогексилдиизоцианата', False), "и 4,4'-метилендициклогексилдиизоцианата")
         self.assertEqual(joined('метилендициклогексилдиизоци', 'аната в виде раствора', False), 'метилендициклогексилдиизоцианата в виде раствора')
         self.assertEqual(joined('спиро[изобенз', 'офуран-1(3Н)', False), 'спиро[изобензофуран-1(3Н)')
@@ -130,9 +144,16 @@ class SourceTextProjectionTests(unittest.TestCase):
         self.assertEqual(joined('неизвестный', 'разрыв', None), 'неизвестный разрыв')
 
     def test_suspended_hyphen_and_source_dash_are_not_word_joins(self):
-        for separator in [True, False, None]:
+        for separator in [True, None]:
             self.assertEqual(join_source_lines([{'text':'газо-', 'trailing_space':separator}, {'text':'или дымоанализаторы'}]), 'газо- или дымоанализаторы')
         self.assertEqual(join_source_lines([{'text':'–', 'trailing_space':False}, {'text':'прочие'}]), '– прочие')
+
+    def test_hyphen_boundary_uses_encoded_space_without_a_following_word_list(self):
+        for word in ('и', 'или', 'либо', 'кислоты', 'Другое', '1211'):
+            for separator in (True, False, None):
+                with self.subTest(word=word, separator=separator):
+                    expected = 'текст-' + ('' if separator is False else ' ') + word
+                    self.assertEqual(join_source_lines([{'text':'текст-', 'trailing_space':separator}, {'text':word}]), expected)
 
     def test_trailing_pdf_space_beyond_ink_is_not_clipped_at_column_boundary(self):
         words = [(392, 100, 400, 113, 'м')]

@@ -199,9 +199,10 @@ and pdfminer pins). Use a separate source-build Python environment for
 `audit_tnved_official.py`; HTTP and synthetic CI do not import these libraries.
 The prepared source runtime was used without installing anything in the HTTP venv.
 
-Wrapped lexical hyphens keep their glyph without an inserted space. Suspended
-forms such as `газо- или` retain their separator. Unhyphenated split words join
-only with matching PDF character evidence that no separator was encoded. A space
+Wrapped lexical hyphens keep their glyph. Version 3 joins lexical edges, with
+or without a hyphen, only when matching PDF character evidence says that NO
+separator was encoded. Encoded spaces survive, including `газо- или` and
+`сульфо- кислоты`; there is no following-word list. A space
 just beyond the final word's ink is included even beyond the nominal text-column
 cutoff. Unknown character boundaries prevent building a candidate.
 
@@ -212,3 +213,27 @@ expose depth/kind. Captions have no dash, and the tree renders the source depth
 instead of a fixed one/two-dash placeholder. Node identity/edges/order/aliases do
 not change. Reserved positions and footnote/index typography remain separate
 open presentation questions; no active code or legal meaning is invented.
+
+## Targeted Claude recheck: separator and provenance errors (2026-11-09)
+
+The returned independent recheck applies to `46506d04...` / `99f70ee3...`, not
+to a later repair. Its errata correct the former 454-case list: 452 genuine
+cases plus 19 previously missed cases = 471 old defects. The old 472-label
+repair also removed an encoded space in `2922210000`; that one over-join is
+now reversed by the general separator rule above. The new isolated v3 candidate
+is `45ab63fa4b14fa4a9e1175f10685364249a2fb8eeb890ecf4a6701f53ba9ba2f`.
+The builder requires `text_projection_version=3`; old v2 rows are rejected.
+Existing source bytes, raw lines, source text records and all structural fields
+are preserved. Existing candidate outputs remain immutable.
+
+An enabled source-text table with a missing node record is an internal snapshot
+failure. Store raises `SourceTextProvenanceError`; the router returns explicit
+503 for affected children/detail requests. It is no longer misreported as a
+422 child-count limit or an unhandled 500. Old profiles without a source-text
+table remain supported; no source text is invented as a fallback.
+
+See `docs/operations/TARIFF_CLAUDE_RECHECK_20261109.md` for exact scope,
+commands, remaining text differences and the distinction between independent
+data/static review and A0 runtime checks. Claude's host API/UI/private SQLite
+layers remain not_assessed. The local replacement profile uses loopback port
+18007; no public endpoint or tunnel is part of this work.
