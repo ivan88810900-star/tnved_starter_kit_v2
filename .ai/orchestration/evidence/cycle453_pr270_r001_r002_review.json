@@ -1,0 +1,82 @@
+{
+  "scope": "R001/R002 final supplied independent review; metadata only",
+  "head": "3eae7ee2358c44ffe6cd91c337fc816705a8031c",
+  "tree": "6499c209aadb986f03725539d24ed0e83e92249d",
+  "snapshot_sha256": "45ab63fa4b14fa4a9e1175f10685364249a2fb8eeb890ecf4a6701f53ba9ba2f",
+  "input": {
+    "zip_sha256": "b4107b2e8f904fd3a4422ad18dab90696ae3a5c4ed72e35599273d61ca78127d",
+    "zip_bytes": 7862,
+    "ZIP_entries": 7,
+    "uncompressed_bytes": 17468,
+    "report_sha256": "1f8bf6fd45694baae8d6750b0d36dea354699932f2bebf6bc6bed4dffea4a0bf",
+    "separate_report_matches_ZIP": true,
+    "archive_CRC_and_safe_paths": "PASS",
+    "external_scripts_executed": false
+  },
+  "reviewed_packet_sha256": "07b6984b12349eff7dc493b495ea20de8567e07348d880fadee8ea3683fe7ec2",
+  "reviewed_packet_manifest_sha256": "1b8dd6d14bb855e0ebc318cd865cf38dcc164824d7f93d00e7eaad665e8ad0fc",
+  "R001": {
+    "independent_status": "CORRECTED_CODE_AND_CORPUS_SIMULATION",
+    "physical_rows_in_report": 21090,
+    "predicted_delta_vs99f7": 1,
+    "actual45ab_navigation_export_reviewed": false,
+    "predicted_label_matches_A0": true,
+    "labels_changed_vs7be": 471,
+    "paths_changed_vs7be_report_and_A0": 1699
+  },
+  "R002": {
+    "independent_status": "CORRECTED_STATIC_CODE_REVIEW",
+    "independent_runtime_test": false,
+    "A0_fixture_and_CI_tests": "separately attributed author evidence"
+  },
+  "API": "NOT_ASSESSED_BY_CLAUDE",
+  "UI": "NOT_ASSESSED_BY_CLAUDE",
+  "private_SQLite_identity": "NOT_ASSESSED_BY_CLAUDE",
+  "remaining": {
+    "F001": "OPEN",
+    "F003": "OPEN",
+    "range_dash_spacing": 7,
+    "inline_spacing": 3,
+    "full_visual_PDF_audit": false
+  },
+  "A0_adjudication": {
+    "input_hashes_and_safe_intake": "PASS",
+    "decision_head_tree_packet_identity": "PASS",
+    "auditor_simulation_change_sets_match_previous_A0_proof": "PASS",
+    "new_defects_in_report": 0,
+    "code_or_data_change_required": false,
+    "product_tests_repeated": false,
+    "raw_report_or_transcript_published": false
+  },
+  "preserved_prohibitions": [
+    "DB_HOLD",
+    "NO_MERGE",
+    "NO_DEPLOY",
+    "NO_ENFORCEMENT",
+    "NO_NEW_AGENTS_CHATS_SCHEDULES",
+    "NO_A6_MODEL_PROVIDER_CALLS"
+  ],
+  "product_head_preserved": true,
+  "readiness": "DRAFT_LIMITED_INDEPENDENT_CODE_REVIEW_RECEIVED_RUNTIME_NOT_ASSESSED",
+  "scope_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6739313080",
+  "cycle": 453,
+  "product_implementation_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6739036138",
+  "exact_head_CI": [
+    {
+      "id": 42609546516,
+      "event": "pull_request",
+      "head": "3eae7ee2358c44ffe6cd91c337fc816705a8031c",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/42609546516"
+    },
+    {
+      "id": 42609535275,
+      "event": "push",
+      "head": "3eae7ee2358c44ffe6cd91c337fc816705a8031c",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/42609535275"
+    }
+  ]
+}
