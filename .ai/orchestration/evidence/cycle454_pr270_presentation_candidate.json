@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "cycle": 454,
+  "queue": 257,
+  "receipt_id": 6740971217,
+  "receipt_url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6740971217",
+  "owner_decision": "F001 inactive source markers; F003 original fragment fallback; preserve all ten spacing limitations",
+  "product_head": "7bfd7b5fd8607e3e9b472adf43d5b3acc43697de",
+  "product_tree": "e3ea9180cf070a0b62e4aa0df1c1b2cb78eb487a",
+  "parent": "3eae7ee2358c44ffe6cd91c337fc816705a8031c",
+  "main": "eeef5028d45ea14af09e0afb01f600bca5602316",
+  "sqlite_sha256": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "sqlite_bytes": 130629632,
+  "frontend_index_sha256": "cee3488eadd6012d3eda69b6a85beea84afd94d11f5d1fc4becadc87a18171ac",
+  "frontend_file_manifest_sha256": "6eba2526bcb15257c8a5d48fd5873b126085da757a70afddf2d8036c35e1edec",
+  "F001": {
+    "inactive_markers": 37,
+    "numeric_code_selectable": false,
+    "in_active_counts": false,
+    "legal_status_inferred": false
+  },
+  "F003": {
+    "small_glyph_nodes": 849,
+    "identity_matches_prior_independent_list": true,
+    "source_fragments": 895,
+    "representation": "explicitly simplified searchable label plus original PDF raster, no guessed semantic math or footnote target",
+    "all_images_visually_inspected": false
+  },
+  "spacing": {
+    "count": 10,
+    "status": "open_limitation",
+    "raw_display_source_impact_ledger": true,
+    "bulk_label_normalization": false
+  },
+  "A0_validation": {
+    "unit": 26,
+    "recovery_gate": {
+      "discovered": 4,
+      "executed": 4,
+      "skipped": 0
+    },
+    "actual_runtime": {
+      "groups": 96,
+      "JSON_requests": 43234,
+      "PNG_requests": 895,
+      "observed_layers": [
+        "SQLite SQL",
+        "HTTP",
+        "Chrome visible UI"
+      ]
+    },
+    "browser": {
+      "configurations": 3,
+      "card_openings": 66,
+      "all37markers_each": true,
+      "ten_spacing_cards": true,
+      "multipage_original": true,
+      "codeless_original": true
+    },
+    "build": "PASS",
+    "typecheck": "4 unchanged TS2339 PermitDocumentsBlock77/80; no new diagnostics; not PASS",
+    "ci": [
+      {
+        "id": 42622236488,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/42622236488",
+        "head_sha": "7bfd7b5fd8607e3e9b472adf43d5b3acc43697de",
+        "conclusion": "success"
+      },
+      {
+        "id": 42622227813,
+        "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/42622227813",
+        "head_sha": "7bfd7b5fd8607e3e9b472adf43d5b3acc43697de",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "prior_independent_scope": {
+    "head": "3eae7ee2358c44ffe6cd91c337fc816705a8031c",
+    "R001": "corrected: source glyph/code and independent simulation",
+    "R002": "corrected: static code only",
+    "actual_SQLite_HTTP_UI": "not independently observed",
+    "reopened": false,
+    "transferred_to_new_runtime": false
+  },
+  "handoff": {
+    "folder": "audit-handoff/20261109-pr270-final-runtime",
+    "manifest_sha256": "c8a0724dfb17d7e8c5dc0d897c2d591b395d763bed6b271b5ae6a2d4b2c7e668",
+    "payload_files": 149,
+    "archives": [
+      {
+        "name": "Tariff-PR270-final-runtime-Core-20261109.zip",
+        "bytes": 27562008,
+        "sha256": "fc2f888a90ada7d6c3fdd725d4ddebbcdb44e88b39426c9b595c8384228a1bf5"
+      },
+      {
+        "name": "Tariff-PR270-final-runtime-Sources-20261109.zip",
+        "bytes": 29595483,
+        "sha256": "f5ff4854cddfecfe2f56e829463d16bb5e72b42f55d1e1be1cd44d0cd8bc1507"
+      }
+    ],
+    "exact_components": [
+      "one real final candidate SQLite, 15 table disclosure",
+      "4 exact Git HTTP modules and empty package markers",
+      "16 changed Git files and exact repair.patch",
+      "5 frozen frontend assets",
+      "96 original official PDFs",
+      "versions, source refs, manifests, source/build manifest",
+      "pinned dependencies, loopback launcher, actual SQL/HTTP/browser probes",
+      "independent audit prompt; labeled A0 JSON/CI/two screenshots"
+    ],
+    "sqlite_extra_scope": "107 historical unverified source notes, 68424 links, 37 markers, 10 open distinctions, 895 PNG",
+    "sensitive_data_present": false,
+    "export_performed": false,
+    "consent": "PENDING for exact new manifest/SQLite",
+    "old_json_consent_covers_this": false,
+    "Claude_actual_access": "Existing cloud session cannot access Mac localhost or private SQLite. Files not transferred. Cloud Python/browser capabilities not observed.",
+    "owner_action": "If exact composition approved, send both ZIPs plus OWNER_HANDOFF_20261109_RU.txt in one message to the SAME existing Claude session; permits only this read-only audit. First run actual SQL/HTTP/browser access probes in its own environment. No tunnel or Mac access.",
+    "independent_runtime_review": "NOT_STARTED"
+  },
+  "safety": {
+    "DB_HOLD": true,
+    "permanent_DB_changed": false,
+    "backup_or_old_packets_overwritten": false,
+    "merge": false,
+    "deploy": false,
+    "enforcement": false,
+    "A6_or_provider_calls": false,
+    "new_agents_chats_schedules": false
+  },
+  "scope_receipts": [
+    6739962487,
+    6740873243
+  ]
+}
