@@ -1,8 +1,8 @@
 {
   "acquisition_note": "Port verified A6 owner-command gate onto current main",
-  "expires_at": null,
-  "generation": 449,
-  "holder": null,
+  "expires_at": "2026-11-09T09:23:36.649647Z",
+  "generation": 450,
+  "holder": "/root/codex-01a1b044-0f10-7941-b8a5-999cf67f41cc",
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "released",
-  "token": null,
-  "updated_at": "2026-11-08T10:27:45.000Z"
+  "state": "active",
+  "token": "5b6a00405b584613b5eb1b49e1363d23",
+  "updated_at": "2026-11-09T08:23:36.649647Z"
 }
