@@ -6,8 +6,10 @@ from pathlib import Path
 import re
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import Response
 
 from ..services.tnved_recovery_store import SourceTextProvenanceError, TnvedRecoveryStore
+from ..services.tnved_presentation import PresentationIntegrityError
 
 
 def recovery_router(database: Path, snapshot_sha256: str) -> APIRouter:
@@ -32,6 +34,8 @@ def recovery_router(database: Path, snapshot_sha256: str) -> APIRouter:
                 yield store
         except SourceTextProvenanceError as exc:
             raise HTTPException(503, "В снимке отсутствует исходный текст узла; требуется проверить целостность набора") from exc
+        except PresentationIntegrityError as exc:
+            raise HTTPException(503, "Фрагмент оригинала недоступен или не прошёл проверку целостности") from exc
         unchanged()
 
     def normalized(code: str) -> str:
@@ -53,6 +57,10 @@ def recovery_router(database: Path, snapshot_sha256: str) -> APIRouter:
             "is_leaf": not section and len(code) == 10 and not children,
             "is_codeless": row.get("kind") in ("codeless", "caption"), "is_group": children, "has_children": children,
             "kind": row.get("kind"), "dash_depth": row.get("dash_depth"),
+            "is_reserved": row.get('kind') == 'reserved', "selectable": row.get('kind') != 'reserved',
+            "format_notice": row.get('format_notice'), "source_fragment_url": row.get('source_fragment_url'),
+            "source_page": row.get('page'),
+            "source_url": row.get('source_url'), "source_sha256": row.get('source_sha256'),
             **({"source_order": row["source_order"], "source_row_id": row.get("source_row_id")} if "source_order" in row else {}),
             "import_duty": None, "duty_rate": None, "vat_rate": None,
         }
@@ -78,7 +86,7 @@ def recovery_router(database: Path, snapshot_sha256: str) -> APIRouter:
         if not rows:
             raise HTTPException(404, "Код не найден")
         if store.navigation_enabled:
-            return [{"hs_code": row["code"] or (row["node_id"] if row["kind"] == "section" else ""), "node_id": row["node_id"], "title": row["label"], "level": index, "is_codeless": row["kind"] in ("codeless", "caption")} for index, row in enumerate(rows)]
+            return [{"hs_code": row["code"] or (row["node_id"] if row["kind"] == "section" else ""), "node_id": row["node_id"], "title": row["label"], "kind": row["kind"], "level": index, "is_codeless": row["kind"] in ("codeless", "caption")} for index, row in enumerate(rows)]
         section = store.section_for(code)
         return ([{"hs_code": section["code"], "title": section["label"], "level": 0}] if section else []) + [
             {"hs_code": row["code"], "title": row["label"], "level": len(row["code"])} for row in rows
@@ -125,6 +133,15 @@ def recovery_router(database: Path, snapshot_sha256: str) -> APIRouter:
                 "requested_code": row.get("requested_code", code), "navigation_alias": row.get("navigation_alias"),
                 "kind": row.get("kind"), "dash_depth": row.get("dash_depth"),
                 "raw_name": row.get("raw_label", row["label"]), "source_lines": row.get("raw_lines", []),
+                "presentation": row.get('presentation'), "selectable": row.get('kind') != 'reserved',
             }
+
+    @router.get('/api/v1/tnved/{code}/source-fragments/{ordinal}.png')
+    def source_fragment(code: str, ordinal: int):
+        with open_store() as store:
+            value = store.source_fragment(normalized(code), ordinal)
+            if value is None:
+                raise HTTPException(404, 'Фрагмент оригинала не найден')
+            return Response(value['png'], media_type='image/png', headers={'ETag': value['sha256'], 'X-Source-SHA256': value['source_sha256'], 'X-Snapshot-SHA256': snapshot_sha256})
 
     return router

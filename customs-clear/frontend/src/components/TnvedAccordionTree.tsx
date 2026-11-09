@@ -50,6 +50,10 @@ function nodeKey(item: TnvedChildItem, index: number): string {
 function identity(item: TnvedChildItem | TnvedSearchHit): string { return item.node_id || item.code; }
 function sourceName(item: TnvedChildItem | TnvedSearchHit): string { return item.source_order == null ? formatTnvedCommodityName(item.name) : item.name; }
 
+function SourceLabel({ item }: { item: TnvedChildItem | TnvedSearchHit }) {
+  return <>{sourceName(item)}{item.format_notice ? <span data-testid="source-format-notice" className="ml-1 text-[11px] font-normal text-amber-800"> · Оформление: см. оригинал</span> : null}</>;
+}
+
 function SourceDashes({ item, legacy = 0 }: { item: TnvedChildItem; legacy?: number }) {
   const count = item.kind === 'caption' ? 0 : item.dash_depth ?? (item.source_order == null ? legacy : 0);
   return count > 0 ? <span data-source-depth={count} aria-label={`Уровень источника: ${count}`} className="shrink-0 whitespace-nowrap select-none text-[11px] font-medium text-[var(--cargo-light)]">{Array.from({ length: count }, () => '–').join(' ')}</span> : null;
@@ -114,7 +118,7 @@ function LeafRow({ item, depth, inCodelessBranch, onSelectLeaf }: LeafRowProps) 
             inCodelessBranch ? '' : ' tree-name'
           }`}
         >
-          {sourceName(item)}
+          <SourceLabel item={item} />
         </span>
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
           {duty ? (
@@ -269,6 +273,16 @@ function TreeNode({
     );
   };
 
+  if (item.kind === 'reserved') {
+    return <motion.div variants={itemVariants} data-testid="reserved-marker" data-marker-id={identity(item)} data-printed-code={item.display_code}
+      className="my-1 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600" style={{ marginLeft: depth * INDENT_PX }}>
+      <p><span className="font-mono font-semibold">{item.display_code}</span> · Неактивная отметка источника</p>
+      <p className="mt-1">{item.format_notice}</p>
+      {item.source_fragment_url ? <a href={item.source_fragment_url} target="_blank" rel="noreferrer" className="mt-1 inline-block underline">Фрагмент оригинала · стр. {item.source_page}</a> : <p role="alert">Фрагмент оригинала недоступен</p>}
+      {item.source_url && /^https?:\/\//i.test(item.source_url) ? <a href={`${item.source_url}#page=${item.source_page}`} target="_blank" rel="noreferrer" title={`SHA-256 снимка PDF: ${item.source_sha256}`} className="ml-3 inline-block underline">Ссылка на PDF</a> : null}
+    </motion.div>;
+  }
+
   if (item.is_codeless && canExpand) {
     const toggleButton = (
       <button
@@ -293,7 +307,7 @@ function TreeNode({
               : 'text-[var(--cargo-mid)]'
           } ${TNVED_COMMODITY_NAME_CLASS}`}
         >
-          {sourceName(item)}
+          <SourceLabel item={item} />
         </span>
       </button>
     );
@@ -329,7 +343,7 @@ function TreeNode({
         <CodelessDotRing />
         <SourceDashes item={item} legacy={1} />
         <span className={`text-[11px] italic text-[var(--cargo-mid)] ${TNVED_COMMODITY_NAME_CLASS}`}>
-          {sourceName(item)}
+          <SourceLabel item={item} />
         </span>
       </motion.div>
     );
@@ -363,7 +377,7 @@ function TreeNode({
         <SourceDashes item={item} />
         <span className="tree-code shrink-0 whitespace-nowrap">{displayLabel(item)}</span>
         <span className={BRANCH_NAME_CLASS}>
-          {sourceName(item)}
+          <SourceLabel item={item} />
         </span>
       </button>
 
@@ -662,7 +676,7 @@ export const TnvedAccordionTree: React.FC<Props> = ({ onSelectCode, initialSearc
                         ) : null}
                       </div>
                       <p className={`mt-1 text-[13px] text-cargo-deep ${TNVED_COMMODITY_NAME_CLASS}`}>
-                        {sourceName(hit) || 'Описание отсутствует'}
+                        <SourceLabel item={hit} />
                       </p>
                       {searchPaths[identity(hit)] ? (
                         <p className="mt-2 truncate text-[11px] text-cargo-light">{searchPaths[identity(hit)]}</p>

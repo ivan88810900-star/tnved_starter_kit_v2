@@ -212,7 +212,7 @@ depth. API detail exposes `raw_name`, `source_lines`, `dash_depth`, `kind`; chil
 expose depth/kind. Captions have no dash, and the tree renders the source depth
 instead of a fixed one/two-dash placeholder. Node identity/edges/order/aliases do
 not change. Reserved positions and footnote/index typography remain separate
-open presentation questions; no active code or legal meaning is invented.
+open presentation questions at the reviewed predecessor; no active code or legal meaning is invented.
 
 ## Targeted Claude recheck: separator and provenance errors (2026-11-09)
 
@@ -237,3 +237,22 @@ commands, remaining text differences and the distinction between independent
 data/static review and A0 runtime checks. Claude's host API/UI/private SQLite
 layers remain not_assessed. The local replacement profile uses loopback port
 18007; no public endpoint or tunnel is part of this work.
+
+## Owner-selected local presentation F001/F003 (2026-11-09)
+
+Separate candidate5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021
+preserves every active baseline table.37reserved rows are distinct inactive
+source markers, excluded from active selection/search/counts.849small-glyph
+nodes have an explicit simplified-label notice and original raster fragments
+inside the SAME SQLite. Formulas/note references retain original appearance
+without inferred semantics.10spacing source/display/impact comparisons remain
+open_limitation. Old45ab and earlier files remain immutable.
+
+Build: scripts/build_tnved_presentation.py; actual-result audit:
+scripts/audit_tnved_presentation.py; Chrome:
+frontend/scripts/presentation-browser-check.cjs. Full commands, exact build
+identity, disclosure and access boundary:
+docs/operations/TARIFF_PRESENTATION_FINAL_20261109.md.
+The final profile uses18008 and its own frozen frontend. Independent runtime
+review awaits scoped handoff of the actual SQLite to the same Claude session;
+a URL to Maclocalhost is insufficient.

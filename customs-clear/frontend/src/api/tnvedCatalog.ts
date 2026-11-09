@@ -11,6 +11,15 @@ export type RecoveredCatalogStatus = {
   rates_present: false;
 };
 
+export type SourcePresentation = {
+  notice: string;
+  reasons: string[];
+  source_url: string;
+  source_sha256: string;
+  fragments: { url: string; page: number; sha256: string; bounds: number[] }[];
+  spacing_difference: { source_text: string; display_text: string; impact: string; status: string; source_text_basis: string } | null;
+};
+
 export type RecoveredCodeDetail = {
   code: string;
   name: string;
@@ -30,6 +39,9 @@ export type RecoveredCodeDetail = {
   valid_to: null;
   complete: false;
   rates: null;
+  kind?: string;
+  selectable?: boolean;
+  presentation?: SourcePresentation | null;
 };
 
 export async function fetchRecoveredCode(code: string): Promise<RecoveredCodeDetail> {
@@ -77,6 +89,7 @@ export type TnvedSearchHit = {
   is_codeless?: boolean;
   source_order?: number;
   path?: string[];
+  format_notice?: string | null;
 };
 
 export type TnvedPreview = {
@@ -240,6 +253,13 @@ export type TnvedChildItem = {
   source_order?: number;
   kind?: string;
   dash_depth?: number | null;
+  is_reserved?: boolean;
+  selectable?: boolean;
+  format_notice?: string | null;
+  source_fragment_url?: string | null;
+  source_page?: number | null;
+  source_url?: string | null;
+  source_sha256?: string | null;
   display_code: string;
   name: string;
   level: string;
@@ -292,6 +312,7 @@ export type TnvedBreadcrumbItem = {
   level: number;
   node_id?: string;
   is_codeless?: boolean;
+  kind?: string;
 };
 
 export async function fetchTnvedBreadcrumb(code: string): Promise<TnvedBreadcrumbItem[]> {
