@@ -1,3 +1,16 @@
+# Cycle 451 checkpoint — cycle 450 PR #270 state reconciled (2026-11-09 10:22 UTC)
+
+- GitHub truth was reread before action: protected `main` remains `eeef5028d45ea14af09e0afb01f600bca5602316`; 52 PRs and 7 issues are open. The released generation-450 lease and `.ai/` were reconciled under verified generation 451.
+- Confirmed persistent-state drift: cycle 450 acquired/released the lease and recorded its verified receipt in issue #257, but `.ai/CURRENT_STATE.md` and cycle evidence still ended at cycle 449.
+- Draft PR #270 is now at exact head `46506d04a84dd15dbc5670a4a1c4c52dafb2a4ba`, tree `df93b1f34403ba2b4464ff1e813e0926ceeb9dc6`, on unchanged `main`. It is mergeable/clean with zero review threads and zero submitted reviews.
+- The supplied Claude audit was bound to predecessor `7be5b40adf8bc1b7e7e6afdb4611ce41b0f4b00f`. Cycle 450 confirmed and repaired F002 PDF word joins and F004 source dash-depth/caption rendering. F001 reserved markers and F003 rich typography/note references remain explicit presentation-contract questions.
+- Final-head push run `42590337559` and PR run `42590344585` succeeded. Logs/evidence bind 225 orchestration tests, 5 snapshot tests, recovery 4/4 with zero skips, and 18 HTTP/catalog/fidelity tests. Earlier runs on `0ad69a3` failed before dependency installation because the hosted image exposed Python 3.14.4; the final commit pins supported Python 3.12.15 while retaining guards and tests.
+- The new isolated candidate snapshot is `99f70ee34caa30637663c4c1a4e847958bfcfe663f4f5136e3d0b02725e0ef1f`. Permanent DB and protected branches were not changed.
+- The targeted independent recheck package is prepared but has not been run or sent. The new PR #270 head is therefore not independently accepted and stays draft. No live A6/provider call was made.
+- Draft PR #271 is unchanged at `b211c746ffaa003138abdc0c6a792bf1369cd641`, exact-head CI PASS, zero review threads/reviews. Its protected-main merge remains a separate owner gate.
+- This cycle changed persistent state only. No candidate, PR metadata, workflow, source/data, tests, merge, deploy, enforcement flag, permissions, secrets or provider request changed.
+- Evidence: `.ai/orchestration/evidence/cycle451_cycle450_persistent_state_reconciliation.json`. Next: owner/existing Claude session runs the prepared PR #270 targeted recheck; otherwise keep both PRs draft and do not repeat provider/live-A6 work.
+
 # Cycle 449 checkpoint — current-main A6 command gate restored (2026-11-08 10:26 UTC)
 
 - GitHub truth was reread before action: `main` remains `eeef5028d45ea14af09e0afb01f600bca5602316`; open PRs, issues, exact-head checks, review surfaces, `agent/orchestration-state`, released generation-448 lease, `.ai/` and recent commits were reconciled. Generation 449 was acquired and verified before writes.
