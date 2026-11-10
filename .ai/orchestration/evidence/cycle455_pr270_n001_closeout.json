@@ -1,0 +1,164 @@
+{
+  "task": "TARIFF-PR270-N001-CLOSEOUT-20261110",
+  "baseline_head": "7bfd7b5fd8607e3e9b472adf43d5b3acc43697de",
+  "final_head_binding": "queue257 final receipt; avoids a self-referential commit hash",
+  "sqlite_sha256": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "frontend_index_sha256": "cee3488eadd6012d3eda69b6a85beea84afd94d11f5d1fc4becadc87a18171ac",
+  "frontend_file_list_digest": "6eba2526bcb15257c8a5d48fd5873b126085da757a70afddf2d8036c35e1edec",
+  "intake": {
+    "ZIP_sha256": "f36f2744ab41d0aee23e9548b86886ffe065a96418cde60cd11b43544e8dc025",
+    "report_sha256": "58bd9644930b9a14b87c5bbc143ed0328eb96aeed7c0650a166ab1922ca5da38",
+    "manifest_files": 77,
+    "present_verified": 76,
+    "missing": [
+      {
+        "path": "http/children-edges.json",
+        "sha256": "67b89027d43626cb47352f08a1a8cd6fe40b0ca7aaf8f155e669d2ab7b19c240"
+      }
+    ],
+    "auditor_scripts_executed": false
+  },
+  "independent_review": {
+    "old_head": "7bfd7b5fd8607e3e9b472adf43d5b3acc43697de",
+    "actual_SQLite_SQL_HTTP_headless_browser": "observed by Claude according to received verified report",
+    "status": "received, N001 confirmed defect, targeted repair pending independent recheck",
+    "reported_GETs": 65097,
+    "missing_artifact_limits_reproduction": true,
+    "R001": "prior code plus independent simulation; not reopened",
+    "R002": "prior static review; not reopened",
+    "F003": "simplified searchable name plus original raster; not rich text or interpreted footnotes",
+    "spacing_distinctions": 10,
+    "spacing_status": "open_limitation",
+    "reproduction_limits": [
+      "Sources absent then; prior96PDF SHA matched",
+      "Playwright1.63.0 instead of1.62.1",
+      "headless Chromium153",
+      "opentelemetry-api1.45.2 unpinned",
+      "Google Fonts external request, auth/me404; no offline guarantee"
+    ]
+  },
+  "N001": {
+    "fix": "resolve open chapter/caption at predecessor of before_order; one resolver for child placement and marker path/breadcrumb",
+    "database_rebuilt": false,
+    "exception_codes_in_implementation": false,
+    "corrected": [
+      "[2838]",
+      "[2848]",
+      "[2851]",
+      "[6908]"
+    ],
+    "all37_correct_once": true,
+    "physical_neighbors_and_consecutive_order_checked": true,
+    "previous33_cards_identical": true,
+    "active_items_unchanged_in_container_lists": 129,
+    "HTTP_requests_each_before_after": 316,
+    "all895PNG_hashes_unchanged": true,
+    "numeric_reserved_lookup": 404,
+    "numeric_reserved_search_total": 0
+  },
+  "A0_validation": {
+    "unit": 29,
+    "unit_PASS": true,
+    "gate": {
+      "discovered": 4,
+      "executed": 4,
+      "skipped": 0
+    },
+    "browser": {
+      "mode": "fixed",
+      "status": "PASS",
+      "configurations": [
+        {
+          "width": 1440,
+          "scale": 1,
+          "marker_observations": 15
+        },
+        {
+          "width": 1280,
+          "scale": 1,
+          "marker_observations": 15
+        },
+        {
+          "width": 1280,
+          "scale": 1.25,
+          "marker_observations": 15
+        }
+      ],
+      "chapters": [
+        "28 V/VI",
+        "69 II",
+        "05",
+        "14",
+        "41",
+        "80"
+      ],
+      "collapsed_expanded_states": true,
+      "not_all37_visually_observed": true
+    },
+    "not_independent_Claude": true
+  },
+  "unchanged": {
+    "navigation_nodes": 21207,
+    "active_10_digit_codes": 13294,
+    "aliases": 271,
+    "source_fragments": 895,
+    "SQLite_PDF_parser_source_text_frontend": true,
+    "source_legal_status": "unverified",
+    "confirmed_rates": false
+  },
+  "handoff": {
+    "same_existing_Claude_session": true,
+    "scope": "all37 markers machine, four corrected positions HTTP/browser; no repeat full audit",
+    "new_SQLite_PDF_frontend_export": false,
+    "A0_external_transmission": false,
+    "independent_targeted_recheck": "PENDING",
+    "packet": "audit-handoff/Tariff-PR270-N001-targeted-recheck-20261110.zip",
+    "bytes": 62888,
+    "sha256": "af037fc773f2f7f2441f4b04740f160b150281b7c10b599a6323f254f44df43c",
+    "manifest_sha256": "ce5592c5028ecf7d970a870efd39e2ad591f5418f551dd3f7f977f73c7902061",
+    "payload_files": 21,
+    "ZIP_members": 23,
+    "all_manifest_members_verified": true,
+    "actual_packet_runtime": "A0 real HTTP and Chrome targeted checks PASS; uses old5970 and5assets, new4Gitmodules; no working-tree runtime assets",
+    "owner_action": "Send this one ZIP plus prepared OWNER_HANDOFF_N001_20261110_RU.txt in same existing Claude chat; all37 machine/four HTTP+UI; request existing missing children-edges hash67b89027 if still present. A0 no automatic external transfer.",
+    "private_auditor_outputs_export": false
+  },
+  "safety": {
+    "DB_HOLD": true,
+    "merge": false,
+    "deploy": false,
+    "enforcement": false,
+    "permanent_DB_write": false,
+    "new_agents_chats_schedules": false,
+    "provider_A6_calls": false
+  },
+  "schema_version": 1,
+  "cycle": 455,
+  "product_head": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+  "product_tree": "2e116b0e6528bf771e05fd7621f756e2948eb1ae",
+  "main": "eeef5028d45ea14af09e0afb01f600bca5602316",
+  "receipt": {
+    "issue": 257,
+    "id": 6763989679,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6763989679"
+  },
+  "scope_receipt": 6763466332,
+  "CI": [
+    {
+      "id": 42789975097,
+      "event": "pull_request",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/42789975097",
+      "head_sha": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+      "conclusion": "success",
+      "logs_confirm": "225 twice +5 snapshot +4/4/0skip recovery +29 catalog tests including new3"
+    },
+    {
+      "id": 42789967481,
+      "event": "push",
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/42789967481",
+      "head_sha": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+      "conclusion": "success",
+      "logs_confirm": "225 twice +5 snapshot +4/4/0skip recovery +29 catalog tests including new3"
+    }
+  ]
+}
