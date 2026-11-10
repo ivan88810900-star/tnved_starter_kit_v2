@@ -100,6 +100,71 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(self.client.get('/api/v1/tnved/8503001000/source-fragments/999.png').status_code, 404)
         self.assertEqual(self.client.get('/api/v1/tnved/not-a-code/source-fragments/0.png').status_code, 422)
 
+    def caption_fixture(self, *, marker_order=20, consecutive=False):
+        """Disposable topology: chapter, caption A with deep leaves, caption B.
+
+        The reserved mark is before the next physical row; that row can start
+        a NEW caption. It must still belong to the preceding open container.
+        """
+        self.client.close()
+        first = 'u-' + hashlib.sha256(b'caption-a').hexdigest()[:24]
+        second = 'u-' + hashlib.sha256(b'caption-b').hexdigest()[:24]
+        with sqlite3.connect(self.database) as db:
+            db.row_factory = sqlite3.Row
+            template = dict(db.execute("SELECT * FROM recovery_navigation WHERE id='850300'").fetchone())
+            # The shared fixture also has a large unrelated pagination tail.
+            # Remove it from this disposable topology before adding its captions.
+            db.execute("DELETE FROM recovery_source_text WHERE node_id IN (SELECT id FROM recovery_navigation WHERE chapter='85' AND source_order>22)")
+            db.execute("DELETE FROM recovery_navigation WHERE chapter='85' AND source_order>22")
+            for key, label, order in ((first, 'I. FIRST', 5), (second, 'II. SECOND', 30)):
+                row = {**template, 'id': key, 'code': None, 'label': label, 'kind': 'caption', 'source_order': order, 'parent_id': '85', 'path_json': json.dumps(['Chapter', label])}
+                db.execute('INSERT INTO recovery_navigation (' + ','.join(row) + ') VALUES (' + ','.join('?' for _ in row) + ')', tuple(row.values()))
+                db.execute('INSERT INTO recovery_source_text VALUES (?,?,?,NULL)', (key, label, '[]'))
+            db.execute("UPDATE recovery_navigation SET parent_id=? WHERE id IN ('850300','8504')", (first,))
+            db.execute('UPDATE recovery_reserved_markers SET before_order=? WHERE id=?', (marker_order, self.marker))
+            if consecutive:
+                self.second_marker = 'u-' + hashlib.sha256(b'second-marker').hexdigest()[:24]
+                db.execute('INSERT INTO recovery_presentation_items VALUES (?,?,?,?,NULL)', (self.second_marker, 'source-85', MARKER_NOTICE, '["reserved_marker"]'))
+                db.execute('INSERT INTO recovery_reserved_markers VALUES (?,?,?,?,?,?,?)', (self.second_marker, '85', '[8598]', marker_order, 1, 1, 'second-marker-row'))
+                db.execute('INSERT INTO recovery_source_fragments VALUES (?,?,?,?,?,?)', (self.second_marker, 0, 1, '[90,100,404,120]', hashlib.sha256(PNG).hexdigest(), PNG))
+        self.client = self.new_client()
+        self.addCleanup(self.client.close)
+        return first, second
+
+    def test_reserved_container_is_caption_not_deep_coded_or_codeless_parent(self):
+        first, _ = self.caption_fixture()
+        chapter = self.client.get('/api/tnved/children/85').json()['items']
+        self.assertNotIn(self.marker, [r['node_id'] for r in chapter])
+        children = self.client.get('/api/tnved/children/' + first).json()['items']
+        self.assertEqual([r['node_id'] for r in children], ['850300', self.marker, '8504'])
+        card = self.client.get('/api/v1/tnved/' + self.marker).json()
+        self.assertEqual(card['path'], ['Chapter', 'I. FIRST', '[8599]'])
+        self.assertEqual([r['node_id'] for r in card['breadcrumb']], ['XVI', '85', first, self.marker])
+        self.assertFalse(card['selectable'])
+        self.assertEqual(self.client.get('/api/v1/tnved/8599').status_code, 404)
+
+    def test_reserved_before_next_caption_stays_in_previous_caption_in_printed_order(self):
+        first, second = self.caption_fixture(marker_order=30, consecutive=True)
+        children = self.client.get('/api/tnved/children/' + first).json()['items']
+        self.assertEqual([r['node_id'] for r in children], ['850300', '8504', self.marker, self.second_marker])
+        self.assertEqual(self.client.get('/api/tnved/children/' + second).json()['items'], [])
+        chapter = self.client.get('/api/tnved/children/85').json()['items']
+        self.assertEqual([r['node_id'] for r in chapter], ['8502', first, second])
+
+    def test_reserved_before_first_caption_stays_at_chapter_and_tail_uses_last_caption(self):
+        first, _ = self.caption_fixture(marker_order=5)
+        self.assertEqual([r['node_id'] for r in self.client.get('/api/tnved/children/85').json()['items']][:3], ['8502', self.marker, first])
+        self.assertEqual(self.client.get('/api/v1/tnved/' + self.marker).json()['breadcrumb'][-2]['node_id'], '85')
+        self.client.close()
+        with sqlite3.connect(self.database) as db:
+            db.execute('UPDATE recovery_reserved_markers SET before_order=99')
+        with self.new_client() as client:
+            self.assertEqual(client.get('/api/v1/tnved/' + self.marker).json()['breadcrumb'][-2]['title'], 'II. SECOND')
+            chapter = client.get('/api/tnved/children/85').json()['items']
+            tail = chapter[-1]
+            self.assertTrue(tail['has_children'])
+            self.assertEqual([r['node_id'] for r in client.get('/api/tnved/children/' + tail['node_id']).json()['items']], [self.marker])
+
 
 if __name__ == '__main__':
     unittest.main()

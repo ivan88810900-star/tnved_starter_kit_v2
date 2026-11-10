@@ -83,7 +83,9 @@ class TnvedRecoveryStore:
     def has_children(self, code: str) -> bool:
         if self.navigation_enabled:
             row = self._navigation_row(code)
-            return row is not None and self._conn.execute("SELECT 1 FROM recovery_navigation WHERE parent_id=? LIMIT 1", (row["id"],)).fetchone() is not None
+            if row is None:
+                return False
+            return self._conn.execute("SELECT 1 FROM recovery_navigation WHERE parent_id=? LIMIT 1", (row["id"],)).fetchone() is not None or bool(self._container_markers(row))
         return self._conn.execute(
             "SELECT 1 FROM recovery_nodes WHERE parent_code=? LIMIT 1", (code,),
         ).fetchone() is not None
@@ -147,7 +149,7 @@ class TnvedRecoveryStore:
             marker = self.marker(code) if row is None else None
             if marker:
                 result.append({"code": None, "node_id": marker['id'], "kind": 'reserved', "label": marker['label']})
-                row = self._navigation_row(marker['chapter'])
+                row = self._navigation_row(marker['parent_id'])
             while row is not None:
                 if row["id"] in seen:
                     raise ValueError("cycle in navigation projection")
@@ -185,8 +187,8 @@ class TnvedRecoveryStore:
             values = [self._with_source_text({**dict(row), "path": json.loads(row["path_json"])}) for row in rows]
             for value in values:
                 value.update(self.display_fields(value['id']))
-            if self.presentation_enabled and parent['kind'] == 'chapter':
-                markers = [self.marker(r['id']) for r in self._conn.execute('SELECT id FROM recovery_reserved_markers WHERE chapter=? ORDER BY before_order,marker_order', (parent['id'],))]
+            if self.presentation_enabled and parent['kind'] in ('chapter', 'caption'):
+                markers = self._container_markers(parent)
                 ordered = [(r['source_order'], 1, 0, r) for r in values] + [(r['before_order'], 0, r['marker_order'], r) for r in markers]
                 values = [r[-1] for r in sorted(ordered, key=lambda r: r[:3])]
                 if len(values) > limit:
@@ -276,16 +278,51 @@ class TnvedRecoveryStore:
             raise PresentationIntegrityError('Original source fragment hash mismatch')
         return dict(row)
 
+    def _container_markers(self, parent) -> list[dict]:
+        if not self.presentation_enabled or parent['kind'] not in ('chapter', 'caption'):
+            return []
+        markers = (self.marker(r['id']) for r in self._conn.execute(
+            'SELECT id FROM recovery_reserved_markers WHERE chapter=? ORDER BY before_order,marker_order',
+            (parent['chapter'],),
+        ))
+        return [row for row in markers if row['parent_id'] == parent['id']]
+
+    def _marker_parent(self, marker) -> sqlite3.Row:
+        """Resolve the container open immediately BEFORE this printed position.
+
+        before_order points to the next navigation row. That row can open a
+        different caption, so use its predecessor and walk past commodity /
+        codeless ancestors to the open caption or chapter. Consecutive marks
+        share the position; marker_order supplies their separate stable order.
+        Nothing is persisted and no reserved-code exceptions are needed.
+        """
+        row = self._conn.execute(
+            "SELECT * FROM recovery_navigation WHERE chapter=? "
+            "AND kind NOT IN ('section','chapter') AND source_order<? "
+            "ORDER BY source_order DESC LIMIT 1",
+            (marker['chapter'], marker['before_order']),
+        ).fetchone()
+        seen = set()
+        while row is not None and row['kind'] not in ('chapter', 'caption'):
+            if row['id'] in seen:
+                raise PresentationIntegrityError('Cycle in reserved marker ancestry')
+            seen.add(row['id'])
+            row = self._navigation_row(row['parent_id'])
+        parent = row if row is not None else self._navigation_row(marker['chapter'])
+        if parent is None or parent['chapter'] != marker['chapter']:
+            raise PresentationIntegrityError('Missing reserved marker container')
+        return parent
+
     def marker(self, node_id: str) -> dict | None:
         if not self.presentation_enabled:
             return None
         row = self._conn.execute('SELECT m.*,p.source_id,s.url,s.sha256 FROM recovery_reserved_markers m JOIN recovery_presentation_items p ON p.node_id=m.id JOIN recovery_sources s ON s.id=p.source_id WHERE m.id=?', (node_id,)).fetchone()
         if row is None:
             return None
-        chapter = self._navigation_row(row['chapter'])
+        parent = self._marker_parent(row)
         value = dict(row)
-        value.update(code=None, node_id=row['id'], kind='reserved', label=row['printed_code'], parent_id=row['chapter'], source_order=row['before_order'],
-                     printed_code=row['printed_code'], path=[chapter['label'], row['printed_code']], raw_label=row['printed_code'], raw_lines=[], dash_depth=None,
+        value.update(code=None, node_id=row['id'], kind='reserved', label=row['printed_code'], parent_id=parent['id'], source_order=row['before_order'],
+                     printed_code=row['printed_code'], path=json.loads(parent['path_json']) + [row['printed_code']], raw_label=row['printed_code'], raw_lines=[], dash_depth=None,
                      source_url=row['url'], source_sha256=row['sha256'], edition_id=None, chain_status='unverified', valid_from=None, valid_to=None, complete=False, rates=None,
                      presentation=self.presentation(node_id), **self.display_fields(node_id))
         return value
