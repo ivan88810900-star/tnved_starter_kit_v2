@@ -1,0 +1,5 @@
+# Offline source extraction only. Not imported by the HTTP read profile.
+pdfplumber==0.11.9
+pdfminer.six==20251230
+pypdfium2==5.14.0
+Pillow==13.0.0

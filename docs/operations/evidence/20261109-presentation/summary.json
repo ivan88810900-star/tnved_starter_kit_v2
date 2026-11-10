@@ -1,0 +1,1393 @@
+{
+  "task": "Tariff final local presentation and actual-result audit handoff",
+  "scope_receipt": 6739962487,
+  "parent_head": "3eae7ee2358c44ffe6cd91c337fc816705a8031c",
+  "final_commit_binding": "issue257 final receipt",
+  "sqlite_sha256": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "sqlite_bytes": 130629632,
+  "baseline_sha256": "45ab63fa4b14fa4a9e1175f10685364249a2fb8eeb890ecf4a6701f53ba9ba2f",
+  "frontend": {
+    "index_sha256": "cee3488eadd6012d3eda69b6a85beea84afd94d11f5d1fc4becadc87a18171ac",
+    "manifest_sha256": "6eba2526bcb15257c8a5d48fd5873b126085da757a70afddf2d8036c35e1edec",
+    "files": [
+      {
+        "path": "assets/index-4p6Shvsr.js",
+        "bytes": 1246480,
+        "sha256": "135925ae0f1cf2e5be8b2ebdac133094fdb0d85641388ef5c14c0f24abfbdee9"
+      },
+      {
+        "path": "assets/index-DFVXNjFz.css",
+        "bytes": 65541,
+        "sha256": "9fb7e56adf434e2b9608c9e7b217b3fff9f44e1a41930af900234db84fc7a12e"
+      },
+      {
+        "path": "favicon.ico",
+        "bytes": 875,
+        "sha256": "4fe1ff53a3c444f7e347fb4b2356c2987b08e312ea467709d8377d7ccdf29271"
+      },
+      {
+        "path": "favicon.svg",
+        "bytes": 425,
+        "sha256": "02e525afaa6826cba9d242f06c385e03cf912c78286ad80e7910bdf087030da8"
+      },
+      {
+        "path": "index.html",
+        "bytes": 1281,
+        "sha256": "cee3488eadd6012d3eda69b6a85beea84afd94d11f5d1fc4becadc87a18171ac"
+      }
+    ]
+  },
+  "owner_policy": {
+    "F001": "37 inactive source markers, original sequence/source references, no active code selection/search/count admission",
+    "F003": "849 exact small-glyph node identities; visibly simplified searchable label + original raster fragments; no guessed formula/note semantics",
+    "spacing": "all10source/display/impact/source identities retained as open_limitation"
+  },
+  "presentation": {
+    "reserved_markers": 37,
+    "small_glyph_nodes": 849,
+    "active_presentation_rows": 854,
+    "all_presentation_rows": 891,
+    "source_fragments": 895,
+    "extra_continuation_fragments": 4,
+    "small_glyph_node_set_matches_independent_inventory": true,
+    "reserved_physical_registry_comparison": true,
+    "original_tables_unchanged": {
+      "recovery_metadata": 10,
+      "recovery_sources": 107,
+      "recovery_editions": 96,
+      "recovery_notes": 107,
+      "recovery_sections": 21,
+      "recovery_section_chapters": 96,
+      "recovery_nodes": 18014,
+      "recovery_node_notes": 68424,
+      "tnved_entries": 18014,
+      "recovery_navigation": 21207,
+      "recovery_heading_aliases": 271,
+      "recovery_source_text": 21207
+    },
+    "byte_identical_replay": true,
+    "source_PDF_bytes_unchanged": true
+  },
+  "author_validation": {
+    "unit_tests": 26,
+    "unit_status": "PASS",
+    "recovery_gate": {
+      "discovered": 4,
+      "executed": 4,
+      "skipped": 0,
+      "status": "PASS"
+    },
+    "portable_runtime_copy_HTTP": {
+      "status": "PASS",
+      "observer": "A0; not independent Claude",
+      "snapshot_sha256": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+      "base_sha256": "45ab63fa4b14fa4a9e1175f10685364249a2fb8eeb890ecf4a6701f53ba9ba2f",
+      "unchanged_active_tables": {
+        "recovery_metadata": 10,
+        "recovery_sources": 107,
+        "recovery_editions": 96,
+        "recovery_notes": 107,
+        "recovery_sections": 21,
+        "recovery_section_chapters": 96,
+        "recovery_nodes": 18014,
+        "recovery_node_notes": 68424,
+        "tnved_entries": 18014,
+        "recovery_navigation": 21207,
+        "recovery_heading_aliases": 271,
+        "recovery_source_text": 21207
+      },
+      "small_glyph_nodes": 849,
+      "small_glyph_identity_crosscheck": true,
+      "reserved_physical_registry_crosscheck": true,
+      "markers": 37,
+      "spacing_distinctions": 10,
+      "spacing_status": "open_limitation",
+      "fragments": 895,
+      "groups": [
+        {
+          "chapter": "01",
+          "active_navigation_nodes": 144,
+          "JSON_requests": 292,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "02",
+          "active_navigation_nodes": 732,
+          "JSON_requests": 1481,
+          "image_requests": 14,
+          "differences": []
+        },
+        {
+          "chapter": "03",
+          "active_navigation_nodes": 788,
+          "JSON_requests": 1594,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "04",
+          "active_navigation_nodes": 303,
+          "JSON_requests": 613,
+          "image_requests": 3,
+          "differences": []
+        },
+        {
+          "chapter": "05",
+          "active_navigation_nodes": 50,
+          "JSON_requests": 110,
+          "image_requests": 2,
+          "differences": []
+        },
+        {
+          "chapter": "06",
+          "active_navigation_nodes": 73,
+          "JSON_requests": 148,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "07",
+          "active_navigation_nodes": 198,
+          "JSON_requests": 403,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "08",
+          "active_navigation_nodes": 210,
+          "JSON_requests": 426,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "09",
+          "active_navigation_nodes": 106,
+          "JSON_requests": 216,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "10",
+          "active_navigation_nodes": 108,
+          "JSON_requests": 219,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "11",
+          "active_navigation_nodes": 117,
+          "JSON_requests": 239,
+          "image_requests": 2,
+          "differences": []
+        },
+        {
+          "chapter": "12",
+          "active_navigation_nodes": 127,
+          "JSON_requests": 261,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "13",
+          "active_navigation_nodes": 22,
+          "JSON_requests": 45,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "14",
+          "active_navigation_nodes": 10,
+          "JSON_requests": 25,
+          "image_requests": 2,
+          "differences": []
+        },
+        {
+          "chapter": "15",
+          "active_navigation_nodes": 276,
+          "JSON_requests": 566,
+          "image_requests": 1,
+          "differences": []
+        },
+        {
+          "chapter": "16",
+          "active_navigation_nodes": 182,
+          "JSON_requests": 370,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "17",
+          "active_navigation_nodes": 181,
+          "JSON_requests": 367,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "18",
+          "active_navigation_nodes": 42,
+          "JSON_requests": 89,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "19",
+          "active_navigation_nodes": 83,
+          "JSON_requests": 169,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "20",
+          "active_navigation_nodes": 694,
+          "JSON_requests": 1402,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "21",
+          "active_navigation_nodes": 99,
+          "JSON_requests": 202,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "22",
+          "active_navigation_nodes": 427,
+          "JSON_requests": 866,
+          "image_requests": 2,
+          "differences": []
+        },
+        {
+          "chapter": "23",
+          "active_navigation_nodes": 104,
+          "JSON_requests": 215,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "24",
+          "active_navigation_nodes": 53,
+          "JSON_requests": 108,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "25",
+          "active_navigation_nodes": 119,
+          "JSON_requests": 252,
+          "image_requests": 3,
+          "differences": []
+        },
+        {
+          "chapter": "26",
+          "active_navigation_nodes": 70,
+          "JSON_requests": 155,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "27",
+          "active_navigation_nodes": 241,
+          "JSON_requests": 494,
+          "image_requests": 9,
+          "differences": []
+        },
+        {
+          "chapter": "28",
+          "active_navigation_nodes": 399,
+          "JSON_requests": 823,
+          "image_requests": 6,
+          "differences": []
+        },
+        {
+          "chapter": "29",
+          "active_navigation_nodes": 767,
+          "JSON_requests": 1557,
+          "image_requests": 19,
+          "differences": []
+        },
+        {
+          "chapter": "30",
+          "active_navigation_nodes": 132,
+          "JSON_requests": 267,
+          "image_requests": 3,
+          "differences": []
+        },
+        {
+          "chapter": "31",
+          "active_navigation_nodes": 51,
+          "JSON_requests": 105,
+          "image_requests": 4,
+          "differences": []
+        },
+        {
+          "chapter": "32",
+          "active_navigation_nodes": 116,
+          "JSON_requests": 239,
+          "image_requests": 9,
+          "differences": []
+        },
+        {
+          "chapter": "33",
+          "active_navigation_nodes": 81,
+          "JSON_requests": 165,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "34",
+          "active_navigation_nodes": 59,
+          "JSON_requests": 122,
+          "image_requests": 4,
+          "differences": []
+        },
+        {
+          "chapter": "35",
+          "active_navigation_nodes": 59,
+          "JSON_requests": 122,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "36",
+          "active_navigation_nodes": 23,
+          "JSON_requests": 50,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "37",
+          "active_navigation_nodes": 67,
+          "JSON_requests": 138,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "38",
+          "active_navigation_nodes": 276,
+          "JSON_requests": 571,
+          "image_requests": 9,
+          "differences": []
+        },
+        {
+          "chapter": "39",
+          "active_navigation_nodes": 419,
+          "JSON_requests": 850,
+          "image_requests": 36,
+          "differences": []
+        },
+        {
+          "chapter": "40",
+          "active_navigation_nodes": 170,
+          "JSON_requests": 348,
+          "image_requests": 16,
+          "differences": []
+        },
+        {
+          "chapter": "41",
+          "active_navigation_nodes": 120,
+          "JSON_requests": 252,
+          "image_requests": 4,
+          "differences": []
+        },
+        {
+          "chapter": "42",
+          "active_navigation_nodes": 62,
+          "JSON_requests": 131,
+          "image_requests": 1,
+          "differences": []
+        },
+        {
+          "chapter": "43",
+          "active_navigation_nodes": 150,
+          "JSON_requests": 305,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "44",
+          "active_navigation_nodes": 831,
+          "JSON_requests": 1682,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "45",
+          "active_navigation_nodes": 21,
+          "JSON_requests": 44,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "46",
+          "active_navigation_nodes": 41,
+          "JSON_requests": 83,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "47",
+          "active_navigation_nodes": 41,
+          "JSON_requests": 86,
+          "image_requests": 2,
+          "differences": []
+        },
+        {
+          "chapter": "48",
+          "active_navigation_nodes": 269,
+          "JSON_requests": 551,
+          "image_requests": 5,
+          "differences": []
+        },
+        {
+          "chapter": "49",
+          "active_navigation_nodes": 35,
+          "JSON_requests": 77,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "50",
+          "active_navigation_nodes": 38,
+          "JSON_requests": 83,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "51",
+          "active_navigation_nodes": 119,
+          "JSON_requests": 244,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "52",
+          "active_navigation_nodes": 216,
+          "JSON_requests": 439,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "53",
+          "active_navigation_nodes": 55,
+          "JSON_requests": 116,
+          "image_requests": 1,
+          "differences": []
+        },
+        {
+          "chapter": "54",
+          "active_navigation_nodes": 129,
+          "JSON_requests": 263,
+          "image_requests": 2,
+          "differences": []
+        },
+        {
+          "chapter": "55",
+          "active_navigation_nodes": 217,
+          "JSON_requests": 440,
+          "image_requests": 1,
+          "differences": []
+        },
+        {
+          "chapter": "56",
+          "active_navigation_nodes": 102,
+          "JSON_requests": 210,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "57",
+          "active_navigation_nodes": 75,
+          "JSON_requests": 153,
+          "image_requests": 2,
+          "differences": []
+        },
+        {
+          "chapter": "58",
+          "active_navigation_nodes": 75,
+          "JSON_requests": 156,
+          "image_requests": 1,
+          "differences": []
+        },
+        {
+          "chapter": "59",
+          "active_navigation_nodes": 71,
+          "JSON_requests": 149,
+          "image_requests": 1,
+          "differences": []
+        },
+        {
+          "chapter": "60",
+          "active_navigation_nodes": 83,
+          "JSON_requests": 168,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "61",
+          "active_navigation_nodes": 264,
+          "JSON_requests": 535,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "62",
+          "active_navigation_nodes": 291,
+          "JSON_requests": 590,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "63",
+          "active_navigation_nodes": 140,
+          "JSON_requests": 286,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "64",
+          "active_navigation_nodes": 142,
+          "JSON_requests": 287,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "65",
+          "active_navigation_nodes": 29,
+          "JSON_requests": 66,
+          "image_requests": 1,
+          "differences": []
+        },
+        {
+          "chapter": "66",
+          "active_navigation_nodes": 14,
+          "JSON_requests": 30,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "67",
+          "active_navigation_nodes": 12,
+          "JSON_requests": 27,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "68",
+          "active_navigation_nodes": 132,
+          "JSON_requests": 270,
+          "image_requests": 6,
+          "differences": []
+        },
+        {
+          "chapter": "69",
+          "active_navigation_nodes": 117,
+          "JSON_requests": 242,
+          "image_requests": 8,
+          "differences": []
+        },
+        {
+          "chapter": "70",
+          "active_navigation_nodes": 288,
+          "JSON_requests": 589,
+          "image_requests": 17,
+          "differences": []
+        },
+        {
+          "chapter": "71",
+          "active_navigation_nodes": 132,
+          "JSON_requests": 270,
+          "image_requests": 0,
+          "differences": []
+        },
+        {
+          "chapter": "72",
+          "active_navigation_nodes": 610,
+          "JSON_requests": 1235,
+          "image_requests": 22,
+          "differences": []
+        },
+        {
+          "chapter": "73",
+          "active_navigation_nodes": 609,
+          "JSON_requests": 1237,
+          "image_requests": 100,
+          "differences": []
+        },
+        {
+          "chapter": "74",
+          "active_navigation_nodes": 92,
+          "JSON_requests": 197,
+          "image_requests": 4,
+          "differences": []
+        },
+        {
+          "chapter": "75",
+          "active_navigation_nodes": 41,
+          "JSON_requests": 85,
+          "image_requests": 6,
+          "differences": []
+        },
+        {
+          "chapter": "76",
+          "active_navigation_nodes": 152,
+          "JSON_requests": 312,
+          "image_requests": 15,
+          "differences": []
+        },
+        {
+          "chapter": "78",
+          "active_navigation_nodes": 19,
+          "JSON_requests": 45,
+          "image_requests": 2,
+          "differences": []
+        },
+        {
+          "chapter": "79",
+          "active_navigation_nodes": 18,
+          "JSON_requests": 43,
+          "image_requests": 1,
+          "differences": []
+        },
+        {
+          "chapter": "80",
+          "active_navigation_nodes": 9,
+          "JSON_requests": 28,
+          "image_requests": 3,
+          "differences": []
+        },
+        {
+          "chapter": "81",
+          "active_navigation_nodes": 139,
+          "JSON_requests": 286,
+          "image_requests": 9,
+          "differences": []
+        },
+        {
+          "chapter": "82",
+          "active_navigation_nodes": 163,
+          "JSON_requests": 334,
+          "image_requests": 1,
+          "differences": []
+        },
+        {
+          "chapter": "83",
+          "active_navigation_nodes": 78,
+          "JSON_requests": 161,
+          "image_requests": 7,
+          "differences": []
+        },
+        {
+          "chapter": "84",
+          "active_navigation_nodes": 2166,
+          "JSON_requests": 4383,
+          "image_requests": 180,
+          "differences": []
+        },
+        {
+          "chapter": "85",
+          "active_navigation_nodes": 1740,
+          "JSON_requests": 3523,
+          "image_requests": 183,
+          "differences": []
+        },
+        {
+          "chapter": "86",
+          "active_navigation_nodes": 68,
+          "JSON_requests": 142,
+          "image_requests": 3,
+          "differences": []
+        },
+        {
+          "chapter": "87",
+          "active_navigation_nodes": 1333,
+          "JSON_requests": 2698,
+          "image_requests": 80,
+          "differences": []
+        },
+        {
+          "chapter": "88",
+          "active_navigation_nodes": 184,
+          "JSON_requests": 376,
+          "image_requests": 2,
+          "differences": []
+        },
+        {
+          "chapter": "89",
+          "active_navigation_nodes": 71,
+          "JSON_requests": 147,
+          "image_requests": 2,
+          "differences": []
+        },
+        {
+          "chapter": "90",
+          "active_navigation_nodes": 431,
+          "JSON_requests": 878,
+          "image_requests": 18,
+          "differences": []
+        },
+        {
+          "chapter": "91",
+          "active_navigation_nodes": 85,
+          "JSON_requests": 174,
+          "image_requests": 3,
+          "differences": []
+        },
+        {
+          "chapter": "92",
+          "active_navigation_nodes": 48,
+          "JSON_requests": 103,
+          "image_requests": 2,
+          "differences": []
+        },
+        {
+          "chapter": "93",
+          "active_navigation_nodes": 37,
+          "JSON_requests": 78,
+          "image_requests": 1,
+          "differences": []
+        },
+        {
+          "chapter": "94",
+          "active_navigation_nodes": 323,
+          "JSON_requests": 653,
+          "image_requests": 52,
+          "differences": []
+        },
+        {
+          "chapter": "95",
+          "active_navigation_nodes": 117,
+          "JSON_requests": 242,
+          "image_requests": 2,
+          "differences": []
+        },
+        {
+          "chapter": "96",
+          "active_navigation_nodes": 135,
+          "JSON_requests": 284,
+          "image_requests": 1,
+          "differences": []
+        },
+        {
+          "chapter": "97",
+          "active_navigation_nodes": 29,
+          "JSON_requests": 60,
+          "image_requests": 0,
+          "differences": []
+        }
+      ],
+      "root_JSON_requests": 22,
+      "frontend_index_sha256": "cee3488eadd6012d3eda69b6a85beea84afd94d11f5d1fc4becadc87a18171ac",
+      "legal_status": "unverified",
+      "rates_present": false
+    },
+    "Chrome_active_regression": {
+      "snapshot_sha256": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+      "source_corpus_sha256": "b7db29fd5992dcc3b61abe746509293fdd0ba347ce7efc3b6eb578fe15a6c275",
+      "expectations_sha256": "6a480b7769d8618f8fd1a5d2002152e05b333a4ce78bf841b1f5656265080cc4",
+      "source_depth_check": {
+        "node_id": "8413705100",
+        "depth": 7,
+        "printed_code": "8413 70 510 0"
+      },
+      "caption_checked": "u-d17d602dcbceb9ffecf020e8",
+      "independent_audit": false,
+      "positive": [
+        {
+          "physical_width": 1440,
+          "render_scale": 1,
+          "css_viewport_width": 1440,
+          "checked_chapter_names": 96,
+          "checked_leaf_cards": [
+            "0101210000",
+            "3001201000",
+            "8401100000",
+            "8517110000",
+            "9401100000",
+            "9503001001",
+            "0106141010",
+            "8413705100",
+            "2922210000",
+            "7002320000",
+            "6903201000",
+            "7304293002"
+          ],
+          "order85": [
+            19,
+            20,
+            21,
+            34,
+            50,
+            64,
+            65
+          ],
+          "search85_total": 1501,
+          "last85": "8549990000",
+          "page_errors": [],
+          "catalog_requests": 89,
+          "frontend_index_sha256": "cee3488eadd6012d3eda69b6a85beea84afd94d11f5d1fc4becadc87a18171ac"
+        },
+        {
+          "physical_width": 1280,
+          "render_scale": 1,
+          "css_viewport_width": 1280,
+          "checked_chapter_names": 96,
+          "checked_leaf_cards": [
+            "0101210000",
+            "3001201000",
+            "8401100000",
+            "8517110000",
+            "9401100000",
+            "9503001001",
+            "0106141010",
+            "8413705100",
+            "2922210000",
+            "7002320000",
+            "6903201000",
+            "7304293002"
+          ],
+          "order85": [
+            19,
+            20,
+            21,
+            34,
+            50,
+            64,
+            65
+          ],
+          "search85_total": 1501,
+          "last85": "8549990000",
+          "page_errors": [],
+          "catalog_requests": 89,
+          "frontend_index_sha256": "cee3488eadd6012d3eda69b6a85beea84afd94d11f5d1fc4becadc87a18171ac"
+        },
+        {
+          "physical_width": 1280,
+          "render_scale": 1.25,
+          "css_viewport_width": 1024,
+          "checked_chapter_names": 96,
+          "checked_leaf_cards": [
+            "0101210000",
+            "3001201000",
+            "8401100000",
+            "8517110000",
+            "9401100000",
+            "9503001001",
+            "0106141010",
+            "8413705100",
+            "2922210000",
+            "7002320000",
+            "6903201000",
+            "7304293002"
+          ],
+          "order85": [
+            19,
+            20,
+            21,
+            34,
+            50,
+            64,
+            65
+          ],
+          "search85_total": 1501,
+          "last85": "8549990000",
+          "page_errors": [],
+          "catalog_requests": 89,
+          "frontend_index_sha256": "cee3488eadd6012d3eda69b6a85beea84afd94d11f5d1fc4becadc87a18171ac"
+        }
+      ],
+      "negative": {
+        "loading_visible": true,
+        "failed_visible": true,
+        "false_empty": false,
+        "retry_real_HTTP": true,
+        "page_errors": []
+      },
+      "status": "PASS"
+    },
+    "Chrome_source_presentation": {
+      "observer": "A0 real Chrome; not independent Claude",
+      "snapshot_sha256": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+      "expectations_sha256": "6a480b7769d8618f8fd1a5d2002152e05b333a4ce78bf841b1f5656265080cc4",
+      "configurations": [
+        {
+          "physical_width": 1440,
+          "render_scale": 1,
+          "checked_markers": [
+            "[0503]",
+            "[0509]",
+            "[1402]",
+            "[1403]",
+            "[1519]",
+            "[2527]",
+            "[2838]",
+            "[2848]",
+            "[2851]",
+            "[4108]",
+            "[4109]",
+            "[4110]",
+            "[4111]",
+            "[4204]",
+            "[4815]",
+            "[5304]",
+            "[6503]",
+            "[6908]",
+            "[7012]",
+            "[7414]",
+            "[7416]",
+            "[7417]",
+            "[7803]",
+            "[7805]",
+            "[7906]",
+            "[8004]",
+            "[8005]",
+            "[8006]",
+            "[8107]",
+            "[8469]",
+            "[8520]",
+            "[8803]",
+            "[9009]",
+            "[9203]",
+            "[9204]",
+            "[9501]",
+            "[9502]"
+          ],
+          "source_cards": [
+            "591132",
+            "3827310000",
+            "7002320000",
+            "6903201000",
+            "7304293002",
+            "7002320000"
+          ],
+          "parent_child_round_trip": true,
+          "source_images_decoded": true,
+          "clipboard_preserved": true,
+          "page_errors": [],
+          "catalog_requests": 66
+        },
+        {
+          "physical_width": 1280,
+          "render_scale": 1,
+          "checked_markers": [
+            "[0503]",
+            "[0509]",
+            "[1402]",
+            "[1403]",
+            "[1519]",
+            "[2527]",
+            "[2838]",
+            "[2848]",
+            "[2851]",
+            "[4108]",
+            "[4109]",
+            "[4110]",
+            "[4111]",
+            "[4204]",
+            "[4815]",
+            "[5304]",
+            "[6503]",
+            "[6908]",
+            "[7012]",
+            "[7414]",
+            "[7416]",
+            "[7417]",
+            "[7803]",
+            "[7805]",
+            "[7906]",
+            "[8004]",
+            "[8005]",
+            "[8006]",
+            "[8107]",
+            "[8469]",
+            "[8520]",
+            "[8803]",
+            "[9009]",
+            "[9203]",
+            "[9204]",
+            "[9501]",
+            "[9502]"
+          ],
+          "source_cards": [
+            "591132",
+            "3827310000",
+            "7002320000",
+            "6903201000",
+            "7304293002",
+            "7002320000"
+          ],
+          "parent_child_round_trip": true,
+          "source_images_decoded": true,
+          "clipboard_preserved": true,
+          "page_errors": [],
+          "catalog_requests": 66
+        },
+        {
+          "physical_width": 1280,
+          "render_scale": 1.25,
+          "checked_markers": [
+            "[0503]",
+            "[0509]",
+            "[1402]",
+            "[1403]",
+            "[1519]",
+            "[2527]",
+            "[2838]",
+            "[2848]",
+            "[2851]",
+            "[4108]",
+            "[4109]",
+            "[4110]",
+            "[4111]",
+            "[4204]",
+            "[4815]",
+            "[5304]",
+            "[6503]",
+            "[6908]",
+            "[7012]",
+            "[7414]",
+            "[7416]",
+            "[7417]",
+            "[7803]",
+            "[7805]",
+            "[7906]",
+            "[8004]",
+            "[8005]",
+            "[8006]",
+            "[8107]",
+            "[8469]",
+            "[8520]",
+            "[8803]",
+            "[9009]",
+            "[9203]",
+            "[9204]",
+            "[9501]",
+            "[9502]"
+          ],
+          "source_cards": [
+            "591132",
+            "3827310000",
+            "7002320000",
+            "6903201000",
+            "7304293002",
+            "7002320000"
+          ],
+          "parent_child_round_trip": true,
+          "source_images_decoded": true,
+          "clipboard_preserved": true,
+          "page_errors": [],
+          "catalog_requests": 66
+        }
+      ],
+      "negative": {
+        "original_load_failure_is_explicit": true
+      },
+      "status": "PASS"
+    },
+    "frontend_build": "PASS",
+    "typecheck": "4pre-existing TS2339 in PermitDocumentsBlock77/80; no typecheck PASS claimed",
+    "independent_audit": false,
+    "Chrome_all10_spacing_and_codeless_continuation": {
+      "status": "PASS",
+      "observer": "A0, not independent Claude",
+      "viewport": 1024,
+      "scale": 1.25,
+      "actual_SQLite_cases": [
+        {
+          "node_id": "3827310000",
+          "spacing_ledger_visible": true,
+          "source_fragments_decoded": 1,
+          "codeless": false
+        },
+        {
+          "node_id": "3827320000",
+          "spacing_ledger_visible": true,
+          "source_fragments_decoded": 1,
+          "codeless": false
+        },
+        {
+          "node_id": "5804",
+          "spacing_ledger_visible": true,
+          "source_fragments_decoded": 1,
+          "codeless": false
+        },
+        {
+          "node_id": "591132",
+          "spacing_ledger_visible": true,
+          "source_fragments_decoded": 1,
+          "codeless": false
+        },
+        {
+          "node_id": "7304220002",
+          "spacing_ledger_visible": true,
+          "source_fragments_decoded": 1,
+          "codeless": false
+        },
+        {
+          "node_id": "7304293002",
+          "spacing_ledger_visible": true,
+          "source_fragments_decoded": 1,
+          "codeless": false
+        },
+        {
+          "node_id": "8407349902",
+          "spacing_ledger_visible": true,
+          "source_fragments_decoded": 1,
+          "codeless": false
+        },
+        {
+          "node_id": "8408205791",
+          "spacing_ledger_visible": true,
+          "source_fragments_decoded": 1,
+          "codeless": false
+        },
+        {
+          "node_id": "8428399001",
+          "spacing_ledger_visible": true,
+          "source_fragments_decoded": 1,
+          "codeless": false
+        },
+        {
+          "node_id": "u-21205d54b07ba47b5b87bedf",
+          "spacing_ledger_visible": true,
+          "source_fragments_decoded": 1,
+          "codeless": true
+        },
+        {
+          "node_id": "8479899701",
+          "spacing_ledger_visible": false,
+          "source_fragments_decoded": 2,
+          "codeless": false
+        },
+        {
+          "node_id": "u-7c01cc6c853ce21c152b9c35",
+          "spacing_ledger_visible": false,
+          "source_fragments_decoded": 1,
+          "codeless": true
+        }
+      ],
+      "page_errors": []
+    }
+  },
+  "old_independent_review_scope": {
+    "head": "3eae7ee2358c44ffe6cd91c337fc816705a8031c",
+    "R001": "closed: code and independent simulation; source module unchanged",
+    "R002": "closed: static; provenance exception/_with_source_text AST unchanged",
+    "new_files_data_build": "not independently reviewed"
+  },
+  "actual_Claude_access": {
+    "used_runtime": "owner-managed existing Claude cloud session",
+    "Mac_SQLite_HTTP_UI": "not accessible according to received independent report",
+    "current_cloud_Python_browser": "not observed by A0; no remote execution connector/provider call",
+    "local_Claude_CLI": "not found on PATH",
+    "desktop_settings_inspection": "unavailable because Codex Computer Use permission not granted; no inference about Claude own permissions",
+    "prepared_method": "consented actual SQLite copy +4Git HTTP modules+frozen frontend+96PDFs; launch own loopback and own browser in SAME existing cloud session",
+    "local_portable_SQLite_HTTP_Chrome_validation": "PASS",
+    "external_handoff": "NOT_PERFORMED_BY_A0; exact content consent required"
+  },
+  "database_disclosure": {
+    "sqlite_bytes": 130629632,
+    "tables": [
+      {
+        "table": "recovery_editions",
+        "rows": 96,
+        "columns": [
+          "id",
+          "valid_from",
+          "valid_to",
+          "chain_status",
+          "complete",
+          "chapters_json",
+          "source_ids_json",
+          "limitations_json"
+        ]
+      },
+      {
+        "table": "recovery_heading_aliases",
+        "rows": 271,
+        "columns": [
+          "heading_code",
+          "node_id"
+        ]
+      },
+      {
+        "table": "recovery_metadata",
+        "rows": 12,
+        "columns": [
+          "key",
+          "value"
+        ]
+      },
+      {
+        "table": "recovery_navigation",
+        "rows": 21207,
+        "columns": [
+          "id",
+          "code",
+          "label",
+          "parent_id",
+          "chapter",
+          "source_order",
+          "source_id",
+          "page",
+          "source_row_id",
+          "kind",
+          "path_json",
+          "printed_code",
+          "change_symbol"
+        ]
+      },
+      {
+        "table": "recovery_node_notes",
+        "rows": 68424,
+        "columns": [
+          "edition_id",
+          "code",
+          "position",
+          "note_id"
+        ]
+      },
+      {
+        "table": "recovery_nodes",
+        "rows": 18014,
+        "columns": [
+          "edition_id",
+          "code",
+          "label",
+          "parent_code",
+          "source_id",
+          "page",
+          "path_json",
+          "note_refs_json",
+          "change_symbol"
+        ]
+      },
+      {
+        "table": "recovery_notes",
+        "rows": 107,
+        "columns": [
+          "id",
+          "title",
+          "source_id",
+          "page",
+          "text",
+          "url"
+        ]
+      },
+      {
+        "table": "recovery_presentation_items",
+        "rows": 891,
+        "columns": [
+          "node_id",
+          "source_id",
+          "notice",
+          "reasons_json",
+          "spacing_json"
+        ]
+      },
+      {
+        "table": "recovery_reserved_markers",
+        "rows": 37,
+        "columns": [
+          "id",
+          "chapter",
+          "printed_code",
+          "before_order",
+          "marker_order",
+          "page",
+          "source_row_id"
+        ]
+      },
+      {
+        "table": "recovery_section_chapters",
+        "rows": 96,
+        "columns": [
+          "chapter_code",
+          "section_roman"
+        ]
+      },
+      {
+        "table": "recovery_sections",
+        "rows": 21,
+        "columns": [
+          "roman_number",
+          "raw_roman_number",
+          "title",
+          "source_id"
+        ]
+      },
+      {
+        "table": "recovery_source_fragments",
+        "rows": 895,
+        "columns": [
+          "node_id",
+          "ordinal",
+          "page",
+          "bounds_json",
+          "sha256",
+          "png"
+        ]
+      },
+      {
+        "table": "recovery_source_text",
+        "rows": 21207,
+        "columns": [
+          "node_id",
+          "raw_label",
+          "raw_lines_json",
+          "dash_depth"
+        ]
+      },
+      {
+        "table": "recovery_sources",
+        "rows": 107,
+        "columns": [
+          "id",
+          "url",
+          "title",
+          "sha256",
+          "retrieved_at",
+          "media_type",
+          "raw_path"
+        ]
+      },
+      {
+        "table": "tnved_entries",
+        "rows": 18014,
+        "columns": [
+          "id",
+          "hs_code",
+          "parent_hs",
+          "level",
+          "title",
+          "description",
+          "chapter",
+          "source_url",
+          "source_revision"
+        ]
+      }
+    ],
+    "secret_private_path_pattern_scan": "PASS",
+    "scope": "structural catalog, historical official source notes, source-presentation PNGs; no client/SGR registry/Neon tables",
+    "exported": false
+  },
+  "limits": [
+    "10spacing distinctions remain open; no mass normalization",
+    "raster fallback, not semantic rich text or footnote target inference",
+    "visual source-image verification sampled;895not claimed visually reviewed",
+    "legal status/rates/dates unverified",
+    "4pre-existing TypeScript errors",
+    "new exact candidate has no independent runtime acceptance"
+  ],
+  "protected_actions": {
+    "DB_HOLD": true,
+    "merge": false,
+    "deploy": false,
+    "enforcement": false,
+    "permanent_DB_writes": false,
+    "new_agents_chats_schedules": false,
+    "automatic_A6_model_provider_calls": false
+  },
+  "CI": "exact final-head run IDs/results bound by queue receipt"
+}

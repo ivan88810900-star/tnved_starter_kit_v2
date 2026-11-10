@@ -1,0 +1,98 @@
+{
+  "snapshot_sha256": "725b784d8185c2f9a6a0378886199e01e19df9501688e1dbdbc3fe803a153591",
+  "source_corpus_sha256": "b7db29fd5992dcc3b61abe746509293fdd0ba347ce7efc3b6eb578fe15a6c275",
+  "positive": [
+    {
+      "physical_width": 1440,
+      "render_scale": 1,
+      "css_viewport_width": 1440,
+      "checked_chapter_names": 96,
+      "checked_leaf_cards": [
+        "0101210000",
+        "3001201000",
+        "8401100000",
+        "8517110000",
+        "9401100000",
+        "9503001001"
+      ],
+      "order85": [
+        19,
+        20,
+        21,
+        34,
+        50,
+        64,
+        65
+      ],
+      "search85_total": 1501,
+      "last85": "8549990000",
+      "page_errors": [],
+      "catalog_requests": 52,
+      "frontend_index_sha256": "cbff95e8e70a4417886b98e19ed879a747837809a7caf4f51a81f526f292d746"
+    },
+    {
+      "physical_width": 1280,
+      "render_scale": 1,
+      "css_viewport_width": 1280,
+      "checked_chapter_names": 96,
+      "checked_leaf_cards": [
+        "0101210000",
+        "3001201000",
+        "8401100000",
+        "8517110000",
+        "9401100000",
+        "9503001001"
+      ],
+      "order85": [
+        19,
+        20,
+        21,
+        34,
+        50,
+        64,
+        65
+      ],
+      "search85_total": 1501,
+      "last85": "8549990000",
+      "page_errors": [],
+      "catalog_requests": 52,
+      "frontend_index_sha256": "cbff95e8e70a4417886b98e19ed879a747837809a7caf4f51a81f526f292d746"
+    },
+    {
+      "physical_width": 1280,
+      "render_scale": 1.25,
+      "css_viewport_width": 1024,
+      "checked_chapter_names": 96,
+      "checked_leaf_cards": [
+        "0101210000",
+        "3001201000",
+        "8401100000",
+        "8517110000",
+        "9401100000",
+        "9503001001"
+      ],
+      "order85": [
+        19,
+        20,
+        21,
+        34,
+        50,
+        64,
+        65
+      ],
+      "search85_total": 1501,
+      "last85": "8549990000",
+      "page_errors": [],
+      "catalog_requests": 52,
+      "frontend_index_sha256": "cbff95e8e70a4417886b98e19ed879a747837809a7caf4f51a81f526f292d746"
+    }
+  ],
+  "negative": {
+    "loading_visible": true,
+    "failed_visible": true,
+    "false_empty": false,
+    "retry_real_HTTP": true,
+    "page_errors": []
+  },
+  "status": "PASS"
+}

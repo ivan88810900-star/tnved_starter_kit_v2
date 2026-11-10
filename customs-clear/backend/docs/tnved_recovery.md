@@ -60,3 +60,199 @@ structural status, lookup, breadcrumb and search. Every lookup explicitly report
 `rates=None` and the snapshot status stays `unverified`. The `tnved_entries`
 table is a compatibility projection for the existing TnvedEntry-shaped read
 path; its `source_revision` is the unverified edition id, not legal admission.
+
+## Local HTTP/UI read profile (2026-11-06)
+
+The explicit `app.recovery_main:create_app` factory serves the **existing**
+recovery store through the existing React dictionary/tree. It does not import
+`app.main`, `app.db`, dotenv, migrations, seeds, schedulers, rate/NTM services,
+or providers. This is a local structural read profile, not a production cutover.
+No ORM catalog or second materialized catalog is created.
+
+Use a dedicated copy of the already accepted SQLite, not the backup itself.
+The caller must supply its explicit SHA-256; startup rejects missing/changed
+files, sidecars, and mismatched pins. Requests fail with 503 if the bound file
+identity changes or sidecars appear. All store connections use SQLite `mode=ro`.
+
+From the repository root, after building `customs-clear/frontend`:
+
+```bash
+TARIFF_PY=/absolute/path/to/isolated/venv/bin/python
+env -i PATH=/usr/bin:/bin PYTHONDONTWRITEBYTECODE=1 \
+  TNVED_RECOVERY_DB=/absolute/path/to/working-copy/tnved-structure.sqlite \
+  TNVED_RECOVERY_SQLITE_SHA256=c5959912f7c1a3e8c0329130d511243c9ead4e5ae5501dc7ce7facff2d6bdff4 \
+  TNVED_RECOVERY_FRONTEND="$PWD/customs-clear/frontend/dist" \
+  "$TARIFF_PY" -m uvicorn app.recovery_main:create_app --factory \
+  --app-dir customs-clear/backend --host 127.0.0.1 --port 18001
+```
+
+Open `http://127.0.0.1:18001/tnved`. The API exposes search, structural detail,
+breadcrumb and direct children using the same snapshot. Health and catalog
+responses identify the pinned SQLite SHA-256. The existing dictionary page
+selects its structural card from the explicit `recovered_catalog` capability.
+The card displays source/edition/page and the full original `path`, including
+uncoded labels. Parent/child navigation follows saved edges; no fake codes or
+new intermediate nodes are synthesized. Rates remain null, dates unknown and
+source status unverified. Other application workflows are outside this profile.
+
+Run regression in `customs-clear/backend`:
+
+```bash
+"$TARIFF_PY" -m unittest -v tests.test_tnved_recovery_http \
+  tests.test_tnved_catalog_api.HermeticTnvedCatalogApiTests
+"$TARIFF_PY" scripts/run_tnved_recovery_ci.py
+```
+
+`frontend/scripts/recovery-browser-check.cjs` drives a real browser against the
+built application without substituting responses. It takes the local base URL,
+a JSON expectation derived read-only from the pinned working SQLite, and an
+output directory. Fields: `snapshot_sha256`, `code`, `name`, `path`, `parent`,
+`parent_name`, `child_codes`. It requires Playwright in `NODE_PATH`; optionally
+set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an installed Chrome binary. The desktop
+bundled Playwright runtime was used for the recorded local acceptance.
+
+## Official tree fidelity candidate (2026-11-06)
+
+The historical acceptance above remains scoped to its original bytes. The next
+local candidate is built from all actual chapter links on the saved official EEC
+index, with separate accepted/current source hashes. See
+`docs/operations/TARIFF_TREE_FIDELITY_20261106.md` and its per-chapter ledger.
+The accepted builder entry point and its immutable pins are unchanged.
+
+`app.services.tnved_fidelity` extracts header-gated PDF table cells with Poppler
+word coordinates. `audit_tnved_official.py` independently checks layout code-cell
+occurrences and the pinned retained physical-cell inventory, then compares every
+source row/edge/name/path/order/page with HTTP. It exits nonzero on proof failures.
+Rates columns and prose references cannot introduce codes. Reserved bracketed
+positions are recorded separately and do not become active tariff codes.
+
+From `customs-clear/backend`, with read-only source directories and NEW outputs:
+
+```bash
+"$TARIFF_PY" scripts/audit_tnved_official.py \
+  --accepted-root "$ACCEPTED" --current-root "$OFFICIAL" \
+  --baseline "$ACCEPTED_SQLITE_COPY" --output "$AUDIT" --pdftotext "$PDFTOTEXT"
+"$TARIFF_PY" scripts/build_tnved_fidelity.py \
+  --source-root "$OFFICIAL" --rows-root "$AUDIT/source-rows" \
+  --accepted-catalog "$ACCEPTED/data/tnved/catalog.json" \
+  --accepted-catalog-sha256 c7e4e5bb52b103d8b13554b4e25bf12ea0d09b4d67494e236a55cc276a173d41 \
+  --manifest-sha256 baa2708f444176a493c2553972b20516bc6473d6e83348db4f9929e27dd2faa2 \
+  --output "$NEW_SQLITE"
+```
+
+The candidate reuses the recovery schema and validator. Its navigation tables
+are a source-derived projection in that SAME SQLite, not a second live catalog.
+Use the resulting manifest's SQLite SHA in the existing local factory command.
+The recorded candidate hash is
+`725b784d8185c2f9a6a0378886199e01e19df9501688e1dbdbc3fe803a153591`.
+No application/persistent database is opened. Existing outputs are never replaced.
+
+Navigation identifies actual printed codes by their exact strings and uncoded
+rows by stable `u-` IDs bound to source PDF hash/page/baseline. Uncoded rows have
+no HS code. Equal labels remain distinct. `source_order` determines children;
+all breadcrumbs include uncoded source ancestors. A unique depth-zero combined
+printed row can have an explicit four-digit heading alias; detail returns the
+actual code and `navigation_alias`, never a substituted normative identity.
+
+Numeric search matches code prefixes only. Text search matches labels/paths.
+Search returns `total`, `offset`, `limit`, `mode`, and snapshot/query-bound
+next/previous/last cursors; invalid cursors return 422. Children either return
+the complete direct list or fail explicitly. The UI separates loading, loaded,
+empty and failed states, with a retry that calls the real endpoint.
+
+```bash
+"$TARIFF_PY" -m unittest -v tests.test_tnved_fidelity \
+  tests.test_tnved_recovery_http \
+  tests.test_tnved_catalog_api.HermeticTnvedCatalogApiTests
+"$TARIFF_PY" scripts/run_tnved_recovery_ci.py
+"$TARIFF_PY" scripts/audit_tnved_official.py \
+  --accepted-root "$ACCEPTED" --current-root "$OFFICIAL" \
+  --baseline "$ACCEPTED_SQLITE_COPY" --output "$AUDIT" --pdftotext "$PDFTOTEXT" \
+  --candidate "$NEW_SQLITE" --url http://127.0.0.1:18001
+```
+
+`frontend/scripts/fidelity-browser-check.cjs BASE_URL SOURCE_EXPECTATIONS OUT`
+drives real Chrome against the built app. Expectations come from independently
+extracted source rows/index, not candidate HTTP responses or SQLite. It checks
+all 96 titles, expanded 01/30/84/85/94/95, source paths/cards, clipboard leading
+zeroes, complete numeric pagination and a separate failed-request/retry case.
+Successful responses are never replaced. The 125% case uses a 1024 CSS-pixel
+viewport with DPR 1.25 to represent a physical 1280-pixel desktop viewport.
+The earlier `recovery-browser-check.cjs` is the limited historical c595 profile
+check; it is not the all-chapter acceptance.
+
+Historical notes/provenance remain stored, but the UI does not admit them as
+current law. Legal applicability, completeness, dates and rates remain unverified.
+The official index/PDF Latin-H versus Cyrillic-Н title discrepancy in chapter 41
+is retained in the report; the chapter navigation takes the index title.
+
+## Claude findings: source text projection (2026-11-09)
+
+The audited `725b784d...` snapshot and audit packet remain unchanged. A NEW local
+candidate has SHA-256
+`99f70ee34caa30637663c4c1a4e847958bfcfe663f4f5136e3d0b02725e0ef1f`.
+See `docs/operations/TARIFF_CLAUDE_ADJUDICATION_20261109.md` for adjudication,
+source coverage limits, commands and the requirement for targeted Claude recheck.
+
+The source build now also requires `requirements-tnved-source.txt` (pdfplumber
+and pdfminer pins). Use a separate source-build Python environment for
+`audit_tnved_official.py`; HTTP and synthetic CI do not import these libraries.
+The prepared source runtime was used without installing anything in the HTTP venv.
+
+Wrapped lexical hyphens keep their glyph. Version 3 joins lexical edges, with
+or without a hyphen, only when matching PDF character evidence says that NO
+separator was encoded. Encoded spaces survive, including `газо- или` and
+`сульфо- кислоты`; there is no following-word list. A space
+just beyond the final word's ink is included even beyond the nominal text-column
+cutoff. Unknown character boundaries prevent building a candidate.
+
+`recovery_source_text` is a provenance/display projection inside the SAME new
+SQLite, with raw label, original lines/page/baseline/character evidence and dash
+depth. API detail exposes `raw_name`, `source_lines`, `dash_depth`, `kind`; children
+expose depth/kind. Captions have no dash, and the tree renders the source depth
+instead of a fixed one/two-dash placeholder. Node identity/edges/order/aliases do
+not change. Reserved positions and footnote/index typography remain separate
+open presentation questions at the reviewed predecessor; no active code or legal meaning is invented.
+
+## Targeted Claude recheck: separator and provenance errors (2026-11-09)
+
+The returned independent recheck applies to `46506d04...` / `99f70ee3...`, not
+to a later repair. Its errata correct the former 454-case list: 452 genuine
+cases plus 19 previously missed cases = 471 old defects. The old 472-label
+repair also removed an encoded space in `2922210000`; that one over-join is
+now reversed by the general separator rule above. The new isolated v3 candidate
+is `45ab63fa4b14fa4a9e1175f10685364249a2fb8eeb890ecf4a6701f53ba9ba2f`.
+The builder requires `text_projection_version=3`; old v2 rows are rejected.
+Existing source bytes, raw lines, source text records and all structural fields
+are preserved. Existing candidate outputs remain immutable.
+
+An enabled source-text table with a missing node record is an internal snapshot
+failure. Store raises `SourceTextProvenanceError`; the router returns explicit
+503 for affected children/detail requests. It is no longer misreported as a
+422 child-count limit or an unhandled 500. Old profiles without a source-text
+table remain supported; no source text is invented as a fallback.
+
+See `docs/operations/TARIFF_CLAUDE_RECHECK_20261109.md` for exact scope,
+commands, remaining text differences and the distinction between independent
+data/static review and A0 runtime checks. Claude's host API/UI/private SQLite
+layers remain not_assessed. The local replacement profile uses loopback port
+18007; no public endpoint or tunnel is part of this work.
+
+## Owner-selected local presentation F001/F003 (2026-11-09)
+
+Separate candidate5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021
+preserves every active baseline table.37reserved rows are distinct inactive
+source markers, excluded from active selection/search/counts.849small-glyph
+nodes have an explicit simplified-label notice and original raster fragments
+inside the SAME SQLite. Formulas/note references retain original appearance
+without inferred semantics.10spacing source/display/impact comparisons remain
+open_limitation. Old45ab and earlier files remain immutable.
+
+Build: scripts/build_tnved_presentation.py; actual-result audit:
+scripts/audit_tnved_presentation.py; Chrome:
+frontend/scripts/presentation-browser-check.cjs. Full commands, exact build
+identity, disclosure and access boundary:
+docs/operations/TARIFF_PRESENTATION_FINAL_20261109.md.
+The final profile uses18008 and its own frozen frontend. Independent runtime
+review awaits scoped handoff of the actual SQLite to the same Claude session;
+a URL to Maclocalhost is insufficient.
