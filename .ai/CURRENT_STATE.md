@@ -1,3 +1,16 @@
+# Cycle 458 checkpoint — chapter-30 official source identified; exact-byte acquisition blocked (2026-11-13)
+
+- GitHub truth was reread before action: protected `main` remains `eeef5028d45ea14af09e0afb01f600bca5602316`; 52 PRs and 7 issues are open. Draft PR #270 remains 7 commits ahead/0 behind at `89001a3ade4ee879a520ee7664a696ebcddfd189`; draft PR #271 remains 1 ahead/0 behind at `b211c746ffaa003138abdc0c6a792bf1369cd641`. Both have zero review threads/reviews and their exact-head PR safety runs remain successful.
+- The selected `ETT-CHAPTER30-OFFICIAL-BATCH-READINESS` source was verified on the official EEC index. The current chapter-30 PDF URL resolves as a 14-page `application/pdf`, headed “ГРУППА 30 — ФАРМАЦЕВТИЧЕСКАЯ ПРОДУКЦИЯ”, under Decision No. 80. Parsed official content reaches the tariff table beginning at code 3001.
+- Exact official bytes cannot be materialized in this runtime: the official web reader can parse the PDF, while the workspace HTTP client receives origin HTTP 403. Consequently no SHA-256, exact row count, deterministic extraction/package or independent byte-bound QA is claimed. Parsed text or screenshots were not substituted for source bytes; no “82 rows = complete” inference was made.
+- No code/PR/main change, source package, database access/write, provider/A6 call, merge, deploy, enforcement change, permission/secret change, force push, branch deletion or test weakening occurred.
+- Evidence: `.ai/orchestration/evidence/cycle458_chapter30_source_readiness.json`.
+- Next: resume only in a runtime that can lawfully download the exact official PDF bytes; hash them, establish the exact chapter-30 row count, build the deterministic no-DB-write package through the existing path, and obtain independent QA.
+
+Historical checkpoints below preserve their original-time status; this checkpoint narrows cycle457's source-availability blocker without claiming source acquisition.
+
+---
+
 # Cycle 457 checkpoint — owner accepted local structural catalog; exact-head merge proposal prepared (2026-11-12)
 
 - Owner decision [#6823972882](https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6823972882) accepts only the local structural code/data/build at HEAD `89001a3ade4ee879a520ee7664a696ebcddfd189`, tree `2e116b0e6528bf771e05fd7621f756e2948eb1ae`, SQLite `5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021` and frontend index `cee3488eadd6012d3eda69b6a85beea84afd94d11f5d1fc4becadc87a18171ac`. N001 is closed in that version. F003, ten spacing differences, four prior TS2339 diagnostics, source/date/rates/NTM/legal-admission limits and DB HOLD remain.
