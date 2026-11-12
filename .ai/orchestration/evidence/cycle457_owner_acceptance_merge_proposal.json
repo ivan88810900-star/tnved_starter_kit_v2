@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "cycle": 457,
+  "checked_at": "2026-11-12T16:23:45.189Z",
+  "kind": "OWNER_ACCEPTANCE_AND_MERGE_PROPOSAL",
+  "owner_decision": {
+    "id": 6823972882,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6823972882",
+    "author": "ivan88810900-star",
+    "created_at": "2026-11-12T12:45:23Z",
+    "decision": "LOCAL_STRUCTURAL_CATALOG_ACCEPTED",
+    "merge_authorized": false
+  },
+  "accepted_artifacts": {
+    "product_head": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+    "product_tree": "2e116b0e6528bf771e05fd7621f756e2948eb1ae",
+    "sqlite_sha256": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+    "sqlite_bytes": 130629632,
+    "frontend_index_sha256": "cee3488eadd6012d3eda69b6a85beea84afd94d11f5d1fc4becadc87a18171ac",
+    "frontend_file_list_digest": "6eba2526bcb15257c8a5d48fd5873b126085da757a70afddf2d8036c35e1edec"
+  },
+  "merge_proposal": {
+    "pr": 270,
+    "draft": true,
+    "base": "main",
+    "base_sha": "eeef5028d45ea14af09e0afb01f600bca5602316",
+    "head": "agent/recovered-catalog-http-ui-v1",
+    "head_sha": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+    "compare_status": "ahead",
+    "ahead_by": 7,
+    "behind_by": 0,
+    "mergeable": true,
+    "changed_files": 41,
+    "review_threads_open": 0,
+    "submitted_reviews": 0,
+    "exact_head_ci": [
+      {
+        "run_id": 42789967481,
+        "event": "push",
+        "conclusion": "success"
+      },
+      {
+        "run_id": 42789975097,
+        "event": "pull_request",
+        "conclusion": "success"
+      }
+    ],
+    "required_action": "SEPARATE_OWNER_APPROVAL_BEFORE_MERGE"
+  },
+  "retained_limits": [
+    "F003 remains simplified search label plus warning and exact PDF raster, not semantic rich text",
+    "Ten spacing distinctions remain open_limitation",
+    "Current-edition completeness, dates, rates, NTM applicability and legal admission are not accepted",
+    "Four pre-existing TS2339 diagnostics and documented environment limits remain",
+    "DB HOLD remains in force"
+  ],
+  "next_task": {
+    "id": "ETT-CHAPTER30-OFFICIAL-BATCH-READINESS",
+    "priority": "first",
+    "status": "BLOCKED_IN_CURRENT_EXECUTION_ENVIRONMENT",
+    "reason": "The previously retained chapter-30 official corpus and extraction package are absent from GitHub and this workspace; no lawful existing local bytes are available to hash or process.",
+    "duplicate_checks": [
+      "No chapter-30 data-batch PR, issue or commit was found in repository-scoped GitHub search",
+      "Only the official source URL is present on main; no retained PDF/package is in the accessible workspace"
+    ],
+    "prohibited_shortcuts": [
+      "Do not treat old derived/quarantine JSON as an official primary source",
+      "Do not claim 82 coded rows as complete current-edition coverage",
+      "Do not refetch a mass corpus or fabricate source bytes",
+      "Do not access or write Neon while DB HOLD is active"
+    ]
+  },
+  "actions_performed": {
+    "product_changed": false,
+    "tests_rerun": false,
+    "provider_called": false,
+    "a6_dispatched": false,
+    "database_accessed": false,
+    "main_changed": false
+  },
+  "lease": {
+    "generation": 457,
+    "holder": "/root/scheduled-maintenance-20261112T161417Z"
+  }
+}
