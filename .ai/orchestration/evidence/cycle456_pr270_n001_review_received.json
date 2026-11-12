@@ -1,0 +1,234 @@
+{
+  "intake": {
+    "received_on": "2026-11-12",
+    "auditor_report_date": "2026-11-10",
+    "ZIP_bytes": 2377031,
+    "ZIP_sha256": "ebb59ed8a419413ab6a5355d2175f85f8af020f43227490e9188927593f8b590",
+    "report_bytes": 21956,
+    "report_sha256": "0c132d3b07acffadbc20bd619d9c53ed5d6433667948254fe8149a68373b6d24",
+    "manifest_sha256": "29333f37154f0ac54c23d22ed9442ffb7645eb5f2f92cd52a269ecebafa65834",
+    "manifest_payloads": 24,
+    "verified_payloads": 24,
+    "ZIP_entries": 25,
+    "CRC_and_path_checks": "PASS",
+    "separate_report_equals_ZIP": true,
+    "original_missing_addendum": {
+      "bytes": 733586,
+      "sha256": "67b89027d43626cb47352f08a1a8cd6fe40b0ca7aaf8f155e669d2ab7b19c240",
+      "matches_old_manifest": true,
+      "old_ZIP_rewritten": false
+    },
+    "auditor_scripts_executed": false,
+    "product_changes": false
+  },
+  "crosscheck": {
+    "verification": "A0 re-read and comparison of received evidence only; no auditor scripts or live re-audit",
+    "parent_lists": 21208,
+    "changed_lists": [
+      "28",
+      "69",
+      "u-691670858d8233a548d912a2",
+      "u-73b0fc047e1b6ae2faa50208",
+      "u-8e6c655b4773ff4a7b7b2a75"
+    ],
+    "ordinary_node_order_preserved": true,
+    "unchanged_lists": 21203,
+    "all37_once_correct_parent": true,
+    "only_moved_marks": [
+      "[6908]",
+      "[2848]",
+      "[2851]",
+      "[2838]"
+    ],
+    "old_edges_sha256": "67b89027d43626cb47352f08a1a8cd6fe40b0ca7aaf8f155e669d2ab7b19c240",
+    "new_edges_sha256": "bf0e1ea32ccdff4a09f64d8777f3865413b246395bd104cc4f31640f6df4bdc0"
+  },
+  "schema_version": 1,
+  "cycle": 456,
+  "task": "TARIFF-PR270-N001-CLOSEOUT-20261110",
+  "scope_receipt": 6823382482,
+  "receipt": {
+    "issue": 257,
+    "id": 6823631745,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6823631745"
+  },
+  "versions": {
+    "head": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+    "tree": "2e116b0e6528bf771e05fd7621f756e2948eb1ae",
+    "parent": "7bfd7b5fd8607e3e9b472adf43d5b3acc43697de",
+    "main": "eeef5028d45ea14af09e0afb01f600bca5602316",
+    "SQLite_sha256": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+    "SQLite_bytes": 130629632,
+    "frontend_index_sha256": "cee3488eadd6012d3eda69b6a85beea84afd94d11f5d1fc4becadc87a18171ac",
+    "frontend_file_list_digest": "6eba2526bcb15257c8a5d48fd5873b126085da757a70afddf2d8036c35e1edec",
+    "product_data_build_changed": false
+  },
+  "independent_review": {
+    "status": "RECEIVED; N001 independently CORRECTED on exact89001a3a",
+    "new_confirmed_defects": [],
+    "all37_machine_correct": true,
+    "four_HTTP_UI_positions": [
+      "[2838] in28/V",
+      "[2848] in28/VI",
+      "[2851] in28/VI",
+      "[6908] in69/II"
+    ],
+    "previous33_unchanged": true,
+    "observed_layers": [
+      "own SQL read-only copy",
+      "own loopback HTTP",
+      "own headless Chromium with DOM/screenshots/Network"
+    ],
+    "not_owner_Mac_runtime": true,
+    "HTTP": {
+      "total": 22560,
+      "success200": 22523,
+      "expected404": 37,
+      "parent_lists": 21208,
+      "changed_lists": 5,
+      "unchanged_lists": 21203
+    },
+    "PNG_SHA_equal": 895,
+    "aliases_same": 271,
+    "active_10_digit_codes": 13294,
+    "auditor_ran_A0_tests_CI": false,
+    "PDF_full_audit_repeated": false,
+    "old_full_audit_bounds_preserved": true,
+    "R001": "prior code+independent simulation; not reopened",
+    "R002": "prior static review; not reopened",
+    "F003": "prior verified simplified searchable name plus original PDF raster; not rich text or note interpretation, unchanged and not re-audited in N001",
+    "machine_details_checked_by_A0": 37,
+    "Git_files_identity": "6/6 code and4/4 runtime matched exact Git bytes",
+    "auditor_scripts_executed_by_A0": false
+  },
+  "CI": [
+    {
+      "id": 42789967481,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/42789967481",
+      "head": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+      "event": "push",
+      "conclusion": "success"
+    },
+    {
+      "id": 42789975097,
+      "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/42789975097",
+      "head": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+      "event": "pull_request",
+      "conclusion": "success"
+    }
+  ],
+  "author_validation": {
+    "previous_exact_head_tests": 29,
+    "recovery_gate": "4/4/0skip",
+    "new_tests_or_live_reaudit_run": false,
+    "reason": "metadata-only evidence intake; unchanged product/data/build",
+    "source_worktree_clean": true
+  },
+  "acceptance_proposal": {
+    "status": "PROPOSED_TO_OWNER; owner acceptance not yet recorded",
+    "scope": "local structural reference only: search, card, names, codeless hierarchy, parent/child navigation,37inactive source markers; source legal status/rates/dates unverified",
+    "exact_head": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+    "F003_fallback_retained": true,
+    "all_ten_spacing_distinctions_remain": "open_limitation; no automatic wording acceptance",
+    "ten_explicit_limits": [
+      {
+        "node_id": "u-21205d54b07ba47b5b87bedf",
+        "chapter_page": "22, стр.5",
+        "difference": "0401 –0404 → 0401 – 0404",
+        "status": "open_limitation"
+      },
+      {
+        "node_id": "3827310000",
+        "chapter_page": "38, стр.24",
+        "difference": "2903 41 000 0 –2903 48 000 0 → пробел после тире",
+        "status": "open_limitation"
+      },
+      {
+        "node_id": "3827320000",
+        "chapter_page": "38, стр.24",
+        "difference": "2903 71 000 0 –2903 75 000 0 → пробел после тире",
+        "status": "open_limitation"
+      },
+      {
+        "node_id": "5804",
+        "chapter_page": "58, стр.3",
+        "difference": "6002 –6006 → 6002 – 6006",
+        "status": "open_limitation"
+      },
+      {
+        "node_id": "591132",
+        "chapter_page": "59, стр.8",
+        "difference": "м²или → м² или",
+        "status": "open_limitation"
+      },
+      {
+        "node_id": "7304220002",
+        "chapter_page": "73, стр.5",
+        "difference": "(H 2 S),из → (H 2 S), из",
+        "status": "open_limitation"
+      },
+      {
+        "node_id": "7304293002",
+        "chapter_page": "73, стр.7",
+        "difference": "(H 2 S),из → (H 2 S), из",
+        "status": "open_limitation"
+      },
+      {
+        "node_id": "8407349902",
+        "chapter_page": "84, стр.15",
+        "difference": "8701 –8705 → 8701 – 8705",
+        "status": "open_limitation"
+      },
+      {
+        "node_id": "8408205791",
+        "chapter_page": "84, стр.22",
+        "difference": "8701 –8705 → 8701 – 8705",
+        "status": "open_limitation"
+      },
+      {
+        "node_id": "8428399001",
+        "chapter_page": "84, стр.61",
+        "difference": "8701 –8705 → 8701 – 8705",
+        "status": "open_limitation"
+      }
+    ],
+    "full_provenance_ledger": "customs-clear/backend/data/tnved_presentation_spacing.json",
+    "does_not_authorize": [
+      "merge",
+      "deploy",
+      "enforcement",
+      "permanent DB writes",
+      "legal admission",
+      "confirmed rates/dates/completeness"
+    ],
+    "next_product_block": "separate rates/NTM data work after local structural acceptance; do not expand PR270"
+  },
+  "remaining_limits": [
+    "headless browser; not visual inspection of all cards",
+    "Playwright1.63.0 vs pinned1.62.1; Chromium153; Python3.13.18",
+    "opentelemetry-api1.45.2 unpinned",
+    "GoogleFonts external and auth/me404; no offline guarantee",
+    "4 prior TS2339 remain; no new typecheck PASS",
+    "earlier Sources ZIP absent, prior96PDF SHA matched",
+    "mark immediately before a new caption absent in current37; observation is not a confirmed defect; existing synthetic unit is not evidence of future PDF meaning",
+    "legal status/rates/dates/edition completeness outside audit"
+  ],
+  "handoff": {
+    "new_packet_or_Claude_action_required": false,
+    "external_transfer_performed_by_A0": false,
+    "private_reports_images_structural_exports_published": false,
+    "old_ZIP_manifests_preserved": true,
+    "missing_old_children_edges_status": "RESOLVED_BY_EXACT_ORIGINAL_ADDENDUM; old ZIP remains as issued; new crawl not substituted",
+    "local_receipt": "Original and extracted evidence preserved in existing owner workspace; local paths not published"
+  },
+  "safety": {
+    "DB_HOLD": true,
+    "merge": false,
+    "deploy": false,
+    "enforcement": false,
+    "permanent_DB_writes": false,
+    "new_agents_chats_schedules": false,
+    "provider_A6_calls": false,
+    "TaskBoard_or_foreign_record_edits": false
+  }
+}
