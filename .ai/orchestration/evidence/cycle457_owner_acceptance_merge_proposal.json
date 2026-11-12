@@ -79,6 +79,23 @@
     "id": 6829340408,
     "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6829340408"
   },
+  "receipt_workflow_observation": {
+    "checkout_step": "skipped",
+    "classification": "KNOWN_FALSE_FAILURE_ON_UNRELATED_ISSUE_COMMENT",
+    "conclusion": "failure",
+    "context_gate_conclusion": "failure",
+    "context_gate_job_id": 131322630737,
+    "dedupe_step": "skipped",
+    "live_audit_conclusion": "skipped",
+    "live_audit_job_id": 131322686983,
+    "note": "PR271 is a separate draft and its merge remains an owner gate.",
+    "provider_called": false,
+    "related_fix_exact_head_ci": 42471279440,
+    "related_fix_head": "b211c746ffaa003138abdc0c6a792bf1369cd641",
+    "related_fix_pr": 271,
+    "run_id": 43258364767,
+    "state_read_step": "skipped"
+  },
   "retained_limits": [
     "F003 remains simplified search label plus warning and exact PDF raster, not semantic rich text",
     "Ten spacing distinctions remain open_limitation",
