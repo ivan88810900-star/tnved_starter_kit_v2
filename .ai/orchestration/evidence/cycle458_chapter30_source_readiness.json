@@ -1,0 +1,74 @@
+{
+  "actions_performed": {
+    "a6_dispatched": false,
+    "code_changed": false,
+    "database_accessed": false,
+    "database_written": false,
+    "official_web_read": true,
+    "package_built": false,
+    "pr_changed": false,
+    "provider_called": false,
+    "raw_pdf_downloaded": false,
+    "source_hash_computed": false
+  },
+  "checked_at": "2026-11-12T22:21:54.336Z",
+  "cycle": 458,
+  "github_truth": {
+    "main_sha": "eeef5028d45ea14af09e0afb01f600bca5602316",
+    "open_issue_count": 7,
+    "open_pr_count": 52,
+    "pr270": {
+      "ahead_by": 7,
+      "behind_by": 0,
+      "draft": true,
+      "exact_head_pr_run": {
+        "conclusion": "success",
+        "id": 42789975097
+      },
+      "head_sha": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+      "review_threads": 0,
+      "reviews": 0
+    },
+    "pr271": {
+      "ahead_by": 1,
+      "behind_by": 0,
+      "draft": true,
+      "exact_head_pr_run": {
+        "conclusion": "success",
+        "id": 42471279440
+      },
+      "head_sha": "b211c746ffaa003138abdc0c6a792bf1369cd641",
+      "review_threads": 0,
+      "reviews": 0
+    }
+  },
+  "kind": "CHAPTER30_OFFICIAL_SOURCE_READINESS",
+  "lease": {
+    "generation": 458,
+    "holder": "/root/scheduled-cycle458-20261113T011417MSK"
+  },
+  "next_step": "Resume only in a runtime that can lawfully download the exact official PDF bytes; hash them, establish exact chapter-30 row count, build the deterministic no-DB-write package through the existing path, and obtain independent QA.",
+  "schema_version": 1,
+  "source_readiness": {
+    "blocker": "The web reader can parse the official 14-page PDF, but the workspace HTTP client receives origin HTTP 403 and cannot materialize the exact bytes. Therefore no SHA-256, deterministic extraction, package, or independent byte-bound QA can be produced in this runtime.",
+    "governing_decision": "Решение Совета ЕЭК от 14 сентября 2021 г. № 80",
+    "observed_pdf": {
+      "content_type": "application/pdf",
+      "first_code": "3001",
+      "pages": 14,
+      "sample_current_marker": "3001 90 200 0 ... 6,5 63С)",
+      "title": "ГРУППА 30 — ФАРМАЦЕВТИЧЕСКАЯ ПРОДУКЦИЯ"
+    },
+    "official_index_title": "ТН ВЭД ЕАЭС и ЕТТ ЕАЭС",
+    "official_index_url": "https://eec.eaeunion.org/comission/department/catr/ett/",
+    "official_pdf_url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.30_2022_08.03.2026.pdf",
+    "prohibited_inferences": [
+      "Do not derive a source hash from parsed text",
+      "Do not substitute web-reader text or screenshots for the official PDF bytes",
+      "Do not claim row completeness or create an import package",
+      "Do not access or write staging/production databases while DB HOLD remains"
+    ],
+    "result": "PRIMARY_SOURCE_IDENTIFIED_CONTENT_READABLE_EXACT_BYTES_UNAVAILABLE",
+    "task_id": "ETT-CHAPTER30-OFFICIAL-BATCH-READINESS"
+  }
+}
