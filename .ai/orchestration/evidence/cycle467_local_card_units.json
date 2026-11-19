@@ -1,0 +1,30 @@
+{
+  "cycle": 467,
+  "initiated_by": "owner_in_current_chat",
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7011471664",
+  "candidate": "d9beee145b8771c09af4cc645d704730076329f6",
+  "parent": "25de4218e7c22602f4aaa6b33da783392ecb0fe6",
+  "worktree_branch": "agent/local-app-integration-v1",
+  "source_chapters": "30–36",
+  "pdf_rows": 328,
+  "raised_rate_notes": 58,
+  "combined_rates": 4,
+  "browser_search_http_and_render_matched": 328,
+  "additional_browser_checks": [
+    "copy",
+    "registry lookup",
+    "missing rate",
+    "parent and child",
+    "mobile compound duty"
+  ],
+  "bundle": {
+    "zip": "Tariff-local-card-cycle467.zip",
+    "sha256": "272d1120d594b0f6c7e7bf09b8358c6915eaf52d04e974ee89b0f0b1aba1e66b",
+    "bytes": 215020,
+    "entries": 16
+  },
+  "legal_status": "UNVERIFIED",
+  "admitted": 0,
+  "db_hold": true,
+  "next": "Select one product and match its document requirement to existing local evidence. Protected verification still requires an existing local login profile."
+}
