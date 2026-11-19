@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "cycle": 465,
+  "task": "NEXT-SAVED-ETT-CH36-OFFLINE",
+  "completed_product_block_at": "2026-11-19T12:34:08.720376+00:00",
+  "execution_mode": "NATIVE_AUTOMATION_HEARTBEAT",
+  "native_trigger": {
+    "automation_id": "tariff",
+    "check_in_time": "2026-11-19T12:25:05.517Z",
+    "trigger_source": "native automation tool output",
+    "launch_kind": "UNKNOWN: native record does not specify Run now versus periodic tick",
+    "native_turn_id": "01a1f3c4-86f0-7ef2-ac1f-a28da77afb88",
+    "native_turn_startedAt_epoch_seconds": 1795091105,
+    "native_hostId": "local",
+    "executed_locally": true,
+    "first_processing_clock_observed": "2026-11-19T12:25:17Z",
+    "lease_acquired_at": "2026-11-19T12:26:20.702076Z",
+    "cwd_matches_owner_local_Tariff": true
+  },
+  "source": {
+    "PDF_bytes": 135604,
+    "PDF_sha256": "1be7c23e6d14a48cff9302a011805dbe9bb37946c619ef2953172255a203f716",
+    "layout_sha256": "b1ea845f69a5f9048c17fa918179d23b6b14710afed3041a9cddc7d62372ceea",
+    "pages": 2,
+    "official_saved_URL": "https://eec.eaeunion.org/upload/files/catr/ett/ru.36_2022.pdf"
+  },
+  "counts": {
+    "raw": 16,
+    "parsed": 16,
+    "ambiguous": 0,
+    "verified": 0,
+    "admitted": 0
+  },
+  "ambiguity_classes": {},
+  "source_checks": {
+    "per_page": [
+      8,
+      8
+    ],
+    "units": {
+      "–": 6,
+      "м": 3,
+      "шт": 7
+    },
+    "rates": {
+      "5": 2,
+      "6,5": 14
+    },
+    "physical_lines": 86,
+    "physical_line_roles": {
+      "blank_or_page_break": 4,
+      "chapter_note": 13,
+      "chapter_note_heading": 1,
+      "chapter_title": 3,
+      "context": 15,
+      "description_continuation": 12,
+      "record_start": 16,
+      "table_header": 22
+    },
+    "unaccounted": 0,
+    "description_continuations": 12,
+    "context_lines": 15,
+    "chapter_notes": 2,
+    "additional_notes": 0,
+    "duty_note_references": {},
+    "PDF_description_nonspace_characters": 838,
+    "PDF_title_notes_nonspace_characters": 753,
+    "all_pages_rendered_and_viewed": 2,
+    "five_multiline_meanings_preserved": true,
+    "cm_cubed_in_note_and_description_preserved": true
+  },
+  "QA": {
+    "kind": "separate critical self-review in same existing Codex context",
+    "independent_A5": false,
+    "negative_controls": 65,
+    "canonical_RAW_result_hash_links": 16,
+    "deterministic_files": 6,
+    "rollback_after_RAW_and_both_layers": true,
+    "local_SQLite_rows": 34,
+    "local_SQLite_replay_DML": [],
+    "replay_total_changes_delta": 0,
+    "full_values_and_timestamps_unchanged": true,
+    "PostgreSQL_execution": false
+  },
+  "identity": {
+    "raw_run_id": "ett:952fac2c47736c6b2ea0d49cb635f523e4dc0fdbfe08b2c55ef3fb581c96c18e",
+    "normalization_digest": "775f39b186022d7d86ab41537d972c1aeff00282877f7632898461a944ebee5c",
+    "plan_sha256": "f44f91ab9fd5251d777df92fe2b79ce83e4e7fbf8db5154c4b0a8cb42a982180",
+    "sql_sha256": "7a276b7e2f36017467f03e7ba70a3837c960b5013d5ecfb06fdfa294aecca0cd"
+  },
+  "runtime_versions": {
+    "source": {
+      "python": "3.12.14",
+      "pdfplumber": "0.11.9",
+      "pdfminer.six": "20251230",
+      "pypdfium2": "5.13.0"
+    },
+    "ingest": {
+      "python": "3.12.15",
+      "SQLAlchemy": "2.0.44"
+    }
+  },
+  "existing_archive_dependencies": [
+    {
+      "path": "Tariff-ETT-Chapter30-offline-batch-20261113.zip",
+      "bytes": 3615101,
+      "sha256": "98bd8359eb1779f352fcd5e7b4719d4541fbe2317e2784b66490c56fefc5afa8"
+    },
+    {
+      "path": "Tariff-CH30-QA-and-CH31-offline-20261119.zip",
+      "bytes": 1496447,
+      "sha256": "9dd9d67f7256138e956b873deee167ca03f528b99c5af88ab4bf5d40ec9b28a4"
+    }
+  ],
+  "verified": 0,
+  "admitted": 0,
+  "calculation_ready": 0,
+  "permanent_DB_access": false,
+  "Neon_calls": false,
+  "storage_uploaded": false,
+  "merge_deploy_enforcement": false,
+  "private_external_transfer": false,
+  "limits": [
+    "legal/current edition and dates",
+    "independent A5/release",
+    "PostgreSQL and fresh target preflight"
+  ],
+  "next_local_operation": {
+    "next_chapter": "37",
+    "source_path": "chapter-37.pdf",
+    "URL": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.37_2022_08.03.2026.pdf",
+    "PDF_bytes": 250540,
+    "PDF_sha256": "998fca6b6aa238f91b65ea1e852767f9e286cfbee500f32fa5ad81b619ab1918",
+    "preliminary_code_lines": 43,
+    "unique_preliminary_codes": 43,
+    "not_full_preparation_or_QA": true,
+    "next_operation": "Full source-first CH37 preparation: all PDF code/rate/literal-unit/context/notes bindings and provenance,existing six pinned RAW/normalization modules,cap86 unchanged/no truncation; isolated local SQLite deterministic reruns/replay/rollback,corruption controls,critical self-review. DB HOLD.",
+    "permanent_DB_access": false
+  },
+  "package_receipt": {
+    "file": "Tariff-ETT-Chapter36-offline-20261119.zip",
+    "bytes": 726343,
+    "sha256": "90b5e94b407072e5d1af37bf8185ac568b3ab978a50eee4845ac49de6f664a3a",
+    "manifest_sha256": "f13a8ec235711ec865bd3e622e0a3f7aab771c882fa4fb3659aa7130993b0db4",
+    "payload_files": 39,
+    "CRC_and_every_SHA": "PASS",
+    "external_transfer": false
+  },
+  "primary_queue_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7009274066",
+  "code_and_SQLite_SHA256": {
+    "build_candidate.py": "6f78843ee30b238918cf6cfa571c17b6569215b8099370eef360c12cbbc82647",
+    "check_candidate.py": "0d9bc18f764f72210de5865104ef53b1cbe65e015bb7bca13bc83ba4f88e28b0",
+    "check_runtime.py": "a0c1c2be42655a49208de95575bef544777807d9c2d015adbc977e74fa9ea447",
+    "prepare_source.py": "65bad6a1a174dd9f164686fdb4f81aaecb01201d6daeb5d434282f8a79c06ff8",
+    "run-1/simulation.sqlite": "5a68647cd2f5371e55b7d47043ca33d1fe6f16dd71c5b72f15379b82ed92f116"
+  },
+  "ownership": {
+    "generation": 465,
+    "holder": "sole existing A0/current chat",
+    "acquire_commit": "821c70ec6b3138e4a9ce90e4abf243a2b0b3784b",
+    "release": "required before end; standard trusted-main CAS and full record reread"
+  },
+  "native_schedule": {
+    "automation_id": "tariff",
+    "status": "ACTIVE",
+    "kind": "heartbeat",
+    "rrule": "FREQ=HOURLY;INTERVAL=1",
+    "same_local_Mac_project_and_chat": true,
+    "target_chat_records": 1,
+    "no_new_record_created_this_cycle": true,
+    "historical_first_execution_proof": "preserved"
+  },
+  "execution_ledger": "evidence/2026-11-19-hourly-continuation/runs/cycle465-01a1f3c4-86f0-7ef2-ac1f-a28da77afb88.json",
+  "repository_versions": {
+    "PR270": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+    "main": "eeef5028d45ea14af09e0afb01f600bca5602316",
+    "product_files_changed": false
+  },
+  "protected_history_preserved": true
+}
