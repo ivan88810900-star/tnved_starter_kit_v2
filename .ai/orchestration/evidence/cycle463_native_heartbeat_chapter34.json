@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "cycle": 463,
+  "task": "NEXT-SAVED-ETT-CH34-OFFLINE",
+  "completed_product_block_at": "2026-11-19T09:23:05.991417+00:00",
+  "execution_mode": "NATIVE_AUTOMATION_HEARTBEAT",
+  "native_trigger": {
+    "automation_id": "tariff",
+    "check_in_time": "2026-11-19T09:13:35.867Z",
+    "trigger_source": "native automation tool output",
+    "launch_kind": "UNKNOWN: native record does not specify Run now versus periodic tick",
+    "native_turn_id": "01a1f315-357e-7352-a2c1-638d154a5e63",
+    "native_hostId": "local",
+    "executed_locally": true,
+    "cwd_matches_owner_local_Tariff": true
+  },
+  "source": {
+    "PDF_bytes": 262876,
+    "PDF_sha256": "d055b4b41bf8f72b131d08b77982a61f9231843b2e896fa61170f3f75c71532b",
+    "layout_sha256": "ae97f397bc8420a37fc62dc248f9e267f2e30353c70ce71150b7507cc84096e6",
+    "pages": 7
+  },
+  "counts": {
+    "raw": 36,
+    "parsed": 28,
+    "ambiguous": 8,
+    "verified": 0,
+    "admitted": 0
+  },
+  "ambiguity_classes": {
+    "SOURCE_FOOTNOTE": 7,
+    "COMPOUND_DUTY": 1
+  },
+  "source_checks": {
+    "per_page": [
+      0,
+      0,
+      9,
+      7,
+      11,
+      8,
+      1
+    ],
+    "units": {
+      "–": 36
+    },
+    "physical_lines": 302,
+    "physical_line_roles": {
+      "chapter_title": 8,
+      "chapter_note": 44,
+      "blank_or_page_break": 9,
+      "table_header": 66,
+      "context": 94,
+      "record_start": 36,
+      "description_and_duty_continuation": 1,
+      "description_continuation": 44
+    },
+    "unaccounted": 0,
+    "description_continuations": 45,
+    "context_lines": 94,
+    "chapter_notes": 5,
+    "duty_note_references": {
+      "67С)": 3,
+      "63С)": 1,
+      "109С)": 3
+    },
+    "description_note5_occurrences": 4,
+    "duty_continuation_bindings": {
+      "3401110001": {
+        "duty_bbox": [
+          439.750005,
+          181.60936000000004,
+          553.17999,
+          228.5793599999999
+        ],
+        "full_pdf_text": "4,5 плюс\n0,02 евро за 1 кг",
+        "source_lines": [
+          {
+            "global_line": 106,
+            "fragment": "0,02 евро за 1 кг",
+            "description_fragment": "мыло, содержащее"
+          }
+        ]
+      }
+    },
+    "PDF_description_nonspace_characters": 3805,
+    "all_pages_rendered_and_viewed": 7,
+    "note_formula3": "plain text10-2 is a typography limitation; original page+glyph evidence retained; not reinterpreted",
+    "note5_page2_continuation_preserved": true
+  },
+  "QA": {
+    "kind": "same-context Codex technical QA and separate critical self-review",
+    "independent_A5": false,
+    "negative_controls": 115,
+    "canonical_RAW_result_hash_links": 36,
+    "deterministic_files": 6,
+    "rollback_after_RAW_and_both_layers": true,
+    "local_SQLite_replay_DML": [],
+    "replay_total_changes_delta": 0,
+    "full_values_and_timestamps_unchanged": true,
+    "PostgreSQL_execution": false
+  },
+  "identity": {
+    "raw_run_id": "ett:bde56b3e8fdb45a069e330d0e4696b753a2f03b9e96af6e20d86ee7ed3ce709d",
+    "normalization_digest": "41fa92c139b79d5eb285c2f83df54a88bd7aa9c5fbb9feeeaa82a24d87e0b16e",
+    "plan_sha256": "eefba43c7715e2d495adacdddc81460d35d19cb5c63ac5f6f0333a468132251b",
+    "sql_sha256": "4a6e3067277644523d9e07a103dee9ed7f1aa0d5ef04df2e29714821b835f4ba"
+  },
+  "existing_archive_dependencies": [
+    {
+      "path": "Tariff-ETT-Chapter30-offline-batch-20261113.zip",
+      "bytes": 3615101,
+      "sha256": "98bd8359eb1779f352fcd5e7b4719d4541fbe2317e2784b66490c56fefc5afa8"
+    },
+    {
+      "path": "Tariff-CH30-QA-and-CH31-offline-20261119.zip",
+      "bytes": 1496447,
+      "sha256": "9dd9d67f7256138e956b873deee167ca03f528b99c5af88ab4bf5d40ec9b28a4"
+    }
+  ],
+  "verified": 0,
+  "admitted": 0,
+  "calculation_ready": 0,
+  "permanent_DB_access": false,
+  "Neon_calls": false,
+  "storage_uploaded": false,
+  "merge_deploy_enforcement": false,
+  "private_external_transfer": false,
+  "limits": [
+    "compound syntax and general-note meanings not legally interpreted",
+    "primary general ETT notes PDF absent",
+    "current edition/date applicability unknown",
+    "plain layout does not preserve formula superscript; PDF/glyphs retained",
+    "self-review is not independent A5",
+    "no PostgreSQL execution or current target preflight"
+  ],
+  "next_local_operation": {
+    "next_chapter": "35",
+    "source_path": "chapter-35.pdf",
+    "URL": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.35_2022_08.03.2026.pdf",
+    "PDF_bytes": 258661,
+    "PDF_sha256": "199b267433c23f0eccb35d9695ef4bb6ec6dc8e31dd9e7f7efda94dc49fd65c5",
+    "preliminary_code_lines": 35,
+    "unique_preliminary_codes": 35,
+    "not_full_preparation_or_QA": true,
+    "next_operation": "full source-first chapter35 preparation including multi-line rate/unit/description/context/notes,existing pinned RAW and normalization,cap86 unchanged; isolated local replay/rollback,negative controls and critical self-review",
+    "permanent_DB_access": false
+  },
+  "package_receipt": {
+    "file": "Tariff-ETT-Chapter34-offline-20261119.zip",
+    "bytes": 1771020,
+    "sha256": "7f722497a0133e47e80a65db9dab0597284f68bcef8238d1da2d23fbc558617a",
+    "manifest_sha256": "0b9787d4d17f7537da77861c35be40e58d3b87b6ead85a5d16ea0bfc564f8080",
+    "payload_files": 42,
+    "CRC_and_every_SHA": "PASS",
+    "external_transfer": false
+  },
+  "primary_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7005060009",
+  "native_run_record": "evidence/2026-11-19-hourly-continuation/runs/cycle463-01a1f315-357e-7352-a2c1-638d154a5e63.json",
+  "first_native_proof_preserved": true,
+  "schedule": {
+    "automation_id": "tariff",
+    "kind": "heartbeat",
+    "status": "ACTIVE",
+    "interval_hours": 1,
+    "target_thread_id": "01a1b044-0f10-7941-b8a5-999cf67f41cc",
+    "hostId": "local",
+    "record_count_for_thread": 1,
+    "prompt_selects_latest_state_without_fixed_chapter": true
+  },
+  "lease": {
+    "generation": 463,
+    "acquisition_and_readback": true,
+    "release_required_before_completion": true
+  }
+}
