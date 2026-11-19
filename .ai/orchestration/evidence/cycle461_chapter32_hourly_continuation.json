@@ -1,0 +1,158 @@
+{
+  "task": "CH32-OFFLINE-PREPARATION-OWNER7002577851",
+  "cycle": 461,
+  "completed_at": "2026-11-19T08:22:08.191842+00:00",
+  "execution_mode": "MANUAL_PROMPT_TEST_NOT_NATIVE_SCHEDULER",
+  "native_automation_id": "tariff",
+  "source": {
+    "bytes": 311286,
+    "sha256": "645cc95586cabb4bf6fafb353c5b99d79cbd13183dd4560ab28e19f1a791da84",
+    "layout_sha256": "30cce3f56b3112922d8bcc0453f833578168626262bf1d51c2e3deda53b3443b",
+    "pages": 10
+  },
+  "counts": {
+    "raw": 74,
+    "parsed": 56,
+    "ambiguous": 18,
+    "verified": 0,
+    "admitted": 0
+  },
+  "source_checks": {
+    "per_page": [
+      0,
+      7,
+      7,
+      9,
+      11,
+      8,
+      7,
+      8,
+      9,
+      8
+    ],
+    "units": {
+      "–": 73,
+      "л": 1
+    },
+    "physical_lines": 487,
+    "unaccounted": 0,
+    "description_continuations": 106,
+    "context_lines": 152,
+    "chapter_notes": 6,
+    "duty_note_occurrences": 18,
+    "description_note5_occurrences": 9,
+    "floating_note_bindings": {
+      "3203001009": {
+        "marker": "63С)",
+        "marker_source_line": 107,
+        "target_source_line": 108,
+        "page": 3
+      },
+      "3208909900": {
+        "marker": "63С)",
+        "marker_source_line": 336,
+        "target_source_line": 337,
+        "page": 7
+      }
+    },
+    "description_nonspace_glyphs": 6974,
+    "all_pages_rendered_and_viewed": 10
+  },
+  "QA": {
+    "kind": "same-context Codex author technical checks and critical self-review",
+    "independent_A5": false,
+    "negative_tests": 229,
+    "complete_RAW_result_hash_links": 74,
+    "deterministic_files": 6,
+    "local_SQLite_replay_DML": [],
+    "all_values_and_timestamps_unchanged": true,
+    "rollback_after_RAW_and_both_layers": true,
+    "PostgreSQL_executed": false
+  },
+  "identity": {
+    "raw_run_id": "ett:9bee1d52a2b3ad6f34e6aa8fa27a4dd6deb12f7b9a70cea8e6bdc2f01a2da59b",
+    "normalization_digest": "03d8ac7291f7993d52773892228904dd992f7c1c06355ed826128a6aa5bd9a81",
+    "plan_sha256": "29ecb2b981fe3b07316a0e64abb7edb8f6ff6363b0c7961f29a1aafb05673aec",
+    "sql_sha256": "d859d0d2bc92f429c76d4ee80350404173255b935f46058fb66c6276f7b28b47"
+  },
+  "existing_archives": [
+    {
+      "path": "Tariff-ETT-Chapter30-offline-batch-20261113.zip",
+      "bytes": 3615101,
+      "sha256": "98bd8359eb1779f352fcd5e7b4719d4541fbe2317e2784b66490c56fefc5afa8"
+    },
+    {
+      "path": "Tariff-CH30-QA-and-CH31-offline-20261119.zip",
+      "bytes": 1496447,
+      "sha256": "9dd9d67f7256138e956b873deee167ca03f528b99c5af88ab4bf5d40ec9b28a4"
+    }
+  ],
+  "status": "LOCAL_CANDIDATE_PREPARED_AND_TECHNICALLY_SELF_CHECKED",
+  "verified": 0,
+  "admitted": 0,
+  "calculation_ready": 0,
+  "permanent_DB_access": false,
+  "Neon_calls": false,
+  "storage_uploaded": false,
+  "merge_deploy_enforcement": false,
+  "new_private_external_transfer": false,
+  "limits": [
+    "primary general ETT notes PDF absent; meanings/dates unresolved",
+    "description5) not equated to chapter note5",
+    "legal edition/effective dates unknown",
+    "same-context review is not independent A5",
+    "no PostgreSQL or current target schema check"
+  ],
+  "next_local_operation": {
+    "next_chapter": "33",
+    "source_path": "chapter-33.pdf",
+    "PDF_bytes": 263836,
+    "PDF_sha256": "26eb35574b88e98b4e0a041350eef22cfde7ad98f740464dd5837085bcc51dc3",
+    "preliminary_code_lines": 51,
+    "unique_preliminary_codes": 51,
+    "not_full_preparation_or_QA": true,
+    "next_operation": "full source-first chapter33 preparation with exact code/rate/unit/note/context binding, same existing74/86-safe path only after establishing full PDF inventory; no permanent writes",
+    "permanent_DB_access": false
+  },
+  "package_receipt": {
+    "file": "Tariff-ETT-Chapter32-offline-20261119.zip",
+    "bytes": 2527086,
+    "sha256": "bb3d6cdce4ef37f51b57228ac01dc4469bac247226ac398171e450df8a64fc22",
+    "manifest_sha256": "ef4aa04cf2968b9a16baea41140fd103280f591c1376d990b80fce7a57e33056",
+    "payload_files": 44,
+    "CRC_and_every_SHA": "PASS",
+    "external_transfer": false
+  },
+  "schedule": {
+    "automation_id": "tariff",
+    "kind": "heartbeat",
+    "status": "ACTIVE",
+    "interval_hours": 1,
+    "target_thread_id": "01a1b044-0f10-7941-b8a5-999cf67f41cc",
+    "same_thread_matching_records": [
+      "tariff"
+    ],
+    "binding_verified_by_native_tools": {
+      "hostId": "local",
+      "projectKind": "local",
+      "projectId": "c511e861-0fe4-45cc-9dcd-cc9e8a71fa9e",
+      "threadId": "01a1b044-0f10-7941-b8a5-999cf67f41cc",
+      "cwd_matches_owner_Tariff_directory": true
+    },
+    "native_Run_now_available_in_tool": false,
+    "Codex_UI_blocker": "Computer Use is not allowed to use com.openai.codex for safety reasons",
+    "first_scheduled_run_observed": false,
+    "required_owner_UI_action": "Open the Tariff automation card in Scheduled and select Run now; no new automation/chat.",
+    "local_execution_requirements": "Mac on and app running; project/source paths available; existing sandbox permissions."
+  },
+  "native_manual_test_turn_id": "01a1f2dc-6666-73e1-bcd0-e7d4c2d95ca9",
+  "owner_task": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7002577851",
+  "primary_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7003761806",
+  "local_run_record": "evidence/2026-11-19-hourly-continuation/manual-test-run.json",
+  "first_scheduled_run_proof": {
+    "status": "PENDING_ACTUAL_NATIVE_EXECUTION",
+    "expected_path": "evidence/2026-11-19-hourly-continuation/first-scheduled-run.json",
+    "created_before_execution": false
+  },
+  "lease_generation": 461
+}
