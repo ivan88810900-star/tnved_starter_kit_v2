@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "cycle": 459,
+  "kind": "HISTORICAL_RESULT_RECONCILED_ON_2026_11_19",
+  "recorded_on": "2026-11-19",
+  "original_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-6848826580",
+  "primary_current_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7002438124",
+  "original_execution_date": "2026-11-13",
+  "original_state_write_completed": false,
+  "reason": "Previous native turn interrupted after queue publication; CURRENT_STATE458 and missing evidence459 were observed on 19Nov. This is a current reconciliation, not retroactive proof of QA on 13Nov.",
+  "archive": "Tariff-ETT-Chapter30-offline-batch-20261113.zip",
+  "archive_bytes": 3615101,
+  "archive_sha256": "98bd8359eb1779f352fcd5e7b4719d4541fbe2317e2784b66490c56fefc5afa8",
+  "manifest_sha256": "4900c7958b5a59d16c263e46a23ecc1819c1903ae37d69ac1ed4c8326ac6473a",
+  "original_claims": {
+    "raw": 82,
+    "normalization": 82,
+    "parsed": 66,
+    "ambiguous": 16,
+    "verified": 0,
+    "admitted": 0,
+    "independent_QA": "PENDING at13Nov"
+  },
+  "verified_now": "See cycle460 evidence and primary receipt for actual19Nov full source/lineage/runtime/critical self-review checks.",
+  "prior_source_blocker": "458 environment could not materialize PDF. Existing saved exact source bytes found in owner Mac workspace; no new download or403retry.",
+  "accepted_catalog": {
+    "head": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+    "owner_acceptance_recorded_cycle": 457,
+    "retained_kit": "Existing immutable catalog kit inventory retained in owner workspace; no new tree re-audit."
+  },
+  "permanent_DB_operations": 0,
+  "Neon_calls": 0,
+  "merge_deploy": false
+}
