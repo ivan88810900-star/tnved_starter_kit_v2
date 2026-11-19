@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "cycle": 462,
+  "task": "NEXT-SAVED-ETT-CH33-OFFLINE",
+  "completed_product_block_at": "2026-11-19T08:44:29.958203+00:00",
+  "execution_mode": "NATIVE_AUTOMATION_HEARTBEAT",
+  "native_trigger": {
+    "automation_id": "tariff",
+    "check_in_time": "2026-11-19T08:39:08.686Z",
+    "trigger_source": "native automation tool output",
+    "launch_kind": "UNKNOWN: Run now versus hourly tick not included in supplied record",
+    "native_turn_id": "01a1f2f5-aa92-7221-904a-67c4ba452edf",
+    "native_hostId": "local",
+    "executed_locally": true,
+    "cwd_matches_owner_local_Tariff": true
+  },
+  "source": {
+    "PDF_bytes": 263836,
+    "PDF_sha256": "26eb35574b88e98b4e0a041350eef22cfde7ad98f740464dd5837085bcc51dc3",
+    "layout_sha256": "b2a8f16049b31bb01f80d40f09b136a6583221bd648e2b01bbc5efef51d6d1dd",
+    "pages": 5
+  },
+  "counts": {
+    "raw": 51,
+    "parsed": 48,
+    "ambiguous": 3,
+    "verified": 0,
+    "admitted": 0
+  },
+  "source_checks": {
+    "per_page": [
+      0,
+      18,
+      8,
+      15,
+      10
+    ],
+    "units": {
+      "–": 51
+    },
+    "physical_lines": 244,
+    "physical_line_roles": {
+      "chapter_title": 4,
+      "chapter_note": 21,
+      "blank_or_page_break": 6,
+      "table_header": 55,
+      "context": 83,
+      "record_start": 51,
+      "description_continuation": 24
+    },
+    "unaccounted": 0,
+    "description_continuations": 24,
+    "context_lines": 83,
+    "chapter_notes": 4,
+    "duty_note_references": {
+      "67С)": 3
+    },
+    "PDF_description_nonspace_characters": 3251,
+    "all_pages_rendered_and_viewed": 5
+  },
+  "QA": {
+    "kind": "same-context Codex technical checks and separate critical self-review",
+    "independent_A5": false,
+    "negative_controls": 156,
+    "canonical_RAW_result_hash_links": 51,
+    "deterministic_files": 6,
+    "rollback_after_RAW_and_both_layers": true,
+    "local_SQLite_replay_DML": [],
+    "replay_total_changes_delta": 0,
+    "full_values_and_timestamps_unchanged": true,
+    "PostgreSQL_execution": false
+  },
+  "identity": {
+    "raw_run_id": "ett:1fc04bd39af890b7138444e028593341bb6c32be7bd539330bb6f8c2abca862c",
+    "normalization_digest": "89568716d6cb0097e6c1afa4583d5133ca0210da8dd59e8ec4526636f199044f",
+    "plan_sha256": "2a64b817b47ee6bc09cac2221cb4bb83149c549de734eecccd33200b943c994c",
+    "sql_sha256": "9acb8806075d626efdedd30e33d3cb3d4644da2a5753005fe2445ae2d7f04d46"
+  },
+  "existing_archive_dependencies": [
+    {
+      "path": "Tariff-ETT-Chapter30-offline-batch-20261113.zip",
+      "bytes": 3615101,
+      "sha256": "98bd8359eb1779f352fcd5e7b4719d4541fbe2317e2784b66490c56fefc5afa8"
+    },
+    {
+      "path": "Tariff-CH30-QA-and-CH31-offline-20261119.zip",
+      "bytes": 1496447,
+      "sha256": "9dd9d67f7256138e956b873deee167ca03f528b99c5af88ab4bf5d40ec9b28a4"
+    }
+  ],
+  "verified": 0,
+  "admitted": 0,
+  "calculation_ready": 0,
+  "permanent_DB_access": false,
+  "Neon_calls": false,
+  "merge_deploy_enforcement": false,
+  "storage_uploaded": false,
+  "private_external_transfer": false,
+  "limits": [
+    "primary general ETT notes PDF missing;67С) not interpreted",
+    "current edition/date applicability unverified",
+    "self-review is not independent A5",
+    "no PostgreSQL execution or fresh target preflight"
+  ],
+  "next_local_operation": {
+    "next_chapter": "34",
+    "source_path": "chapter-34.pdf",
+    "URL": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.34_2022_08.03.2026.pdf",
+    "PDF_bytes": 262876,
+    "PDF_sha256": "d055b4b41bf8f72b131d08b77982a61f9231843b2e896fa61170f3f75c71532b",
+    "preliminary_code_lines": 36,
+    "unique_preliminary_codes": 36,
+    "not_full_preparation_or_QA": true,
+    "next_operation": "full source-first preparation of chapter34 with literal multi-line rate/unit/note/context binding; existing pinned ingestion and normalization only,cap86 unchanged,no truncation; temporary local DB,replay/rollback and critical self-review",
+    "permanent_DB_access": false
+  },
+  "package_receipt": {
+    "file": "Tariff-ETT-Chapter33-offline-20261119.zip",
+    "bytes": 1524042,
+    "sha256": "9c909c0377e268950d18391d4c861010cdb59044529225d848e15362a04c03ba",
+    "manifest_sha256": "005260f2655990b068acb2c674f4dae2fc719e19c7ab9d6f49606650939346af",
+    "payload_files": 39,
+    "CRC_and_every_SHA": "PASS",
+    "external_transfer": false
+  },
+  "primary_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7004255852",
+  "first_native_execution_proof": {
+    "path": "evidence/2026-11-19-hourly-continuation/first-scheduled-run.json",
+    "real_trigger_received": true,
+    "source": "native automation tool output",
+    "turn_id": "01a1f2f5-aa92-7221-904a-67c4ba452edf",
+    "check_in_time": "2026-11-19T08:39:08.686Z",
+    "launch_subtype": "UNKNOWN: Run now or hourly tick not supplied",
+    "local_file_processing_completed": true,
+    "current_run_record": "evidence/2026-11-19-hourly-continuation/runs/cycle462-01a1f2f5-aa92-7221-904a-67c4ba452edf.json"
+  },
+  "schedule": {
+    "automation_id": "tariff",
+    "kind": "heartbeat",
+    "status": "ACTIVE",
+    "interval_hours": 1,
+    "target_thread_id": "01a1b044-0f10-7941-b8a5-999cf67f41cc",
+    "hostId": "local",
+    "duplicate_records_for_thread": 0,
+    "prompt_updated_to_latest_state": true,
+    "extra_UI_action_no_longer_needed_to_prove_engine_execution": true
+  },
+  "lease": {
+    "generation": 462,
+    "acquisition_and_readback": true,
+    "release_required_before_completion": true
+  }
+}
