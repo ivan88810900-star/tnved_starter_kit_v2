@@ -1,0 +1,87 @@
+{
+  "cycle": 466,
+  "owner_task": 7009920907,
+  "primary_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7011064582",
+  "priority": "local application integration and NTM",
+  "local_candidate": "25de4218e7c22602f4aaa6b33da783392ecb0fe6",
+  "target_branch_local": "agent/local-app-integration-v1",
+  "native": {
+    "id": "tariff",
+    "host": "local",
+    "checkin": "2026-11-19T13:25:07.424Z",
+    "turn": "01a1f3fb-7ce4-7503-88b3-b3e713039401",
+    "subtype": "UNKNOWN"
+  },
+  "code_refs": [
+    {
+      "pr": 255,
+      "base_name": "candidate/core-a6-repack-v1",
+      "base_sha": "14e0ee8f034d94ffc5831d87e076f4d693a5a524",
+      "head_name": "agent/core-payment-regressions-v1",
+      "head_sha": "27080f214a1cdbc6bb89e837a602a5dbaff38e72",
+      "draft": true,
+      "state": "open"
+    },
+    {
+      "pr": 256,
+      "base_name": "candidate/product-a6-repack-v1",
+      "base_sha": "e39e19787bd913baeb6f85577a13e1116458e633",
+      "head_name": "agent/product-ntm-regressions-v1",
+      "head_sha": "407a01c55d972800d2219063a2c532d85f5640b9",
+      "draft": true,
+      "state": "open"
+    },
+    {
+      "pr": 258,
+      "base_name": "agent/product-ntm-regressions-v1",
+      "base_sha": "3c24676a69b1d78d320bd5764fb04f5ac3f3430d",
+      "head_name": "agent/nsi-sgr-pagination-v1",
+      "head_sha": "c2d4a51a52246dbe436d3073a42143aae63f90c5",
+      "draft": true,
+      "state": "open"
+    },
+    {
+      "pr": 270,
+      "base_name": "main",
+      "base_sha": "eeef5028d45ea14af09e0afb01f600bca5602316",
+      "head_name": "agent/recovered-catalog-http-ui-v1",
+      "head_sha": "89001a3ade4ee879a520ee7664a696ebcddfd189",
+      "draft": true,
+      "state": "open"
+    }
+  ],
+  "counts": {
+    "local_ett": 328,
+    "parsed": 266,
+    "ambiguous": 62,
+    "admitted": 0,
+    "archived_public_acts": 9,
+    "archived_rule_rows": 16
+  },
+  "qa": {
+    "preregistered": 22,
+    "expected_outcomes_observed": 21,
+    "blocked_on_auth": 1,
+    "all_rate_projections_equal": 328,
+    "public_registry_rows_equal": 9,
+    "checks": [
+      "typecheck",
+      "repeat build",
+      "catalog HTTP regression",
+      "atomic preparation rollback",
+      "read-only source parity"
+    ],
+    "independent_review": false,
+    "pg": false
+  },
+  "kit": {
+    "file": "Tariff-local-integration-cycle466.zip",
+    "bytes": 180608,
+    "sha256": "8ec47dd7d07789e2ea33c1436126652e28ed0b36f5958cba4262d0b2fe960086",
+    "manifest_sha256": "52dae95fb15e22821651235e4d98192dd3a7720c5f933e4c736b0ef08b873917",
+    "bundle_sha256": "04b4d8a6e9ec8ca2d6387318bb67773affaab4e4d1429893191c8124788aaa44",
+    "payload_count": 16
+  },
+  "next": "Authenticated single-case advisory/document path with known local auth profile and sourced records; while unavailable, local document source inventory and manual calculation readiness. No chapter37 preparation until reprioritized.",
+  "protected_operations": false
+}
