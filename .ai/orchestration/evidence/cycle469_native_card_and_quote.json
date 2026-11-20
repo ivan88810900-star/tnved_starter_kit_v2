@@ -1,0 +1,31 @@
+{
+  "cycle": 469,
+  "automation": "tariff",
+  "owner_priority": 7009920907,
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7035424129",
+  "checkpoint_scope": "local structural card and separate guarded public quote candidate",
+  "card": "41f5294fd312907acc3a6b8bec4ce585ccfe1180",
+  "quote": "c78524d1c31903e5cbb975371a93bd007f6b2ede",
+  "quote_base": "27080f214a1cdbc6bb89e837a602a5dbaff38e72",
+  "quote_frontend_base": "407a01c55d972800d2219063a2c532d85f5640b9",
+  "catalog": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "served_index_sha256": "e2893648476fa29b6fadfcedf83d31933040d04c0d3e5fbf03039a6517fbdfe7",
+  "artifact": "evidence/2026-11-19-integration/Tariff-local-card-and-quote-cycle469.zip",
+  "artifact_sha256": "e3588d402a5129463bd46c99e01a2a61de71d25f60ef7e55885bcfe816d5e362",
+  "manifest_sha256": "8c827dbf1551db64a9f1c0632bc4cbe2c8ad1b4704c5fdff5c9dec5e99f0c2ec",
+  "checks": {
+    "actual_card_products": 6,
+    "pinned_sql_rows_pdf_digests": 5,
+    "saved_pdf_format_cases": 328,
+    "missing_rate_is_distinct_from_zero": true,
+    "synthetic_legacy_browser_cases": 4,
+    "manual_quote_and_geo_controls": 12,
+    "ordinary_engine_tests": 6,
+    "all_three_withheld_inputs_in_two_browser_builds": true,
+    "public_profile_final_history_writes": false,
+    "pr256_full_test_types": "not run successfully, local testing-library/react and vitest absent",
+    "independent_review": false
+  },
+  "next_operation": "Connect the accepted catalog leaf lookup to the public local calculator for 3304100000. Confirm a genuine leaf, a parent and a missing rate, then test the card-to-calculator flow without admitting an unverified payment.",
+  "restrictions": "DB HOLD, no permanent writes, deployments, merges, enforcement or provider calls."
+}
