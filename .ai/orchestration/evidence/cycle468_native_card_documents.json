@@ -1,0 +1,32 @@
+{
+  "cycle": 468,
+  "mode": "NATIVE_AUTOMATION_HEARTBEAT",
+  "automation_id": "tariff",
+  "check_in_time": "2026-11-20T07:36:29.271Z",
+  "native_turn_id": "01a1f7e2-a95d-7da3-be8f-fc0b6d51d7f9",
+  "trigger_subtype": "UNKNOWN",
+  "owner_priority": 7009920907,
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7034464609",
+  "candidate": "5f76c800104e923464839fe08b93dd162aaa3e92",
+  "previous_candidate": "d9beee145b8771c09af4cc645d704730076329f6",
+  "catalog": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "scope": "local documentary case 3304100000 from pinned archival public evidence",
+  "artifact": "Tariff-local-documents-cycle468.zip",
+  "sha256": "a23072c9ea6138b8321e6cec5f3b434a39efa54c323c89296e5b581070c64483",
+  "results": {
+    "archived_rule_hits": 1,
+    "referenced_acts": 2,
+    "verified_permission": null,
+    "api_public_records": 9,
+    "sql_http_cases": 23,
+    "invalid_422": 3,
+    "extractor_regressions": 5,
+    "protected_ntm_http": 503,
+    "manual_reference_error_observed": true,
+    "manual_attribution_proposal_verified_in_separate_copy": true,
+    "applied_to_product": false
+  },
+  "next_local": "Test proposed manual-duty attribution through normal payment quote gates and geo override at PR255/256 compatible versions. Verify real product requirements only with operative source, product details and existing local auth profile.",
+  "permanent_writes": false,
+  "independent_review": false
+}
