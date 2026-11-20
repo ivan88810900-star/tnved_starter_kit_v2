@@ -237,6 +237,16 @@ function TreeNode({
   );
 }
 
+function parseManualDutyPercent(input: string): number | undefined {
+  const value = input.trim();
+  if (!value) return undefined;
+  const percent = Number(value.replace(',', '.'));
+  if (!/^\+?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:[eE][+-]?\d+)?$/.test(value) || !Number.isFinite(percent)) {
+    throw new Error('Введите неотрицательную ставку пошлины в процентах, например 7,5.');
+  }
+  return percent;
+}
+
 export const Calculator: React.FC = () => {
   const [searchParams] = useSearchParams();
   const assistantVisible = useAssistantSurfaceVisible();
@@ -583,7 +593,7 @@ export const Calculator: React.FC = () => {
         payload.live_animal_breeding_status = liveAnimalBreedingStatus;
       }
       if (insurance) payload.insurance = parseFloat(insurance);
-      if (dutyRate) payload.duty_rate = parseFloat(dutyRate);
+      payload.duty_rate = parseManualDutyPercent(dutyRate);
       if (excise) payload.excise = parseFloat(excise);
       if (quantity) payload.quantity = parseFloat(quantity);
       if (netWeightKg) payload.net_weight_kg = parseFloat(netWeightKg);
@@ -670,7 +680,7 @@ export const Calculator: React.FC = () => {
           payload.live_animal_breeding_status = liveAnimalBreedingStatus;
         }
         if (insurance) payload.insurance = parseFloat(insurance);
-        if (dutyRate) payload.duty_rate = parseFloat(dutyRate);
+        payload.duty_rate = parseManualDutyPercent(dutyRate);
         if (excise) payload.excise = parseFloat(excise);
         if (quantity) payload.quantity = parseFloat(quantity);
         if (p.net_weight_kg != null && Number(p.net_weight_kg) > 0) {
@@ -1467,7 +1477,7 @@ export const Calculator: React.FC = () => {
           </label>
           <label className="space-y-1">
             <span className="cc-label">Пошлина % (вручную)</span>
-            <input value={dutyRate} onChange={(e) => setDutyRate(e.target.value)} className="cc-input" />
+            <input inputMode="decimal" value={dutyRate} onChange={(e) => setDutyRate(e.target.value)} className="cc-input" />
           </label>
           <label className="space-y-1">
             <span className="cc-label">Акциз, ₽</span>

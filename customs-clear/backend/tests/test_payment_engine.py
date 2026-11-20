@@ -194,6 +194,7 @@ class PaymentEngineTests(unittest.TestCase):
         """Нулевые ручные значения валидны и не превращаются в отсутствие ввода."""
         res = self._calc(duty_rate=0, vat_rate=0, excise=0)
         self.assertEqual(res["breakdown"]["selected_rule"], "manual_rate")
+        self.assertIn("0 %", res["legal_basis"]["duty"])
         self.assertEqual(res["breakdown"]["duty"], 0)
         self.assertEqual(res["breakdown"]["vat_rate"], 0)
         self.assertIsNone(res["breakdown"]["vat"])
@@ -239,8 +240,9 @@ class PaymentEngineTests(unittest.TestCase):
 
     def test_duty_override(self):
         """Ручное переопределение ставки пошлины."""
-        res = self._calc(hs_code="8509400000", customs_value=100_000, duty_rate=5.0)
-        self.assertAlmostEqual(res["breakdown"]["duty"], 5_000.0, places=1)
+        res = self._calc(hs_code="8509400000", customs_value=100_000, duty_rate=7.55)
+        self.assertAlmostEqual(res["breakdown"]["duty"], 7_550.0, places=1)
+        self.assertIn("7,55 %", res["legal_basis"]["duty"])
 
     def test_duty_zero_for_phones(self):
         """Код 8517: пошлина 0%."""

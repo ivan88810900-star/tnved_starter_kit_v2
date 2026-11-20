@@ -1333,6 +1333,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
     # структурированное правило hs_duty_rules остаётся приоритетным.
     if manual_duty_rate is None and duty_rule is None and geo_meta.get("duty_override_rate") is not None:
         manual_duty_rate = float(geo_meta["duty_override_rate"])
+        geo_meta["duty_override_applied"] = True
     duty, duty_rate, ad_valorem_amount, specific_amount_rub, selected_rule, fx_rate, specific_qty_used = _compute_structured_duty(
         customs_value=customs_value,
         quantity=qty,
@@ -1642,6 +1643,27 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         "antidumping_status": antidumping_status,
     }
 
+    if manual_duty_rate_supplied:
+        percent = str(duty_rate).removesuffix(".0").replace(".", ",")
+        duty_basis = f"Введённая вручную ставка пошлины {percent} %."
+    elif geo_meta.get("duty_override_applied"):
+        percent = str(duty_rate).removesuffix(".0").replace(".", ",")
+        duty_basis = f"Ставка пошлины по стране {country}: {percent} %."
+        if geo_meta.get("document_basis"):
+            duty_basis += " Основание: " + geo_meta["document_basis"]
+    elif duty_rule:
+        duty_basis = (
+            f"Структурированное правило: {duty_rule.type} "
+            f"(код {duty_rule.commodity_code}). Выбрано: {selected_rule}."
+        )
+    elif matched:
+        duty_basis = f"Ввозная пошлина {duty_rate}% по коду ТН ВЭД/ЕТТ ЕАЭС."
+    else:
+        duty_basis = (
+            "Ставка пошлины не найдена в локальной базе; нулевой кандидат не подтверждён, "
+            "окончательный платёж удержан до ручной проверки."
+        )
+
     tnved_context = get_tnved_context_for_hs(hs_code)
 
     return {
@@ -1706,19 +1728,7 @@ def compute_payments(payload: dict[str, Any]) -> dict[str, Any]:
         },
         "legal_basis": {
             "vat": vat_reason,
-            "duty": (
-                (
-                    f"Структурированное правило: {duty_rule.type} "
-                    f"(код {duty_rule.commodity_code}). Выбрано: {selected_rule}."
-                )
-                if duty_rule
-                else (
-                    f"Ввозная пошлина {duty_rate}% по коду ТН ВЭД/ЕТТ ЕАЭС."
-                    if matched else
-                    "Ставка пошлины не найдена в локальной базе; нулевой кандидат не подтверждён, "
-                    "окончательный платёж удержан до ручной проверки."
-                )
-            ),
+            "duty": duty_basis,
             "customs_fee": "Таможенный сбор рассчитан по шкале РФ 2026 по таможенной стоимости.",
             "antidumping": antidumping_reason,
             "excise": excise_reason,

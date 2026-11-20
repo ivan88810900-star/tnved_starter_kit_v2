@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import hmac
-import os
 from typing import Any, Optional
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from .admin_token import require_admin_token as require_admin_token
 from .api import auth as auth_mod
 
 _bearer_optional = HTTPBearer(auto_error=False)
@@ -39,19 +38,3 @@ async def require_authenticated_user(
         _raise_authentication_required()
     role = str(payload.get("role") or "viewer").strip().lower()
     return {"username": username, "role": role, "payload": payload}
-
-
-def require_admin_token(x_admin_token: str | None) -> None:
-    """
-    Строгая проверка ADMIN_API_TOKEN для админ-операций.
-    Доступ без токена полностью запрещён.
-    """
-    expected = os.getenv("ADMIN_API_TOKEN", "").strip()
-    if not expected:
-        raise HTTPException(
-            status_code=401,
-            detail="Unauthorized: ADMIN_API_TOKEN не настроен.",
-        )
-    provided = (x_admin_token or "").strip()
-    if not provided or not hmac.compare_digest(provided, expected):
-        raise HTTPException(status_code=401, detail="Unauthorized: invalid or missing X-Admin-Token")

@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from google.api_core.client_options import ClientOptions
 from loguru import logger
 
 _BACKEND_ROOT = Path(__file__).resolve().parents[2]
@@ -52,6 +51,8 @@ def configure_google_generativeai(genai: Any, *, api_key: str) -> None:
     _load_gemini_env()
     base_url = normalize_gemini_api_endpoint_for_sdk(os.getenv("GEMINI_BASE_URL") or "")
     if base_url:
+        from google.api_core.client_options import ClientOptions
+
         client_options = ClientOptions(api_endpoint=base_url)
         # transport="rest" обязателен: иначе SDK часто уходит в gRPC на generativelanguage.googleapis.com.
         genai.configure(

@@ -436,16 +436,18 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
         )
 
     manual_duty = payload.get("duty_rate") is not None
+    geo_duty = bool((raw.get("geo") or {}).get("duty_override_applied"))
     manual_vat = payload.get("vat_rate") is not None
     duty_source_pending = duty_rule_source_pending or (rate_source_pending and not manual_duty)
     duty_status: PaymentLineStatus = "manual_override" if manual_duty else "applied"
     duty_reason = str((raw.get("legal_basis") or {}).get("duty") or "")
     if duty_source_pending:
         duty_status = "manual_review_required"
-        duty_reason = (
+        pending_reason = (
             "Автоматическая пошлина рассчитана только предварительно: строка ставки "
             "или структурированное правило не имеют проверенной неизменяемой привязки к источнику."
         )
+        duty_reason = f"{duty_reason} {pending_reason}" if geo_duty else pending_reason
     elif int(dq.get("match_length") or 0) == 0 and not manual_duty:
         duty_status = "unknown"
         duty_reason = duty_reason or "Ставка пошлины не найдена в локальной базе; применена ставка 0% для расчёта."
@@ -473,11 +475,22 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             "не имеют подтверждённой применимости и требуют ручной проверки."
         )
 
-    duty_source = (
-        "ручной ввод ставки пошлины"
-        if manual_duty
-        else "hs_duty_rules / hs_rates (ЕТТ ЕАЭС)"
+    if manual_duty:
+        duty_source = "ручной ввод ставки пошлины"
+    elif geo_duty:
+        duty_source = "geo_special_duties"
+    else:
+        duty_source = "hs_duty_rules / hs_rates (ЕТТ ЕАЭС)"
+    # A fallback zero or the percentage part of a specific/combined rule is
+    # not the tariff rate. Leave that label unset when it cannot be stated.
+    rule_type = (raw.get("auto_detected") or {}).get("duty_rule_type")
+    percent_known = manual_duty or geo_duty or rule_type == "ad_valorem" or (
+        not rule_type and bool(dq.get("match_length"))
     )
+    percent = breakdown.get("duty_rate")
+    duty_label = None
+    if percent_known and percent is not None:
+        duty_label = str(percent).removesuffix(".0").replace(".", ",") + " %"
     vat_source = (
         "ручной ввод ставки НДС"
         if manual_vat
@@ -501,7 +514,7 @@ def build_payment_quote(payload: dict[str, Any]) -> PaymentQuoteResponse:
             status=duty_status,
             reason=duty_reason,
             source=duty_source,
-            rate_label=f"{breakdown.get('duty_rate')}%" if breakdown.get("duty_rate") is not None else None,
+            rate_label=duty_label,
         ),
         PaymentQuoteLineItem(
             code="vat",

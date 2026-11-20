@@ -15,7 +15,7 @@ from ..services.payment_profile_builder import (
     build_compare_payment_profiles,
 )
 from ..services.export_service import generate_final_customs_excel
-from ..security import require_admin_token
+from ..admin_token import require_admin_token
 from ..services.payment_engine_compat import (
     compute_payments,
     get_commodity_meta_info,
