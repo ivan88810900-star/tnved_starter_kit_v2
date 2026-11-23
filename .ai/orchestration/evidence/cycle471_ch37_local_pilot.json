@@ -1,0 +1,120 @@
+{
+  "cycle": 471,
+  "automation_id": "tariff",
+  "mode": "NATIVE_AUTOMATION_HEARTBEAT",
+  "trigger_subtype": "UNKNOWN",
+  "native_turn_id": "01a20775-67a4-7491-b6d4-f0a3923751b9",
+  "check_in_time": "2026-11-23T08:11:04.479Z",
+  "owner_priority": 7009920907,
+  "source": {
+    "chapter": "37",
+    "pdf_sha256": "998fca6b6aa238f91b65ea1e852767f9e286cfbee500f32fa5ad81b619ab1918",
+    "layout_sha256": "c79e1872889646908332bd7449f972eafdde74889a739d6eda4a999857e766f2",
+    "page_counts": [
+      5,
+      9,
+      13,
+      13,
+      3
+    ],
+    "source_lines": 221,
+    "description_continuation_lines": 31,
+    "heading_or_context_lines": 68,
+    "chapter_notes": 2,
+    "additional_notes": 2,
+    "explicit_additional_note_code": "3706905200"
+  },
+  "outcomes": {
+    "raw": 43,
+    "parsed": 43,
+    "ambiguous": 0,
+    "verified": 0,
+    "admitted": 0,
+    "percent_counts": {
+      "0": 2,
+      "5": 31,
+      "6.5": 10
+    },
+    "unit_counts": {
+      "м²": 12,
+      "шт, м": 8,
+      "шт": 1,
+      "м": 9,
+      "–": 13
+    }
+  },
+  "archive": {
+    "file": "Tariff-ETT-Chapter37-offline-20261123.zip",
+    "bytes": 1497862,
+    "sha256": "c5bc1bb2c5af6d8ce2c09574a5a5a4f111ec08c3b52ab8f77f38e72132dbdf52",
+    "manifest_sha256": "a8ff1220ea14cc33ba5d1f585fcec6ce4b52a80247122b52716d703eea534531",
+    "files": 49,
+    "sqlite_sha256": "f5f264c242e6dcbbaa84c5cd21b6279e4058768fb152fe8a05ce221c696f951f",
+    "norm": "bd98f2a35b83950213de1bd86bba8fcd553070665d9818a996066da9d05db776"
+  },
+  "product": {
+    "candidate": "cefc334f43801e3d41369130b9001ca458196aa0",
+    "parent": "14847db63e524a77f8c928b9c567e270dccc7036",
+    "tree": "500e2c0cfd5b997ab36c2da5b308d532219e887d",
+    "frontend": {
+      "favicon.ico": "4fe1ff53a3c444f7e347fb4b2356c2987b08e312ea467709d8377d7ccdf29271",
+      "index.html": "43dab75ba61b2a33fa1d0e1ea26720aef4857d303bc6585de5c9e8c7ac912528",
+      "favicon.svg": "02e525afaa6826cba9d242f06c385e03cf912c78286ad80e7910bdf087030da8",
+      "assets/index-CmhgDIdr.css": "e3d3b854268c3b6fe93b75d703573d81ad333ba1ae7c4abe5335909052d1736c",
+      "assets/index-D28SmdK3.js": "533fbb0a585d84b06bbf1fa8d61114d4b09f93063da2ffdba0ef4e048c181ecf"
+    },
+    "loopback_port": 18016,
+    "all_connected_reference_rates": 371,
+    "branch": "agent/local-catalog-payments-v1"
+  },
+  "checks": {
+    "hash_linked_rows": 43,
+    "negative_controls": 224,
+    "reproducible_files": 7,
+    "replay_dml": 0,
+    "replay_timestamp_changes": 0,
+    "rollback": [
+      "RAW",
+      "RAW+normalization"
+    ],
+    "http_pdf_sqlite": 43,
+    "browser_product_cards": 6,
+    "prior_http_sqlite_regressions": 32,
+    "extended_snapshot_guards": 3,
+    "previous_pilot_supported": true,
+    "compile_and_two_identical_frontend_builds": true
+  },
+  "next": {
+    "chapter": "38",
+    "PDF_sha256": "4d8798483fbe725cb05142a953493b93f6b8ad87ae4f545c8664fada59215c1d",
+    "layout_count": 194,
+    "catalog_count": 194,
+    "same": true,
+    "slices": [
+      "3801100000",
+      "3815120000",
+      "3825909000"
+    ],
+    "last": "3827900000",
+    "slice_lengths": [
+      86,
+      86,
+      22
+    ],
+    "operation": "Check captured chapter 38 PDF cell boundaries and note scopes, including the three plus-prefixed rows. Run supported slices 1–86, 87–172 and 173–194, proving union and no duplicates before local normalization."
+  },
+  "gates": {
+    "scope": "A0 self-review on isolated SQLite",
+    "legal_verification": false,
+    "db_hold": true,
+    "merge": false,
+    "deploy": false
+  },
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7095800673",
+  "pilot_archive": {
+    "path": "evidence/2026-11-23-ch37-pilot/Tariff-local-ch37-pilot-cycle471.zip",
+    "sha256": "122c9ba7db31f7f8e85423340434e6967dc3545d5711325fed8b0b1990c27c74",
+    "manifest_sha256": "7777c6ec3c46e1fddb61de0ae345ec144750db8adf09fd9bd0fc6495d5c8554a",
+    "bytes": 388157
+  }
+}
