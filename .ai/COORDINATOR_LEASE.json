@@ -1,8 +1,8 @@
 {
   "acquisition_note": "Reconcile verified cycle 450 PR270 adjudication into persistent state",
-  "expires_at": "2026-11-23T08:50:25.421385Z",
+  "expires_at": null,
   "generation": 470,
-  "holder": "/root/codex-01a1b044-0f10-7941-b8a5-999cf67f41cc",
+  "holder": null,
   "lease_repair": {
     "corrupt_commit_sha": "3e9bf171fbcabe9df78eb6bef34cda11e46bf4fa",
     "defect": "release serialization replacer omitted nested lease metadata",
@@ -43,7 +43,7 @@
     "repaired_at": "2026-11-01T16:21:10Z",
     "state_preserved": "active"
   },
-  "state": "active",
-  "token": "6925b1ff07d94499bda704a4514ca94b",
-  "updated_at": "2026-11-23T07:50:25.421385Z"
+  "state": "released",
+  "token": null,
+  "updated_at": "2026-11-23T08:10:02.406126Z"
 }
