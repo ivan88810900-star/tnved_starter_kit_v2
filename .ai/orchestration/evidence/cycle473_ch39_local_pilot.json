@@ -1,0 +1,204 @@
+{
+  "cycle": 473,
+  "mode": "NATIVE_AUTOMATION_HEARTBEAT",
+  "automation_id": "tariff",
+  "check_in_time": "2026-11-23T10:24:46.745Z",
+  "native_turn_id": "01a207ef-d09e-73b2-9261-889367dd45e5",
+  "trigger_subtype": "UNKNOWN",
+  "owner_priority": 7009920907,
+  "product": {
+    "candidate": "c71c34623fd8eb44743acb448a9ca3bbaae70ac5",
+    "tree": "23cc6b503cf3bf49466ec79d49eee85e3a8630f1",
+    "parent": "63472970e545a21de671dcf3e8184aee07b7fbb4",
+    "frontend": {
+      "favicon.ico": "4fe1ff53a3c444f7e347fb4b2356c2987b08e312ea467709d8377d7ccdf29271",
+      "index.html": "d39452856aecf2ffdcd390ad4565e29b5960bb8e5c19af52f3bfaae6d5f35654",
+      "favicon.svg": "02e525afaa6826cba9d242f06c385e03cf912c78286ad80e7910bdf087030da8",
+      "assets/index-CmhgDIdr.css": "e3d3b854268c3b6fe93b75d703573d81ad333ba1ae7c4abe5335909052d1736c",
+      "assets/index-CKhm76xX.js": "b441786472dcca215bd97efe9c659865f0675c10dde5f498b09b134cbcb2073f"
+    },
+    "port": 18016,
+    "chapters": "30–39",
+    "all_connected_unverified": 832
+  },
+  "source": {
+    "pdf_sha256": "b31bc592790137114e151ddd628ed54082e24b01b1c8245ecc24cb2f84413b5a",
+    "layout_sha256": "5870ddee4490c1bd3760940d7e6442514d09944f3f9c6dabed55465137f83585",
+    "source_revision": "2026-03-08-chapter39",
+    "catalog_sha256": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+    "pages": 32,
+    "physical_lines": 1502,
+    "notes_by_scope": {
+      "section_VII": 2,
+      "chapter": 11,
+      "subheading": 2,
+      "additional": 1,
+      "EAEU_additional": 2
+    },
+    "printed_forms": {
+      "percent": 263,
+      "specific": 2,
+      "minimum": 2
+    },
+    "printed_main": {
+      "0": 23,
+      "4": 16,
+      "5": 28,
+      "6,5": 196,
+      "0,13 евро за 1 кг": 1,
+      "6,5, но не менее 0,096 евро за 1 кг": 2,
+      "0,096 евро за 1 кг": 1
+    },
+    "footnote_counts": {
+      "67С)": 8,
+      "72С)": 1,
+      "63С)": 18,
+      "82С)": 1,
+      "110С)": 3,
+      "94С)": 2,
+      "57С)": 1,
+      "10С)": 4,
+      "108С)": 1,
+      "34С)": 4
+    },
+    "superscript_rows": 43,
+    "units": {
+      "–": 264,
+      "м²": 3
+    },
+    "layout_projection_sha256": "06af2bda3351982053cb7028d3b355c52ffafb8938b2af54fbe7ff74f7f5cd63"
+  },
+  "result": {
+    "outcomes": {
+      "PARSED": 220,
+      "AMBIGUOUS": 47
+    },
+    "unique_codes": 267,
+    "row_hash_links": 267,
+    "intervals": [
+      [
+        "3901101000",
+        "3909400000"
+      ],
+      [
+        "3909501000",
+        "3920202101"
+      ],
+      [
+        "3920202109",
+        "3926905000"
+      ],
+      [
+        "3926909200",
+        "3926909709"
+      ]
+    ],
+    "slices": [
+      {
+        "name": "slice-001-086",
+        "first": 1,
+        "last": 86,
+        "count": 86,
+        "sql_sha256": "c37e68970d3ff1e6dddf81e314e2dccb915e6e7f2c707deae60bcdb44afd59b3",
+        "plan_sha256": "79a82cd9f7c6909fb2a17752bc79e87f86d57ad9d22a6f24946ff0ab7886b3d6",
+        "normalization_digest": "723f941a5553fa555ce2857cfa961146d6f06ccf9d6abbdf0734342aa446590c",
+        "sqlite_sha256": "e6e71d389ea1efec00659aefc223cdf0254655f8b44cf792caf478c99a20fc53"
+      },
+      {
+        "name": "slice-087-172",
+        "first": 87,
+        "last": 172,
+        "count": 86,
+        "sql_sha256": "9c9ace52873a5202fc91881e8562efe5113d510794272f1ae202ef287420b9b3",
+        "plan_sha256": "1a330ea674f8a8eaf7180fef361cee5ac2f9f361bde9288b7b213c9dd5fe9e65",
+        "normalization_digest": "89de66179420c98c15e9ec51ecd2eac33b09c1cfce4c36efb13a2003e958b142",
+        "sqlite_sha256": "c3e1f91769c18716b8502a696fe490afa4403866139e03750cac9233841565d9"
+      },
+      {
+        "name": "slice-173-258",
+        "first": 173,
+        "last": 258,
+        "count": 86,
+        "sql_sha256": "be36512af6d9a83d46f9a8d334c40d2d5d9069d3cdd9c276f0108650f750d06c",
+        "plan_sha256": "4d96a97728a675b4d2e43876573576d45515f09b06845c76b93e28b49611a4d2",
+        "normalization_digest": "8744cff6e5bcad2371b960853bbd5e55ba9db4709a191c058eb6acd26ce6a98b",
+        "sqlite_sha256": "42b784714bcd0d71998555f57415e50065b5a1e8033a46e1a8e6f9ea32ad19c4"
+      },
+      {
+        "name": "slice-259-267",
+        "first": 259,
+        "last": 267,
+        "count": 9,
+        "sql_sha256": "ff233f86380dfc44a603f73eea3e9e6e7406ad4a193529e65ba94135243a5a90",
+        "plan_sha256": "5e082934f9502f3346cd6908d9e2436d9ee0bd1a182932ba406e74de4fee5c46",
+        "normalization_digest": "b4db7f1afab7e6b9a615f4e61f300cd0398f4bff1f2d17c113d895ffedd28916",
+        "sqlite_sha256": "a98633cdd1ebd7fa29ba581563ed1be9120bee72a4aebe7c5b3fb44f98bb19be"
+      }
+    ],
+    "negative_count": 1138,
+    "immutable_source_count": 1,
+    "independent_sqlite_snapshots": true,
+    "verified": 0,
+    "admitted": 0
+  },
+  "archive": {
+    "file": "Tariff-ETT-Chapter39-offline-20261123.zip",
+    "sha256": "64d40e351cb07d2f2c5b0bfc81b8bcb13a54e2f759ede068d608181ed1e46700",
+    "bytes": 14122691,
+    "manifest_sha256": "b3e7b3e8525e7468e1a08d669c608cce2ab11ae4a79e1e680539da35bf41aae9",
+    "files": 149
+  },
+  "checks": {
+    "port": 18016,
+    "http": 267,
+    "browser": 29,
+    "other": 8,
+    "errors": 0,
+    "old_http_sqlite": 32,
+    "deterministic_files": 28,
+    "independent_runs_per_slice": 2,
+    "rollback_phases": [
+      "RAW",
+      "RAW and normalization"
+    ],
+    "replay_dml": 0,
+    "timestamps_changed": 0,
+    "prior_profiles": [
+      7,
+      8,
+      9
+    ],
+    "all_seven_partition_hashes_unchanged": true,
+    "duplicate_codes": 0
+  },
+  "next": {
+    "chapter": 40,
+    "source_sha256": "57bced8470cc8bbd88d79038374015bdba68c35d5592166002c5ac9115eddbb1",
+    "layout_sha256": "ce0d5556e4f654f043adf070af49b5a8e13dc477c1300e9110ba282a5fe38538",
+    "layout_rows": 112,
+    "catalog_rows": 112,
+    "complete_ordered_match": true,
+    "source_pages": 14,
+    "parts": [
+      86,
+      26
+    ],
+    "operation": "Start with rows 1–86 of the retained chapter 40 PDF, binding rates, literal supplementary units, continuations, notes and provenance; complete rows 87–112, check the union and run isolated normalization replay and rollback."
+  },
+  "limits": {
+    "review": "same-context A0",
+    "status": "UNVERIFIED",
+    "db_hold": true,
+    "postgres_executed": false,
+    "legal_admission": false,
+    "merge": false,
+    "deploy": false
+  },
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7100741553",
+  "pilot_archive": {
+    "path": "evidence/2026-11-23-ch39-pilot/Tariff-local-ch39-pilot-cycle473.zip",
+    "sha256": "aef37cd1b2918f578840749c540af202718c014c81354ba9309d30685fce0770",
+    "manifest_sha256": "28cadf704e905160fc59ea9d42444e03d111ccea02b0ff5245d6535a29f7251b",
+    "bytes": 583401
+  }
+}
