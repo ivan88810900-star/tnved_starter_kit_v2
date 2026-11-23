@@ -1,0 +1,165 @@
+{
+  "cycle": 472,
+  "mode": "NATIVE_AUTOMATION_HEARTBEAT",
+  "automation_id": "tariff",
+  "check_in_time": "2026-11-23T09:16:11.211Z",
+  "native_turn_id": "01a207b1-044f-7992-9961-82e87f89cbc5",
+  "trigger_subtype": "UNKNOWN",
+  "owner_priority": 7009920907,
+  "product": {
+    "candidate": "63472970e545a21de671dcf3e8184aee07b7fbb4",
+    "tree": "0aad5cd9ff7278c9ca7972ee536681ce8e8143ed",
+    "parent": "cefc334f43801e3d41369130b9001ca458196aa0",
+    "frontend": {
+      "favicon.ico": "4fe1ff53a3c444f7e347fb4b2356c2987b08e312ea467709d8377d7ccdf29271",
+      "index.html": "f99a5257aa918f21dfc878daed1d6595645980e7ffc0c680f218410ed0652331",
+      "favicon.svg": "02e525afaa6826cba9d242f06c385e03cf912c78286ad80e7910bdf087030da8",
+      "assets/index-CmhgDIdr.css": "e3d3b854268c3b6fe93b75d703573d81ad333ba1ae7c4abe5335909052d1736c",
+      "assets/index-DukBlifY.js": "bd00d952061cee133649e497f2e851074b394ac1cccf014a21039c7768c87772"
+    },
+    "port": 18016,
+    "chapters": "30–38",
+    "all_connected_unverified": 565
+  },
+  "source": {
+    "pdf_sha256": "4d8798483fbe725cb05142a953493b93f6b8ad87ae4f545c8664fada59215c1d",
+    "layout_sha256": "d42d953f7ee00025b699ef009865e174000f6eb5c0e0b1555ccb22d842ddc32f",
+    "source_revision": "2026-03-08-chapter38",
+    "pages": 25,
+    "physical_lines": 1200,
+    "chapter_notes": 7,
+    "subheading_notes": 4,
+    "plus_prefixed_rows": 3,
+    "percent_counts": {
+      "0": 9,
+      "3": 12,
+      "5": 170,
+      "10": 1,
+      "6.5": 2
+    },
+    "superscript_rows": 50,
+    "supplementary_units": {
+      "–": 194
+    }
+  },
+  "result": {
+    "outcomes": {
+      "PARSED": 144,
+      "AMBIGUOUS": 50
+    },
+    "unique_codes": 194,
+    "row_hash_links": 194,
+    "intervals": [
+      [
+        "3801100000",
+        "3815110000"
+      ],
+      [
+        "3815120000",
+        "3825901000"
+      ],
+      [
+        "3825909000",
+        "3827900000"
+      ]
+    ],
+    "slices": [
+      {
+        "name": "slice-001-086",
+        "first": 1,
+        "last": 86,
+        "count": 86,
+        "sql_sha256": "09c0ccac975b1ff370de6d7c147b8720bc0395f16c8807e5d29f685657462d5a",
+        "plan_sha256": "bed7d1be0e46c94edaaca685d96c6cfebb12fb8ac852f9c2785775ccf0496f04",
+        "normalization_digest": "f415595a67edea82e6d571ee74c0b15d5225b38f1be125da0abff16817bb97ee",
+        "sqlite_sha256": "b5fc77408d5b50af076bd31a6caf5c545bcb0d8169cf91a4322d757252c82b25"
+      },
+      {
+        "name": "slice-087-172",
+        "first": 87,
+        "last": 172,
+        "count": 86,
+        "sql_sha256": "0bade8b811ad5bf48328c8475b8bc2a7aeb4ad4acbc255e1fca01343246ad35f",
+        "plan_sha256": "a0a9b0fb8e838c5b951c6582f4069ec39f7cf8dbb4d1eca28b3f457342a5f325",
+        "normalization_digest": "12e339e6bdbcd2587cfb9dc3343099d485395ae93bb125624fa3101005bc31c2",
+        "sqlite_sha256": "9b632886d43441581f110489554ae61d7c476586d03f8dd21fb0312e6c77876e"
+      },
+      {
+        "name": "slice-173-194",
+        "first": 173,
+        "last": 194,
+        "count": 22,
+        "sql_sha256": "39aeab1e7a36e27ea731de6a7f09c9c8fb1e6709a6fa255c10430b7c3aa8427c",
+        "plan_sha256": "5c31d76b0cecf6285c38b0dbd2afa75625b662ecb9f3fb6f6ac461eaa855b9c6",
+        "normalization_digest": "eb65eeb61084b47d790c108532f1044e3b02b9782d06c229fe70a8d31112e6f9",
+        "sqlite_sha256": "0a9513b7c4f9a0189332209cd54e1a2e0c6b6178473e0472c57b2a875a5edf7c"
+      }
+    ],
+    "negative_count": 842,
+    "immutable_source_count": 1,
+    "independent_sqlite_snapshots": true,
+    "verified": 0,
+    "admitted": 0
+  },
+  "archive": {
+    "file": "Tariff-ETT-Chapter38-offline-20261123.zip",
+    "sha256": "e2b86b424dbd388ed4ddcef7bfbcc6fe6246b28a042a1a172a492555f3897e31",
+    "bytes": 9043639,
+    "manifest_sha256": "57e03cb2a62c202ffbcf27555783e73366bafffcfd4a6553718fc2521ea2ad46",
+    "files": 120
+  },
+  "checks": {
+    "port": 18016,
+    "http": 194,
+    "browser": 22,
+    "other": 6,
+    "errors": 0,
+    "old_http_sqlite": 32,
+    "comparable_files": 21,
+    "independent_runs_per_slice": 2,
+    "rollback_phases": [
+      "RAW",
+      "RAW and normalization"
+    ],
+    "replay_dml": 0,
+    "timestamps_changed": 0,
+    "protected_old_profiles": [
+      7,
+      8
+    ],
+    "all_three_served_sqlite_hashes_unchanged": true,
+    "duplicate_hs_codes": 0
+  },
+  "next": {
+    "chapter": 39,
+    "source_sha256": "b31bc592790137114e151ddd628ed54082e24b01b1c8245ecc24cb2f84413b5a",
+    "layout_sha256": "5870ddee4490c1bd3760940d7e6442514d09944f3f9c6dabed55465137f83585",
+    "layout_rows": 267,
+    "catalog_rows": 267,
+    "complete_ordered_match": true,
+    "source_pages": 32,
+    "parts": [
+      86,
+      86,
+      86,
+      9
+    ],
+    "operation": "Bind the first 86 rows to code, rate, literal unit, continuation and note cells in the retained chapter 39 PDF. Validate union of the four bounded slices before treating the entire chapter as prepared."
+  },
+  "limits": {
+    "review": "same-context A0",
+    "status": "UNVERIFIED",
+    "db_hold": true,
+    "postgres_executed": false,
+    "legal_admission": false,
+    "merge": false,
+    "deploy": false
+  },
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7097270859",
+  "pilot_archive": {
+    "path": "evidence/2026-11-23-ch38-pilot/Tariff-local-ch38-pilot-cycle472.zip",
+    "sha256": "f840985ed65a1d933973a7e9514515bae4ea610cd479ced0d30adfb105a4fff8",
+    "manifest_sha256": "c31b1332be1118023872f88f40e032f5126ec4679fb1fb9d21c5d5e4923c0750",
+    "bytes": 454875
+  }
+}
