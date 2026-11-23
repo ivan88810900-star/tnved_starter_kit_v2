@@ -1,0 +1,209 @@
+{
+  "cycle": 474,
+  "mode": "NATIVE_AUTOMATION_HEARTBEAT",
+  "automation_id": "tariff",
+  "check_in_time": "2026-11-23T12:23:40.573Z",
+  "native_turn_id": "01a2085c-ab23-7340-9ec7-99cf201f647a",
+  "trigger_subtype": "UNKNOWN",
+  "owner_priority": 7009920907,
+  "product": {
+    "candidate": "615fae7c46cfe93d7f55299838ed551362da8dce",
+    "tree": "b356a9c6d24719fca9efb8992c374a83f4d083ca",
+    "parent": "c71c34623fd8eb44743acb448a9ca3bbaae70ac5",
+    "frontend": {
+      "favicon.ico": "4fe1ff53a3c444f7e347fb4b2356c2987b08e312ea467709d8377d7ccdf29271",
+      "index.html": "d298355361a2ceef001168d0962465f3d685af8283f4a6c08fe2e3f3a62d0d58",
+      "favicon.svg": "02e525afaa6826cba9d242f06c385e03cf912c78286ad80e7910bdf087030da8",
+      "assets/index-CmhgDIdr.css": "e3d3b854268c3b6fe93b75d703573d81ad333ba1ae7c4abe5335909052d1736c",
+      "assets/index-CEBh8Q5h.js": "b92780a7fd9f1f249312b4f9306b4ca251e75d0eae83b0ceef3af47d6aaee5f4"
+    },
+    "port": 18016,
+    "chapters": "30–40",
+    "all_connected_unverified": 944
+  },
+  "source": {
+    "source_records": 112,
+    "pdf": "57bced8470cc8bbd88d79038374015bdba68c35d5592166002c5ac9115eddbb1",
+    "layout": "ce0d5556e4f654f043adf070af49b5a8e13dc477c1300e9110ba282a5fe38538",
+    "catalog": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+    "parser_input_sha256": "ce0d5556e4f654f043adf070af49b5a8e13dc477c1300e9110ba282a5fe38538",
+    "parser_input_kind": "full untouched official layout",
+    "physical_lines": 633,
+    "source_pages": 14,
+    "per_page": {
+      "3": 2,
+      "4": 8,
+      "5": 15,
+      "6": 11,
+      "7": 10,
+      "8": 9,
+      "9": 12,
+      "10": 10,
+      "11": 10,
+      "12": 13,
+      "13": 10,
+      "14": 2
+    },
+    "roles": {
+      "title": 2,
+      "note_heading": 2,
+      "note": 102,
+      "page_break": 14,
+      "blank": 3,
+      "table_header": 132,
+      "hierarchy_context": 151,
+      "active_row": 112,
+      "continuation": 115
+    },
+    "main_counts": {
+      "0": 13,
+      "2": 1,
+      "3": 8,
+      "5": 58,
+      "8": 2,
+      "9": 3,
+      "10": 18,
+      "13": 1,
+      "15": 7,
+      "15, но не менее 2,02 евро за 1 шт": 1
+    },
+    "rate_forms": {
+      "percent": 111,
+      "minimum": 1
+    },
+    "units": {
+      "–": 82,
+      "м²": 1,
+      "шт": 26,
+      "пар": 3
+    },
+    "footnote_counts": {
+      "101С)": 1,
+      "109С)": 1,
+      "63С)": 11,
+      "67С)": 3,
+      "14С)": 2,
+      "46С)": 2,
+      "9С)": 1,
+      "15С)": 2
+    },
+    "without_note": 89,
+    "unqualified_percent": 88,
+    "notes_by_scope": {
+      "chapter": 9,
+      "additional": 1
+    },
+    "multiline_rates": [
+      "4012110000"
+    ],
+    "prefixes": [
+      "4015190000"
+    ]
+  },
+  "result": {
+    "outcomes": {
+      "PARSED": 88,
+      "AMBIGUOUS": 24
+    },
+    "unique_codes": 112,
+    "row_hash_links": 112,
+    "intervals": [
+      [
+        "4001100000",
+        "4014100000"
+      ],
+      [
+        "4014900000",
+        "4017000009"
+      ]
+    ],
+    "slices": [
+      {
+        "name": "slice-001-086",
+        "first": 1,
+        "last": 86,
+        "count": 86,
+        "sql_sha256": "279d03d77b11ba171987ef6942bad9e4a94889d3c681fed04af616f6bec4fd0d",
+        "plan_sha256": "85cb1b0343a20e4b51ac6a31a9b57267db5302a5c5b4a0a880ea430c7a652eb0",
+        "normalization_digest": "d506e258cc11f3497b502cd8c8378da662f7f5c1f6c658ca62252cece0a31748",
+        "sqlite_sha256": "8c57ded4b2587a5102d0935a9b7a0900359188b1b5fd8cb401572582f28ca80a"
+      },
+      {
+        "name": "slice-087-112",
+        "first": 87,
+        "last": 112,
+        "count": 26,
+        "sql_sha256": "40c293f3f7395c03392cd260ab5c294f52ddf5e1b1791a1c87033fc13a5e5705",
+        "plan_sha256": "8bc8e175e9bc773f8ca5595c795d4586e115904f3d44d2cf18e38b0ec4237213",
+        "normalization_digest": "a96700feb9c7fbc4beccd99ba89bfbf4d985e3e93e61cdd995f6660d1e5c7eed",
+        "sqlite_sha256": "d38cacf25e0c9083012e26e5390c3cab4617047099bbd1f0b7433018c929ebf1"
+      }
+    ],
+    "negative_count": 491,
+    "immutable_source_count": 1,
+    "independent_sqlite_snapshots": true,
+    "verified": 0,
+    "admitted": 0
+  },
+  "archive": {
+    "file": "Tariff-ETT-Chapter40-offline-20261123.zip",
+    "sha256": "1ff41e5b010031d7224cc1c6d05cff547af3f50203611647560988644dc4d1c3",
+    "bytes": 5043914,
+    "manifest_sha256": "c5689d2115c70a920dcb72f4d2d77f399ede385fc3a7d32e746b434313923c92",
+    "files": 82
+  },
+  "checks": {
+    "port": 18016,
+    "http": 112,
+    "browser": 26,
+    "other": 8,
+    "errors": 0,
+    "test_instance": {
+      "port": 18017,
+      "http": 112,
+      "browser": 26,
+      "other": 8,
+      "errors": 0
+    },
+    "baseline_rate": null,
+    "legacy_http_sqlite": 32,
+    "isolated_parts_unchanged": 9,
+    "deterministic_files": 14,
+    "independent_runs_per_part": 2,
+    "replay_dml": 0,
+    "duplicate_codes": 0,
+    "verified": 0,
+    "admitted": 0,
+    "source_revision": "2026-03-08-chapter40"
+  },
+  "next": {
+    "chapter": 41,
+    "source_sha256": "871219209cdca4e6b730b52d2e664ed85e09b5ad698fa2b3528ec88414ce3af7",
+    "layout_sha256": "78351035ddb0007fcc55952c40cc20a1a042ca40cc1b36a687dc9caca174f238",
+    "layout_rows": 71,
+    "catalog_rows": 71,
+    "complete_ordered_match": true,
+    "source_pages": 11,
+    "parts": [
+      71
+    ],
+    "operation": "Связать все строки главы 41 с ячейками ставок, единицами, продолжениями и примечаниями PDF. Проверить нормализацию, повтор и откат в отдельных SQLite, затем HTTP и карточки на Mac."
+  },
+  "limits": {
+    "review": "same-context A0",
+    "status": "UNVERIFIED",
+    "db_hold": true,
+    "postgres_executed": false,
+    "legal_admission": false,
+    "merge": false,
+    "deploy": false
+  },
+  "pilot_artifact": {
+    "path": "evidence/2026-11-23-ch40-pilot/Tariff-local-ch40-pilot-cycle474.zip",
+    "sha256": "b171b06e433dd4aeb8d010e97658534ad0f65f58fbaeeb9adee300903f83507d",
+    "manifest_sha256": "7ace7aa823274569108b817a3d1db21020861ebb1fc233fbef9c3c2a4e7af447",
+    "bytes": 632753
+  },
+  "owner_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7101532198",
+  "lease_generation": 474
+}
