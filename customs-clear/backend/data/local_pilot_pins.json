@@ -41,5 +41,12 @@
       "ZIP_sha256": "90b5e94b407072e5d1af37bf8185ac568b3ab978a50eee4845ac49de6f664a3a",
       "sha256": "5a68647cd2f5371e55b7d47043ca33d1fe6f16dd71c5b72f15379b82ed92f116"
     }
+  },
+  "additional_chapters": {
+    "37": {
+      "ZIP": "Tariff-ETT-Chapter37-offline-20261123.zip",
+      "ZIP_sha256": "c5bc1bb2c5af6d8ce2c09574a5a5a4f111ec08c3b52ab8f77f38e72132dbdf52",
+      "sha256": "f5f264c242e6dcbbaa84c5cd21b6279e4058768fb152fe8a05ce221c696f951f"
+    }
   }
 }

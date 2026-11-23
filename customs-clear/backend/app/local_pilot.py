@@ -43,8 +43,15 @@ def create_app():
     catalog_path = data / "catalog.sqlite"
     catalog_identity = file_identity(catalog_path)
     catalog = create_recovery_app(catalog_path, PINS["catalog"], Path(os.environ["TNVED_RECOVERY_FRONTEND"]))
-    identities = {chapter: verify(data / (chapter + ".sqlite"), entry["sha256"])
+    rate_files = {chapter: (data / (chapter + ".sqlite"), entry["sha256"])
                   for chapter, entry in PINS["chapters"].items()}
+    additional_dir = os.environ.get("TARIFF_PILOT_ADDITIONAL_RATES")
+    if additional_dir:
+        additional = Path(additional_dir).resolve(strict=True)
+        for chapter, entry in PINS["additional_chapters"].items():
+            rate_files[chapter] = (additional / (chapter + ".sqlite"), entry["sha256"])
+    identities = {chapter: verify(path, digest)
+                  for chapter, (path, digest) in rate_files.items()}
     # The production reader sets SQLite WAL pragmas. Give it its own disposable
     # copy of the public registry table, without job tables, users or client data.
     registry = data / "public-acts.sqlite"
@@ -79,7 +86,7 @@ def create_app():
         chapter = code[:2]
         if chapter not in identities:
             return {"rate": None}
-        path = data / (chapter + ".sqlite")
+        path = rate_files[chapter][0]
         try:
             require_unchanged(path, identities[chapter])
             with closing(sqlite3.connect(path.as_uri() + "?mode=ro&immutable=1", uri=True)) as db:
