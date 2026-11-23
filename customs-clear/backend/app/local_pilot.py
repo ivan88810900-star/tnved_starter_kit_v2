@@ -38,20 +38,45 @@ def verify(path, digest):
     return identity
 
 
+def verified_rate_parts(data):
+    parts = {}
+    for directory, chapters in (
+        (data, PINS["chapters"]),
+        (os.environ.get("TARIFF_PILOT_ADDITIONAL_RATES"), PINS["additional_chapters"]),
+    ):
+        if directory:
+            root = Path(directory).resolve(strict=True)
+            for chapter, entry in chapters.items():
+                path = root / (chapter + ".sqlite")
+                parts[chapter] = [(chapter + "00000000", chapter + "99999999", path, verify(path, entry["sha256"]))]
+
+    directory = os.environ.get("TARIFF_PILOT_PARTITIONED_RATES")
+    if directory:
+        root = Path(directory).resolve(strict=True)
+        for chapter, entry in PINS["partitioned_chapters"].items():
+            if chapter in parts:
+                raise ValueError("Duplicate tariff chapter")
+            intervals = []
+            for part in entry["parts"]:
+                first, last = part["first"], part["last"]
+                if (len(first) != 10 or len(last) != 10 or not first.isdigit() or not last.isdigit()
+                        or not first.startswith(chapter) or not last.startswith(chapter)
+                        or first > last or (intervals and first <= intervals[-1][1])):
+                    raise ValueError("Invalid tariff partition bounds")
+                path = root / part["file"]
+                intervals.append((first, last, path, verify(path, part["sha256"])))
+            if not intervals:
+                raise ValueError("Missing tariff partitions")
+            parts[chapter] = intervals
+    return parts
+
+
 def create_app():
     data = Path(os.environ["TARIFF_PILOT_DATA"]).resolve(strict=True)
     catalog_path = data / "catalog.sqlite"
     catalog_identity = file_identity(catalog_path)
     catalog = create_recovery_app(catalog_path, PINS["catalog"], Path(os.environ["TNVED_RECOVERY_FRONTEND"]))
-    rate_files = {chapter: (data / (chapter + ".sqlite"), entry["sha256"])
-                  for chapter, entry in PINS["chapters"].items()}
-    additional_dir = os.environ.get("TARIFF_PILOT_ADDITIONAL_RATES")
-    if additional_dir:
-        additional = Path(additional_dir).resolve(strict=True)
-        for chapter, entry in PINS["additional_chapters"].items():
-            rate_files[chapter] = (additional / (chapter + ".sqlite"), entry["sha256"])
-    identities = {chapter: verify(path, digest)
-                  for chapter, (path, digest) in rate_files.items()}
+    rate_parts = verified_rate_parts(data)
     # The production reader sets SQLite WAL pragmas. Give it its own disposable
     # copy of the public registry table, without job tables, users or client data.
     registry = data / "public-acts.sqlite"
@@ -83,12 +108,13 @@ def create_app():
 
     @app.get("/api/local-ett/{code}")
     def saved_rate(code: Annotated[str, PathParam(pattern=r"^[0-9]{10}$")]):
-        chapter = code[:2]
-        if chapter not in identities:
+        batch = next(((path, identity) for first, last, path, identity in rate_parts.get(code[:2], ())
+                      if first <= code <= last), None)
+        if batch is None:
             return {"rate": None}
-        path = rate_files[chapter][0]
+        path, identity = batch
         try:
-            require_unchanged(path, identities[chapter])
+            require_unchanged(path, identity)
             with closing(sqlite3.connect(path.as_uri() + "?mode=ro&immutable=1", uri=True)) as db:
                 db.row_factory = sqlite3.Row
                 rows = db.execute(
