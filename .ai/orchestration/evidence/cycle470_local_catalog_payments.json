@@ -1,0 +1,49 @@
+{
+  "cycle": 470,
+  "trigger": "owner-requested local run",
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7095098661",
+  "owner_priority": 7009920907,
+  "candidate": "14847db63e524a77f8c928b9c567e270dccc7036",
+  "tree": "eec4d097c3016c521d3f8acebc6c6cf46d52e632",
+  "catalog_sqlite_sha256": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "source_datasets": {
+    "chapters": "30–36",
+    "all_unverified": 328,
+    "archived_public_acts": 9
+  },
+  "local_port": 18016,
+  "verified": {
+    "browser": 21,
+    "http_sqlite": 32,
+    "product_and_regression_tests": 15,
+    "unchanged_source_files": 9,
+    "repeat_frontend_build_identical": true,
+    "manual_rates_on_100000_rub": {
+      "0": 0,
+      "6.5": 6500,
+      "7.55": 7550
+    },
+    "final_payable_total": null
+  },
+  "package": {
+    "artifact": "evidence/2026-11-23-catalog-payments/Tariff-local-catalog-payments-cycle470.zip",
+    "bytes": 608712,
+    "sha256": "f2948322a5765a5307fda781bcde4ca078d6df055dc4c17d8a3a4ff01888280e",
+    "manifest_entries": 24,
+    "manifest_sha256": "aab1bf0e843fe412b7f0040f7ad975a0e3d68fd1a6cdd8c4f4dab86beada894d"
+  },
+  "next": {
+    "chapter": 37,
+    "code_page_matches": 43,
+    "source_pdf_sha256": "998fca6b6aa238f91b65ea1e852767f9e286cfbee500f32fa5ad81b619ab1918",
+    "operation": "Bind the retained chapter 37 PDF rate and unit cells and notes for all 43 codes. Normalize and replay on local disposable copies; preserve legal status. Check local pilot health when resuming."
+  },
+  "constraints": {
+    "db_hold": true,
+    "public_network_exposure": false,
+    "protected_ntm_status": 503,
+    "postgres_checked": false,
+    "merge": false,
+    "deploy": false
+  }
+}
