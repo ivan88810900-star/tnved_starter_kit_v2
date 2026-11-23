@@ -103,6 +103,24 @@
           "sha256": "a98633cdd1ebd7fa29ba581563ed1be9120bee72a4aebe7c5b3fb44f98bb19be"
         }
       ]
+    },
+    "40": {
+      "ZIP": "Tariff-ETT-Chapter40-offline-20261123.zip",
+      "ZIP_sha256": "1ff41e5b010031d7224cc1c6d05cff547af3f50203611647560988644dc4d1c3",
+      "parts": [
+        {
+          "first": "4001100000",
+          "last": "4014100000",
+          "file": "40-001-086.sqlite",
+          "sha256": "8c57ded4b2587a5102d0935a9b7a0900359188b1b5fd8cb401572582f28ca80a"
+        },
+        {
+          "first": "4014900000",
+          "last": "4017000009",
+          "file": "40-087-112.sqlite",
+          "sha256": "d38cacf25e0c9083012e26e5390c3cab4617047099bbd1f0b7433018c929ebf1"
+        }
+      ]
     }
   }
 }
