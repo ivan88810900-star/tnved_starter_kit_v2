@@ -53,7 +53,12 @@ def verified_rate_parts(data):
     directory = os.environ.get("TARIFF_PILOT_PARTITIONED_RATES")
     if directory:
         root = Path(directory).resolve(strict=True)
-        for chapter, entry in PINS["partitioned_chapters"].items():
+        # The original partitioned snapshot contains chapter 38 only.
+        chapters = os.environ.get("TARIFF_PILOT_PARTITIONED_CHAPTERS", "38").split(",")
+        for chapter in chapters:
+            entry = PINS["partitioned_chapters"].get(chapter)
+            if entry is None:
+                raise ValueError("Unknown partitioned tariff chapter")
             if chapter in parts:
                 raise ValueError("Duplicate tariff chapter")
             intervals = []
