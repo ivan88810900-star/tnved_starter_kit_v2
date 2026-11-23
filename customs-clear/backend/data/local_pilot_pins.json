@@ -1,0 +1,45 @@
+{
+  "catalog": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "archived_db": "53847cb00ebc53f6315042325bc416d13d65cf020a10530a4ce7dde848ed1ff2",
+  "public_acts": [
+    "ab07580148d450356a8615a5a5964dc2311727d2c2c54a254c86481b5f807b78",
+    "04548634fbcdb34ab4bb3ab90c44525cbc8d5ef37d164c454c5930f56140361e"
+  ],
+  "chapters": {
+    "30": {
+      "ZIP": "Tariff-ETT-Chapter30-offline-batch-20261113.zip",
+      "ZIP_sha256": "98bd8359eb1779f352fcd5e7b4719d4541fbe2317e2784b66490c56fefc5afa8",
+      "sha256": "ca82262339dc1d862e40a91630a01a5c973321a2f89f5cf7d6a919ee12ee1d47"
+    },
+    "31": {
+      "ZIP": "Tariff-CH30-QA-and-CH31-offline-20261119.zip",
+      "ZIP_sha256": "9dd9d67f7256138e956b873deee167ca03f528b99c5af88ab4bf5d40ec9b28a4",
+      "sha256": "5a6c19949e613cb04a9408094c78efa5eb14426c112f0439caf9a7be8b7d8c7e"
+    },
+    "32": {
+      "ZIP": "Tariff-ETT-Chapter32-offline-20261119.zip",
+      "ZIP_sha256": "bb3d6cdce4ef37f51b57228ac01dc4469bac247226ac398171e450df8a64fc22",
+      "sha256": "1d757f5c77d5d29d1d69ceeb11ee4492146ceba4b5976ed50b4899d9a7ecef26"
+    },
+    "33": {
+      "ZIP": "Tariff-ETT-Chapter33-offline-20261119.zip",
+      "ZIP_sha256": "9c909c0377e268950d18391d4c861010cdb59044529225d848e15362a04c03ba",
+      "sha256": "80ff9017d89fca6d9efd91a0c281f7df0528c5683ef90903fb5f076e6ca088fd"
+    },
+    "34": {
+      "ZIP": "Tariff-ETT-Chapter34-offline-20261119.zip",
+      "ZIP_sha256": "7f722497a0133e47e80a65db9dab0597284f68bcef8238d1da2d23fbc558617a",
+      "sha256": "b0edc878e751d568178719773ac2be89b3b0b7e480b281fad5ba50fc5cd303a4"
+    },
+    "35": {
+      "ZIP": "Tariff-ETT-Chapter35-offline-20261119.zip",
+      "ZIP_sha256": "c906903bf10b65933c50adbae38ad8f1a70f6d9dc844bd6737be49716d58c7ba",
+      "sha256": "1a3bbbeedb3d6fdfacad378c985150e2650b05530c870c642d95551c82610b01"
+    },
+    "36": {
+      "ZIP": "Tariff-ETT-Chapter36-offline-20261119.zip",
+      "ZIP_sha256": "90b5e94b407072e5d1af37bf8185ac568b3ab978a50eee4845ac49de6f664a3a",
+      "sha256": "5a68647cd2f5371e55b7d47043ca33d1fe6f16dd71c5b72f15379b82ed92f116"
+    }
+  }
+}

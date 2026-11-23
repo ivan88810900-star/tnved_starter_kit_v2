@@ -1,3 +1,4 @@
+import { parseManualDutyPercent } from '../utils/dutyRate';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Banknote, ShieldCheck } from 'lucide-react';
@@ -235,16 +236,6 @@ function TreeNode({
       )}
     </div>
   );
-}
-
-function parseManualDutyPercent(input: string): number | undefined {
-  const value = input.trim();
-  if (!value) return undefined;
-  const percent = Number(value.replace(',', '.'));
-  if (!/^\+?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:[eE][+-]?\d+)?$/.test(value) || !Number.isFinite(percent)) {
-    throw new Error('Введите неотрицательную ставку пошлины в процентах, например 7,5.');
-  }
-  return percent;
 }
 
 export const Calculator: React.FC = () => {

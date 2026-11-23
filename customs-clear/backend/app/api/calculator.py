@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Literal
 
 from fastapi import APIRouter, Header, HTTPException, Query
@@ -167,6 +168,17 @@ class ExportExcelRequest(BaseModel):
     items: list[ExportExcelItemIn] = Field(default_factory=list)
 
 
+def legacy_code_check(code: str) -> dict | None:
+    if is_leaf_hs_code(code):
+        return None
+    return {
+        "status": "CLARIFICATION_NEEDED",
+        "hs_code": code,
+        "message": f"Код {code} является групповым заголовком. Для расчёта выберите конкретный код товара.",
+        "suggested_codes": find_suggested_leaf_codes(code, limit=20),
+    }
+
+
 @router.post("/compute")
 async def compute(req: CalculatorRequest) -> JSONResponse:
     """Расчёт платежей: пошлина, НДС, акциз, антидемпинг, утильсбор.
@@ -176,22 +188,16 @@ async def compute(req: CalculatorRequest) -> JSONResponse:
     `auto_detected`, `tnved_context`, `special_duties`, `tariff_preference`
     и метаданные утильсбора — именно эти поля потребляет UI калькулятора.
     """
+    return await compute_checked(req, legacy_code_check)
+
+
+async def compute_checked(req: CalculatorRequest, check_code: Callable[[str], dict | None]) -> JSONResponse:
     try:
         logger.info(f"Расчёт платежей для кода {req.hs_code}")
-        hs_norm = (req.hs_code or "").strip().replace(" ", "")
-        if not is_leaf_hs_code(hs_norm):
-            suggested = find_suggested_leaf_codes(hs_norm, limit=20)
-            return JSONResponse(
-                {
-                    "status": "CLARIFICATION_NEEDED",
-                    "hs_code": hs_norm,
-                    "message": (
-                        f"Код {hs_norm} является групповым заголовком. "
-                        "Для расчёта выберите конкретный код товара."
-                    ),
-                    "suggested_codes": suggested,
-                }
-            )
+        code = (req.hs_code or "").strip().replace(" ", "")
+        issue = check_code(code)
+        if issue is not None:
+            return JSONResponse(issue)
         payload = req.model_dump(exclude={"save_history", "document_id", "user_ref"})
         rates = get_rates_map()
         invoice_currency = (req.invoice_currency or "RUB").upper().strip()

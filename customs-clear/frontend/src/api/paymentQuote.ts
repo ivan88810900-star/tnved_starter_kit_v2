@@ -34,6 +34,7 @@ export type PaymentQuoteAssumption = {
 export type PaymentQuoteRequest = {
   hs_code: string;
   customs_value: number;
+  duty_rate?: number;
   invoice_currency?: string;
   freight?: number;
   insurance?: number | null;

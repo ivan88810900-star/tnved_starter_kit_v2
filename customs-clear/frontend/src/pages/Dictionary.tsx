@@ -1,16 +1,28 @@
+import { useSearchParams } from 'react-router-dom';
 import React from 'react';
 import { X } from 'lucide-react';
 import { ProductDetails } from '../components/tnved/ProductDetails';
+import { RecoveredCodeDetails } from '../components/tnved/RecoveredCodeDetails';
+import { useClientCapabilities } from '../context/ClientCapabilitiesContext';
 import { TnvedAccordionTree } from '../components/TnvedAccordionTree';
 import { PageHeader } from '../components/PageHeader';
 import { CC_HOME_TNVED_QUERY_KEY, CC_TNVED_SELECT_CODE_KEY } from '../constants/homeNav';
 
 export const Dictionary: React.FC = () => {
+  const { recoveredCatalog } = useClientCapabilities();
+  const compactCard = Boolean(recoveredCatalog) && import.meta.env.VITE_TARIFF_LOCAL_PILOT === '1';
+  const [params] = useSearchParams();
+  const linkedCode = params.get('code') ?? '';
   const [selectedCode, setSelectedCode] = React.useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const [initialSearch, setInitialSearch] = React.useState<string | undefined>(undefined);
 
   React.useEffect(() => {
+    if (/^\d{2,10}$/.test(linkedCode)) {
+      setSelectedCode(linkedCode);
+      setDetailsOpen(true);
+      return;
+    }
     try {
       const codeRaw = sessionStorage.getItem(CC_TNVED_SELECT_CODE_KEY);
       if (codeRaw?.trim()) {
@@ -30,7 +42,7 @@ export const Dictionary: React.FC = () => {
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [linkedCode]);
 
   const handleSelectCode = React.useCallback((code: string) => {
     setSelectedCode(code);
@@ -51,6 +63,17 @@ export const Dictionary: React.FC = () => {
       <div className="flex h-full min-h-0 flex-1 flex-col">
         <PageHeader title="Справочник ТН ВЭД" />
 
+        {recoveredCatalog ? (
+          <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="status">
+            <p className="font-semibold">Восстановленный справочник · {recoveredCatalog.nodes.toLocaleString('ru-RU')} узлов</p>
+            <p>Источник не проверен. Действительность кодов и ставки не подтверждены.</p>
+            <details className="mt-1 text-xs">
+              <summary className="cursor-pointer">Идентификатор набора</summary>
+              <p className="break-all font-mono" data-testid="snapshot-sha256">{recoveredCatalog.snapshot_sha256}</p>
+            </details>
+          </div>
+        ) : null}
+
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-cargo-border bg-cargo-surface">
           <div className="flex min-h-0 flex-1 flex-col p-3 sm:p-4">
             <TnvedAccordionTree
@@ -68,13 +91,13 @@ export const Dictionary: React.FC = () => {
           onClick={() => setDetailsOpen(false)}
         >
           <div
-            className="flex h-[100dvh] max-h-[100dvh] w-full max-w-5xl flex-col overflow-hidden rounded-none border border-cargo-border bg-cargo-surface shadow-xl sm:h-[90vh] sm:min-h-[480px] sm:rounded-lg"
+            className={`flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden rounded-none border border-cargo-border bg-cargo-surface shadow-xl sm:rounded-lg ${compactCard ? 'max-w-2xl sm:h-auto sm:max-h-[90dvh]' : 'max-w-5xl sm:h-[90vh] sm:min-h-[480px]'}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-cargo-border px-4 py-4 sm:px-5">
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-cargo-light">Карточка товара</p>
-                <p className="mt-1 font-mono text-2xl font-medium text-cargo-trust">{selectedCode}</p>
+                {!compactCard && <p className="mt-1 font-mono text-2xl font-medium text-cargo-trust" data-testid="selected-code">{selectedCode.startsWith('u-') ? 'Бескодовая группировка' : selectedCode}</p>}
               </div>
               <button
                 type="button"
@@ -86,7 +109,9 @@ export const Dictionary: React.FC = () => {
               </button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5">
-              <ProductDetails selectedCode={selectedCode} />
+              {recoveredCatalog ? (
+                <RecoveredCodeDetails selectedCode={selectedCode} onSelectCode={handleSelectCode} />
+              ) : <ProductDetails selectedCode={selectedCode} />}
             </div>
           </div>
         </div>

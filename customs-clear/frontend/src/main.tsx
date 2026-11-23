@@ -11,6 +11,7 @@ import { DocumentCheck } from './pages/DocumentCheck';
 import { Classifier } from './pages/Classifier';
 import { Trois } from './pages/Trois';
 import { Calculator } from './pages/Calculator';
+import { LocalCatalogCalculator } from './pages/LocalCatalogCalculator';
 import { NonTariff } from './pages/NonTariff';
 import { Assistant } from './pages/Assistant';
 import {
@@ -72,7 +73,7 @@ function AppRoutes() {
         <Route path="tnved" element={<Dictionary />} />
         <Route path="trois" element={<Trois />} />
         <Route path="permits" element={<PermitPicker />} />
-        <Route path="calculator" element={<Calculator />} />
+        <Route path="calculator" element={import.meta.env.VITE_TARIFF_LOCAL_PILOT === '1' ? <LocalCatalogCalculator /> : <Calculator />} />
         <Route path="invoice" element={<InvoicePage />} />
         <Route path="non-tariff" element={<NonTariff />} />
         <Route

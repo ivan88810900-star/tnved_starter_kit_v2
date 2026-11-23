@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUpRight, FileCheck2, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, FileCheck2, ShieldAlert } from 'lucide-react';
 import type { TnvedCommodityDetail, TnvedPreview } from '../../api/tnvedCatalog';
 import { formatCode } from '../../api/tnvedCatalog';
 import { formatDutyDisplay, formatPercentRate } from '../../utils/dutyRate';
@@ -96,7 +96,7 @@ function documentsSummary(preview: TnvedPreview | null): { text: string; hasRequ
   if (badges.length > 0) {
     return { text: badges.slice(0, 4).join(', '), hasRequirements: true };
   }
-  return { text: 'Не требуются', hasRequirements: false };
+  return { text: 'Нет сведений', hasRequirements: false };
 }
 
 type NonTariffMeasureCardsProps = {
@@ -152,7 +152,7 @@ export const ProductCardSummary: React.FC<Props> = ({ detail, preview }) => {
   const vatText =
     (preview?.payments?.vat_rates ?? []).length > 0
       ? preview!.payments!.vat_rates!.map((r) => formatPercentRate(r)).join(' / ')
-      : '22%';
+      : 'Нет данных';
   const exciseText = (preview?.payments?.excise ?? '').trim();
   const unit = (detail.unit ?? '').trim();
   const docs = documentsSummary(preview);
@@ -233,12 +233,7 @@ export const ProductCardSummary: React.FC<Props> = ({ detail, preview }) => {
           <FileCheck2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <span>Требуются разрешительные документы{measureBadges.length > 0 ? `: ${measureBadges.join(', ')}` : ''}.</span>
         </div>
-      ) : (
-        <div className="flex items-center gap-2 border-t border-emerald-100 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700 sm:px-5">
-          <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden />
-          Особых разрешительных документов не выявлено.
-        </div>
-      )}
+      ) : null}
     </section>
   );
 };

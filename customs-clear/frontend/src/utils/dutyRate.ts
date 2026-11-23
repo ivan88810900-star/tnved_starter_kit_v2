@@ -15,7 +15,7 @@ export function normalizeDutyRate(raw?: string | null): string {
     if (/^пошлина/i.test(low) || /^ндс/i.test(low)) return '';
     return t;
   }
-  return t.replace(/\s+/g, ' ').replace(' %', '%');
+  return t;
 }
 
 export type DutyBadgeInfo = {
@@ -27,14 +27,15 @@ export function parseDutyBadge(raw?: string | null): DutyBadgeInfo {
   const t = normalizeDutyRate(raw);
   if (!t) return null;
 
-  if (/eur|€/i.test(t)) {
-    return { label: t.toLowerCase().includes('eur') ? 'EUR/кг' : t, tone: 'specific' };
+  const percent = /^(\d+(?:[.,]\d+)?)\s*%?$/.exec(t);
+  if (percent) {
+    const value = percent[1];
+    return { label: value + ' %', tone: Number(value.replace(',', '.')) === 0 ? 'zero' : 'percent' };
   }
 
-  const numeric = parseFloat(t.replace('%', '').replace(',', '.').replace(/[^\d.,]/g, ''));
-  if (!Number.isFinite(numeric)) return null;
-  if (numeric === 0) return { label: '0%', tone: 'zero' };
-  return { label: t.includes('%') ? t : `${t}%`, tone: 'percent' };
+  // A bare first operand in a combined ETT rate has the percentage column's unit.
+  const combined = /^(\d+(?:[.,]\d+)?)(,?\s+(?:плюс|но не менее)\s+\d.*)$/u.exec(t);
+  return { label: combined ? combined[1] + ' %' + combined[2] : t, tone: 'specific' };
 }
 
 /** Человекочитаемая ставка для карточки товара. */
@@ -45,5 +46,15 @@ export function formatDutyDisplay(raw?: string | null): string {
 
 export function formatPercentRate(value?: number | null): string {
   if (value == null || !Number.isFinite(value)) return '—';
-  return `${Number.isInteger(value) ? value : parseFloat(value.toFixed(1))}%`;
+  return String(value).replace('.', ',') + ' %';
+}
+
+export function parseManualDutyPercent(input: string): number | undefined {
+  const value = input.trim();
+  if (!value) return undefined;
+  const percent = Number(value.replace(',', '.'));
+  if (!/^\+?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:[eE][+-]?\d+)?$/.test(value) || !Number.isFinite(percent)) {
+    throw new Error('Введите неотрицательную ставку пошлины в процентах, например 7,5.');
+  }
+  return percent;
 }

@@ -14,7 +14,6 @@ import { PreliminaryDecisionsBlock } from './PreliminaryDecisionsBlock';
 import { ClassificationRulingsBlock } from './ClassificationRulingsBlock';
 import { ProductCardSummary, NonTariffMeasureCards } from './ProductCardSummary';
 import { PermitDocumentsBlock } from './PermitDocumentsBlock';
-import { formatDutyDisplay } from '../../utils/dutyRate';
 import type { NormativeRequirementsBlockData, SanctionsRiskBlockData } from '../../types/api.types';
 import { ArrowUpRight, ShieldCheck } from 'lucide-react';
 
@@ -213,7 +212,6 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
 
   if (!detail) return null;
 
-  const dutyLabel = formatDutyDisplay(preview?.payments?.duty || detail.import_duty);
   const nonTariffMeasures = detail.non_tariff_measures ?? [];
   const intellectualProperties = detail.intellectual_properties ?? [];
 
@@ -260,12 +258,6 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
       {/* Шапка-резюме карточки товара */}
       <ProductCardSummary detail={detail} preview={preview} />
 
-      <PermitDocumentsBlock
-        hsCode={detail.code}
-        productName={(detail.name ?? detail.description ?? '').trim()}
-        normativeBlock={normativeBlock}
-      />
-
       {intellectualProperties.length > 0 ? (
         <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
           <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden />
@@ -303,18 +295,6 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
 
       {activeTab === 'payments' ? (
         <div className="space-y-4">
-          <section className="rounded-xl border border-blue-100 bg-blue-50 px-5 py-4">
-            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-blue-700">Ставки (справочник)</p>
-            <div className="flex flex-wrap gap-4 font-mono text-lg font-bold text-blue-900">
-              <span>Пошлина: {dutyLabel}</span>
-              <span>
-                НДС:{' '}
-                {(preview?.payments?.vat_rates ?? [22]).map((r) => `${r}%`).join(' / ')}
-              </span>
-              {preview?.payments?.excise ? <span>Акциз: {preview.payments.excise}</span> : null}
-            </div>
-          </section>
-
           <details className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
             <summary className="cursor-pointer text-xs font-bold uppercase tracking-wide text-gray-600">
               Правовые основания
@@ -440,6 +420,11 @@ export const ProductDetails: React.FC<Props> = ({ selectedCode }) => {
               <ArrowUpRight className="h-4 w-4" aria-hidden />
             </button>
           </div>
+          <PermitDocumentsBlock
+            hsCode={detail.code}
+            productName={(detail.name ?? detail.description ?? '').trim()}
+            normativeBlock={normativeBlock}
+          />
           {normativeLoading ? (
             <p className="text-sm text-gray-500">Загрузка нормативного блока…</p>
           ) : normativeError ? (

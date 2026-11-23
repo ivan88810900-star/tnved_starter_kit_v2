@@ -1,3 +1,4 @@
+import { parseManualDutyPercent } from '../../utils/dutyRate';
 import React from 'react';
 import { Calculator } from 'lucide-react';
 import {
@@ -41,14 +42,8 @@ function formatRub(value: number | null | undefined): string {
 
 function formatRateLabel(raw?: string | null): string | null {
   if (!raw?.trim()) return null;
-  const m = /^([\d.,]+)\s*%$/.exec(raw.trim());
-  if (m) {
-    const n = parseFloat(m[1].replace(',', '.'));
-    if (Number.isFinite(n)) {
-      return `${Number.isInteger(n) ? n : parseFloat(n.toFixed(1))}%`;
-    }
-  }
-  return raw.replace(/\.0(?=%)/, '%');
+  return raw.trim().replace(/^(\d+(?:[.,]\d+)?)\s*%$/, (_, amount: string) =>
+    amount.replace(/\.0$/, '').replace('.', ',') + ' %');
 }
 
 function LineAmount({ item }: { item: PaymentQuoteLineItem }) {
@@ -67,10 +62,12 @@ type Props = {
   hsCode: string;
   description?: string;
   className?: string;
+  localPreview?: boolean;
 };
 
-export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, className }) => {
-  const [customsValue, setCustomsValue] = React.useState('100000');
+export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, className, localPreview = false }) => {
+  const [customsValue, setCustomsValue] = React.useState(localPreview ? '' : '100000');
+  const [manualDuty, setManualDuty] = React.useState('');
   const [currency, setCurrency] = React.useState('RUB');
   const [country, setCountry] = React.useState('');
   const [quantity, setQuantity] = React.useState('');
@@ -83,7 +80,7 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
   const isLiveAnimalCode = /^010[2-5]\d{6}$/.test(hsCode.replace(/\D/g, ''));
 
   const loadQuote = React.useCallback(async () => {
-    const value = parseFloat(customsValue.replace(/\s/g, '').replace(',', '.'));
+    const value = Number(customsValue.replace(/\s/g, '').replace(',', '.'));
     if (!Number.isFinite(value) || value <= 0) {
       setError('Укажите таможенную стоимость больше 0.');
       return;
@@ -93,6 +90,7 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
     try {
       const payload = {
         hs_code: hsCode,
+        duty_rate: localPreview ? parseManualDutyPercent(manualDuty) : undefined,
         customs_value: value,
         invoice_currency: currency.trim().toUpperCase() || 'RUB',
         country: country.trim().toUpperCase() || null,
@@ -111,13 +109,13 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
     } finally {
       setLoading(false);
     }
-  }, [hsCode, customsValue, currency, country, quantity, description, isLiveAnimalCode, liveAnimalBreedingStatus]);
+  }, [hsCode, localPreview, manualDuty, customsValue, currency, country, quantity, description, isLiveAnimalCode, liveAnimalBreedingStatus]);
 
   React.useEffect(() => {
     setQuote(null);
     setError(null);
-    void loadQuote();
-  }, [hsCode]); // eslint-disable-line react-hooks/exhaustive-deps -- пересчёт при смене кода
+    if (!localPreview) void loadQuote();
+  }, [hsCode, localPreview]); // eslint-disable-line react-hooks/exhaustive-deps -- пересчёт при смене кода
 
   return (
     <div className={`space-y-4 ${className ?? ''}`}>
@@ -127,78 +125,87 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
           <h3 className="text-sm font-bold uppercase tracking-wide text-blue-800">Расчёт платежей</h3>
         </div>
         <p className="mb-4 text-xs text-slate-600">
-          Пошлина, НДС, таможенный сбор и акциз по указанной таможенной стоимости.
+          {localPreview ? 'Ставка из справочника не подставляется автоматически. Для предварительного расчёта можно указать процент вручную.'
+            : 'Пошлина, НДС, таможенный сбор и акциз по указанной таможенной стоимости.'}
         </p>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="block text-xs">
-            <span className="mb-1 block font-medium text-slate-700">Таможенная стоимость</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={customsValue}
-              onChange={(e) => setCustomsValue(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="block text-xs">
-            <span className="mb-1 block font-medium text-slate-700">Валюта</span>
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            >
-              <option value="RUB">RUB</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="CNY">CNY</option>
-            </select>
-          </label>
-          <label className="block text-xs">
-            <span className="mb-1 block font-medium text-slate-700">Страна (ISO-2)</span>
-            <input
-              type="text"
-              maxLength={2}
-              placeholder="CN"
-              value={country}
-              onChange={(e) => setCountry(e.target.value.toUpperCase())}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm uppercase"
-            />
-          </label>
-          <label className="block text-xs">
-            <span className="mb-1 block font-medium text-slate-700">Количество</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              placeholder="1"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            />
-          </label>
-        </div>
+        <fieldset disabled={localPreview && loading} onChange={localPreview ? () => { setQuote(null); setError(null); } : undefined}>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="block text-xs">
+              <span className="mb-1 block font-medium text-slate-700">Таможенная стоимость</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={customsValue}
+                onChange={(e) => setCustomsValue(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block text-xs">
+              <span className="mb-1 block font-medium text-slate-700">Валюта</span>
+              <select
+                disabled={localPreview}
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              >
+                <option value="RUB">RUB</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="CNY">CNY</option>
+              </select>
+            </label>
+            {localPreview && <label className="block text-xs">
+              <span className="mb-1 block font-medium text-slate-700">Ручная ставка пошлины, %</span>
+              <input inputMode="decimal" value={manualDuty} onChange={e => setManualDuty(e.target.value)}
+                placeholder="Например, 7,55" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+            </label>}
+            <label className="block text-xs">
+              <span className="mb-1 block font-medium text-slate-700">Страна (ISO-2)</span>
+              <input
+                type="text"
+                maxLength={2}
+                placeholder="CN"
+                value={country}
+                onChange={(e) => setCountry(e.target.value.toUpperCase())}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm uppercase"
+              />
+            </label>
+            <label className="block text-xs">
+              <span className="mb-1 block font-medium text-slate-700">Количество</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="1"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+            </label>
+          </div>
 
-        {isLiveAnimalCode ? (
-          <label className="mt-3 block text-xs">
-            <span className="mb-1 block font-medium text-slate-700">Племенной статус животного</span>
-            <select
-              value={liveAnimalBreedingStatus}
-              onChange={(e) =>
-                setLiveAnimalBreedingStatus(
-                  e.target.value as 'breeding' | 'non_breeding' | 'unknown',
-                )
-              }
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm sm:max-w-md"
-            >
-              <option value="unknown">Не подтверждён — требуется проверка</option>
-              <option value="non_breeding">Неплеменное — подтверждено документами</option>
-              <option value="breeding">Племенное — подтверждено документами</option>
-            </select>
-            <span className="mt-1 block text-[11px] text-slate-500">
-              Для неоднозначных кодов 0102–0105 ставка и итог не считаются окончательными без этого факта.
-            </span>
-          </label>
-        ) : null}
+          {isLiveAnimalCode ? (
+            <label className="mt-3 block text-xs">
+              <span className="mb-1 block font-medium text-slate-700">Племенной статус животного</span>
+              <select
+                value={liveAnimalBreedingStatus}
+                onChange={(e) =>
+                  setLiveAnimalBreedingStatus(
+                    e.target.value as 'breeding' | 'non_breeding' | 'unknown',
+                  )
+                }
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm sm:max-w-md"
+              >
+                <option value="unknown">Не подтверждён — требуется проверка</option>
+                <option value="non_breeding">Неплеменное — подтверждено документами</option>
+                <option value="breeding">Племенное — подтверждено документами</option>
+              </select>
+              <span className="mt-1 block text-[11px] text-slate-500">
+                Для неоднозначных кодов 0102–0105 ставка и итог не считаются окончательными без этого факта.
+              </span>
+            </label>
+          ) : null}
+        </fieldset>
 
         <button
           type="button"
@@ -227,7 +234,8 @@ export const SmartPaymentsBlock: React.FC<Props> = ({ hsCode, description, class
               </thead>
               <tbody>
                 {quote.line_items.map((item) => {
-                  const rateLabel = formatRateLabel(item.rate_label);
+                  const unconfirmed = localPreview && item.status === 'manual_review_required';
+                  const rateLabel = unconfirmed ? null : formatRateLabel(item.rate_label);
                   return (
                     <tr key={item.code} className="border-t border-slate-100">
                       <td className="px-4 py-3 align-top">
