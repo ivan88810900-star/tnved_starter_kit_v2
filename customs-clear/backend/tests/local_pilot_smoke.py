@@ -29,6 +29,12 @@ def check(port, config, root):
         for heading in ("4108", "4109", "4110", "4111"):
             status, data = request("/api/local-ett/" + heading + "000000")
             assert status == 200 and data["rate"] is None
+    if "42" in config["partitioned_chapters"]:
+        codes.extend(["4202125001", "4203210000"])
+        status, data = request("/api/local-ett/4204000000")
+        assert status == 200 and data["rate"] is None
+    if "43" in config["partitioned_chapters"]:
+        codes.extend(["4301300000", "4302197500", "4302307110"])
     for code in codes:
         if code[:2] in pins["chapters"]:
             entry = pins["chapters"][code[:2]]

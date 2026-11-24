@@ -133,6 +133,36 @@
           "sha256": "b721c5ff203ecb2caaeb8b61f015505bd08e2190e0299753daa9bf7b66e76fe4"
         }
       ]
+    },
+    "42": {
+      "ZIP": "Tariff-ETT-Chapter42-offline-20261124.zip",
+      "ZIP_sha256": "156d4b95b1d9c65299668352fd7958e5b1e8fb7a6aa880252864776f5bfe0e25",
+      "parts": [
+        {
+          "first": "4201000000",
+          "last": "4206000000",
+          "file": "42-001-038.sqlite",
+          "sha256": "0b5dff87882a360c9d7c368c64f3b0491f44d089992233ed3f32ba3004796435"
+        }
+      ]
+    },
+    "43": {
+      "ZIP": "Tariff-ETT-Chapter43-offline-20261124.zip",
+      "ZIP_sha256": "0ff9f22e69630acf623d3f4054e75ad17a94b67fddce7e3b2a115a726e6830ce",
+      "parts": [
+        {
+          "first": "4301100010",
+          "last": "4302306120",
+          "file": "43-001-086.sqlite",
+          "sha256": "d392297dee3c4e0b15be72be5e10cbe3f6425b905548b62e9c82ff2d3b979647"
+        },
+        {
+          "first": "4302307110",
+          "last": "4304000000",
+          "file": "43-087-109.sqlite",
+          "sha256": "03035d64f9a444323554f1c5415feff7dd1cab1b6725d24ab3fa7d27fafc3f43"
+        }
+      ]
     }
   }
 }
