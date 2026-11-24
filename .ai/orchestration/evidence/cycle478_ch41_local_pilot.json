@@ -1,0 +1,52 @@
+{
+  "cycle": 478,
+  "automation": "tariff",
+  "check_in_utc": "2026-11-24T07:44:15.116Z",
+  "native_turn_id": "01a20c83-3512-7cf2-b594-c329b260fac6",
+  "product_head": "f948dd8d4d14ac55a6feb798a5110967ec48fee3",
+  "product_tree": "be87db49b4538da258567aa5123a2048664be75f",
+  "previous_product": "f0474d3022ba523758f71ac7634a5769442e9106",
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7125520803",
+  "source_zip_sha256": "01839f8561aefa91a6a57a4fc6a1d96038a3723a423a2dd93380c9001bc47902",
+  "sqlite_ch41_sha256": "b721c5ff203ecb2caaeb8b61f015505bd08e2190e0299753daa9bf7b66e76fe4",
+  "js_sha256": "084dfe7c4f456cce786f00eac1ae8c5e6a9d617e10442f167c829e273f1d3dca",
+  "total_unique": 1015,
+  "parsed": 832,
+  "ambiguous": 183,
+  "legal": "all UNVERIFIED",
+  "self_check": {
+    "sqlite_http": {
+      "18016": 71,
+      "18018": 71
+    },
+    "official_ledger_fields": 8,
+    "cards_ch41": 71,
+    "browser_errors": [],
+    "additional_lookups": 8,
+    "reserved_visible_inactive": 4,
+    "user_port_http_sql": 32,
+    "local_unit_tests": 8,
+    "typescript_exit": 0,
+    "identical_builds": 2,
+    "staging_port_closed": true,
+    "auth_me_anonymous": 401,
+    "manual_rate_on_ch41_entry": "empty",
+    "previous_profile_preserved": true
+  },
+  "local_manifest": "ed18a5dfc562c70e870fdc8243ed45d5064b5c210fb06b87b71bb676181e4a16",
+  "local_proof": "evidence/2026-11-24-ch41-pilot/r478",
+  "ci": [
+    {
+      "name": "offline-safety",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "payment-regression",
+      "status": "completed",
+      "conclusion": "skipped"
+    }
+  ],
+  "next": "Подключить существующий non_tariff_normative_block через штатную авторизацию к изолированным данным. Сначала проверить зависимости check_position_non_tariff, чтение источников и исход при нехватке сведений, затем исполнить переход из карточки в Chrome. Положительный вывод проверить на реальном товаре с датированной нормой и документом на него.",
+  "db_hold": true
+}
