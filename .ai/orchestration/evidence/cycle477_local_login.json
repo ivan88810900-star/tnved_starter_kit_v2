@@ -1,0 +1,67 @@
+{
+  "cycle": 477,
+  "mode": "OWNER_CHAT_REQUEST",
+  "native_turn_id": "01a20c74-fd20-71f3-855b-047b3a86e2d7",
+  "started_at": "2026-11-24T07:28:43.308Z",
+  "product_head": "f0474d3022ba523758f71ac7634a5769442e9106",
+  "product_tree": "43368e6d20cce5f92677b522cf2429b220d30cb5",
+  "owner_scope": "Four local random authentication values only, outside Git on the Mac; normal login, session, protected-route and logout checks.",
+  "profile": {
+    "created": true,
+    "fields": 4,
+    "mode": "0o600",
+    "directory_mode": "0o700",
+    "owner_matches": true,
+    "outside_git": true,
+    "secrets_published": false,
+    "configuration_values_logged": false,
+    "port": 18018,
+    "bind": "127.0.0.1",
+    "standard_auth": true,
+    "anonymous_reference_port": 18016
+  },
+  "runtime": {
+    "http_roles": [
+      "viewer",
+      "admin"
+    ],
+    "ui_role": "declarant",
+    "ui": "real Google Chrome",
+    "source_code": "3304100000",
+    "normal_login": 200,
+    "me_after_reload": 200,
+    "protected_status_order": [
+      401,
+      503,
+      401
+    ],
+    "browser_logout": 200,
+    "me_after_logout": 401,
+    "ref_rate": "6,5 %",
+    "manual_quote": {
+      "manual_percent": "7,55",
+      "value_rub": 100000,
+      "duty_rub": 7550,
+      "total_payable": null
+    },
+    "page_errors": 0
+  },
+  "next": {
+    "critical": "Подготовить предметную интеграцию защищённого маршрута на разрешённых изолированных данных. Для положительной приёмки нужна связь конкретного товара, датированной нормы и документа с подходящей областью действия.",
+    "independent": "Пока предметные входы отсутствуют, в отдельном блоке подключить уже проверенный кандидат главы 41."
+  },
+  "limits": {
+    "db_hold": true,
+    "legal_acceptance": false,
+    "ntm_backend_connected": false,
+    "production_or_neon_access": false,
+    "external_provider_calls": false,
+    "other_credentials_changed": false
+  },
+  "proof": {
+    "path": "evidence/2026-11-24-local-login/r477",
+    "files": 5,
+    "manifest_sha256": "e8e8d1c99223d43284cddf5a03b8522de5190b6039ed3b89854d3c9001ccb335"
+  },
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7125104902"
+}
