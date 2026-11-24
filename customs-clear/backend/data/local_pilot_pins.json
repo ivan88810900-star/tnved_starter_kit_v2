@@ -121,6 +121,18 @@
           "sha256": "d38cacf25e0c9083012e26e5390c3cab4617047099bbd1f0b7433018c929ebf1"
         }
       ]
+    },
+    "41": {
+      "ZIP": "Tariff-CH41-reviewed-local-01a20890-2983-7161-b3bf-9cfbd7cd42d5.zip",
+      "ZIP_sha256": "01839f8561aefa91a6a57a4fc6a1d96038a3723a423a2dd93380c9001bc47902",
+      "parts": [
+        {
+          "first": "4101201000",
+          "last": "4115200000",
+          "file": "41-001-071.sqlite",
+          "sha256": "b721c5ff203ecb2caaeb8b61f015505bd08e2190e0299753daa9bf7b66e76fe4"
+        }
+      ]
     }
   }
 }

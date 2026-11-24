@@ -23,7 +23,13 @@ def check(port, config, root):
 
     pins = json.loads((Path(__file__).resolve().parents[1] / "data/local_pilot_pins.json").read_text())
     assert request("/api/health/ready")[1]["status"] == "ready"
-    for code in ("3304100000", "4012110000"):
+    codes = ["3304100000", "4012110000"]
+    if "41" in config["partitioned_chapters"]:
+        codes.extend(["4101201000", "4106910000", "4106920000", "4107111100"])
+        for heading in ("4108", "4109", "4110", "4111"):
+            status, data = request("/api/local-ett/" + heading + "000000")
+            assert status == 200 and data["rate"] is None
+    for code in codes:
         if code[:2] in pins["chapters"]:
             entry = pins["chapters"][code[:2]]
             db = root / config["catalog_and_rates"] / (code[:2] + ".sqlite")
