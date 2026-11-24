@@ -3,9 +3,9 @@
   "automation_id": "tariff",
   "mode": "NATIVE_AUTOMATION_HEARTBEAT",
   "trigger_subtype": "UNKNOWN",
-  "native_turn_id": "truncated",
+  "native_turn_id": "01a20c4b-2cb8-76c3-a48e-3bac48ecabac",
   "check_in": "2026-11-24T06:43:02.961Z",
-  "started_at": "Warning:",
+  "started_at": "2026-11-24T06:43:02.989Z",
   "owner_priority": 7102624268,
   "product": {
     "branch": "agent/local-catalog-payments-v1",
@@ -166,10 +166,10 @@
   },
   "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7124715427",
   "archive": {
-    "path": "evidence/2026-11-24-readiness/Tariff-local-readiness-cycle475.zip",
-    "sha256": "6baf69dba33fb301ec0dfd285b0186109a6b0b980bb79d2fdabe86a1408eb27a",
-    "manifest_sha256": "1e03560fb56f66743c1a3083ee93c4ccf6aac85b62c1de18df83fff2784d5b0d",
-    "bytes": 269609,
+    "path": "evidence/2026-11-24-readiness/Tariff-local-readiness-cycle475-r2.zip",
+    "sha256": "42083a8cdadb3815ad2a542cb91c6967a7762de932e448c98d9841f6ec62f93d",
+    "manifest_sha256": "724909a89b65992e912f80544bb597e084c42888fa201bc2dd1a9c87bcd4e59d",
+    "bytes": 269626,
     "files": 36
   }
 }
