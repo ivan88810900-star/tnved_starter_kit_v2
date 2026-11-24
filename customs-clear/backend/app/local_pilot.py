@@ -9,7 +9,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Path as PathParam, Query
+from fastapi import Depends, FastAPI, HTTPException, Path as PathParam, Query
 
 from .recovery_main import create_recovery_app
 
@@ -149,7 +149,15 @@ def create_app():
         ]
         return {"status": "OK", "items": items[:limit]}
 
-    @app.post("/api/non_tariff/normative-block")
+    protected_dependencies = []
+    if os.environ.get("TARIFF_PILOT_LOGIN") == "1":
+        from .api.auth import router as auth_router
+        from .security import require_authenticated_user
+
+        app.include_router(auth_router, prefix="/api/auth")
+        protected_dependencies = [Depends(require_authenticated_user)]
+
+    @app.post("/api/non_tariff/normative-block", dependencies=protected_dependencies)
     def protected_service_unavailable():
         raise HTTPException(503, "Защищённый нормативный сервис не подключён к локальному профилю")
 

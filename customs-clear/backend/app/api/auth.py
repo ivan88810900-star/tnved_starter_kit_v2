@@ -47,12 +47,13 @@ _USERS = {
         "password": _required_env("DECLARANT_PASSWORD"),
         "role": "declarant",
     },
-    "test": {
+}
+if os.getenv("TARIFF_PILOT_LOGIN") != "1":
+    _USERS["test"] = {
         "username": "test",
         "password": (os.getenv("TEST_PASSWORD") or "test123").strip(),
         "role": "declarant",
-    },
-}
+    }
 
 
 def authenticate_user(username: str, password: str) -> Optional[dict]:
