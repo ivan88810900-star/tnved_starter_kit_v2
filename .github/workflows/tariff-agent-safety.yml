@@ -2,7 +2,7 @@ name: Tariff agent safety
 on:
   pull_request:
     branches: [main, feat/canonical-read-path]
-    paths: ['tools/tariff_agents/**', 'tests/agent_orchestration/**', '.ai/**', 'AGENTS.md', '.github/workflows/tariff-agent-safety.yml', '.github/workflows/tariff-a6-live.yml']
+    paths: ['tools/tariff_agents/**', 'tests/agent_orchestration/**', '.ai/**', 'AGENTS.md', '.github/workflows/tariff-agent-safety.yml', '.github/workflows/tariff-a6-live.yml', 'customs-clear/backend/**', 'customs-clear/frontend/**']
   push:
     branches: ['agent/**']
   workflow_dispatch:
@@ -28,7 +28,12 @@ jobs:
       - name: Committed persistent state schema
         run: python3 -m tools.tariff_agents validate-snapshot
   payment-regression:
-    if: ${{ startsWith(github.ref, 'refs/heads/agent/core-') }}
+    if: >-
+      ${{ startsWith(github.ref, 'refs/heads/agent/core-') ||
+          github.ref == 'refs/heads/agent/local-catalog-payments-v1' ||
+          (github.event_name == 'pull_request' &&
+           (startsWith(github.head_ref, 'agent/core-') ||
+            github.head_ref == 'agent/local-catalog-payments-v1')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
@@ -93,3 +98,13 @@ jobs:
           tests/test_countervailing_ingestion.py
           tests/test_special_safeguard_ingestion.py
           tests/test_official_payment_coverage_audit.py
+      - name: Run local pilot regression slice
+        if: >-
+          ${{ github.ref == 'refs/heads/agent/local-catalog-payments-v1' ||
+              (github.event_name == 'pull_request' &&
+               github.head_ref == 'agent/local-catalog-payments-v1') }}
+        run: >-
+          python -m pytest -q
+          tests/test_local_pilot_profile.py
+          tests/test_local_pilot_payments.py
+          tests/test_local_pilot_ntm.py
