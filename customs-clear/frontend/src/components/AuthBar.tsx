@@ -1,7 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../api/client';
 import { getApiErrorMessage } from '../api/error';
 import type { AuthLoginResponse, AuthSessionResponse } from '../types/api.types';
+
+const requestLogin = 'tariff:request-login';
+export const loginCompleted = 'tariff:login-completed';
+
+export function openLoginDialog() {
+  window.dispatchEvent(new Event(requestLogin));
+}
 
 type Props = {
   variant?: 'default' | 'cargo';
@@ -36,6 +44,9 @@ export function AuthBar({ variant = 'default' }: Props) {
 
   useEffect(() => {
     void refreshSession();
+    const showLogin = () => setOpen(true);
+    window.addEventListener(requestLogin, showLogin);
+    return () => window.removeEventListener(requestLogin, showLogin);
   }, [refreshSession]);
 
   const logout = useCallback(async () => {
@@ -76,6 +87,7 @@ export function AuthBar({ variant = 'default' }: Props) {
       }
       setPassword('');
       setOpen(false);
+      window.dispatchEvent(new Event(loginCompleted));
     } catch (e) {
       setErr(getApiErrorMessage(e, 'Ошибка входа'));
     } finally {
@@ -121,12 +133,15 @@ export function AuthBar({ variant = 'default' }: Props) {
         </button>
       )}
 
-      {open && (
+      {open && createPortal(
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-cargo-deep/30 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="cc-auth-title"
+          onKeyDown={event => {
+            if (event.key === 'Escape') { event.stopPropagation(); setOpen(false); }
+          }}
           onClick={() => setOpen(false)}
         >
           <div className="cc-card w-full max-w-sm p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -142,6 +157,7 @@ export function AuthBar({ variant = 'default' }: Props) {
                 <input
                   className="cc-input mt-1 w-full"
                   autoComplete="username"
+                  autoFocus
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
@@ -167,7 +183,7 @@ export function AuthBar({ variant = 'default' }: Props) {
               </div>
             </form>
           </div>
-        </div>
+        </div>, document.body
       )}
     </div>
   );
