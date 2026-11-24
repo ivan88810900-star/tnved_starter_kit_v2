@@ -1,0 +1,58 @@
+{
+  "cycle": 479,
+  "mode": "NATIVE_AUTOMATION_HEARTBEAT",
+  "automation_id": "tariff",
+  "trigger_subtype": "UNKNOWN",
+  "check_in": "2026-11-24T08:45:16.661Z",
+  "native_turn_id": "01a20cbb-13fb-7172-b3f6-040a195d9e8a",
+  "start": "2026-11-24T08:45:16.689Z",
+  "main": "eeef5028d45ea14af09e0afb01f600bca5602316",
+  "previous_product": "f948dd8d4d14ac55a6feb798a5110967ec48fee3",
+  "handler_commit": "4db13180b06fa926d0013cd25c72e2263760cf94",
+  "product_commit": "6b496f56173f7b634170a64d5ed829dcc42b6c16",
+  "product_tree": "0d7d85e78c0816fb998b187836727bd2df6379fe",
+  "ci": {
+    "id": 45360750822,
+    "jobs": [
+      {
+        "name": "offline-safety",
+        "conclusion": "success"
+      },
+      {
+        "name": "payment-regression",
+        "conclusion": "skipped"
+      }
+    ]
+  },
+  "next": "Проверить поступление одного локального предметного комплекта. Если он поступил, связать характеристики реального товара с датированной редакцией нормы и областью документа, проверить тот же сценарий под штатным входом. Пока комплект отсутствует, обработать 38 строк главы 42 из закреплённых PDF и layout: привязать ставки, единицы, примечания и источники; повторить изолированную загрузку и сверить HTTP и карточки.",
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7126831898",
+  "local_root_relative": "evidence/2026-11-24-local-ntm/r479",
+  "manifest_sha256": "2e078fb9318b314dbcbc6a356a985ca0a1233f831135ad65a8bf2b2ed5cea77c",
+  "registry_sha256": "ab07580148d450356a8615a5a5964dc2311727d2c2c54a254c86481b5f807b78",
+  "frontend_js_sha256": "aedef3899575a9001b249190f465dcc0f062f680ebc8dc3cfbcf6e9b2d0de583",
+  "assurance": "A0 self-check",
+  "previous_authenticated_status": 503,
+  "current_auth_sequence": [
+    401,
+    200,
+    401
+  ],
+  "assessment": "INSUFFICIENT_EVIDENCE",
+  "source_card": [
+    "009/2011",
+    "seed-2026-03"
+  ],
+  "pytest": 17,
+  "legacy_http_sql": 32,
+  "invalid_http_cases": 5,
+  "manual_duty_rub": 7550,
+  "total_payable": null,
+  "positive_case_accepted": false,
+  "chapter42": {
+    "pages": 6,
+    "matched_code_page_pairs": 38,
+    "marker": "[4204]",
+    "rates_bound": false
+  },
+  "db_hold": true
+}
