@@ -9,7 +9,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Path as PathParam, Query
+from fastapi import FastAPI, HTTPException, Path as PathParam, Query
 
 from .recovery_main import create_recovery_app
 
@@ -93,12 +93,16 @@ def create_app():
     from .db import engine
     if engine.url.database != str(local_registry) or engine.url.drivername != "sqlite":
         raise RuntimeError("Start the pilot in a dedicated process")
-    from .local_pilot_payments import pilot_payment_router
+    from .local_pilot_payments import catalog_code_issue, pilot_catalog_reader, pilot_payment_router
     from .services.normative_store import list_tr_ts_acts
 
     app = FastAPI(title="Tariff — локальная справочная карточка")
     app.state.registry_tempdir = scratch
-    app.include_router(pilot_payment_router(catalog_path, lambda: require_unchanged(catalog_path, catalog_identity), local_registry))
+
+    def check_catalog_snapshot():
+        require_unchanged(catalog_path, catalog_identity)
+
+    app.include_router(pilot_payment_router(catalog_path, check_catalog_snapshot, local_registry))
 
     @app.middleware("http")
     async def local_resources_only(request, call_next):
@@ -149,17 +153,26 @@ def create_app():
         ]
         return {"status": "OK", "items": items[:limit]}
 
-    protected_dependencies = []
     if os.environ.get("TARIFF_PILOT_LOGIN") == "1":
         from .api.auth import router as auth_router
-        from .security import require_authenticated_user
+        from .api.non_tariff import non_tariff_normative_block, normative_position_checker
+        from .services.local_pilot_ntm import archive_normative_block
+
+        async def check_local_position(hs_code, description, country, permits):
+            code = hs_code.strip().replace(" ", "")
+            with pilot_catalog_reader(catalog_path, check_catalog_snapshot) as store:
+                issue = catalog_code_issue(store, code)
+                if issue:
+                    raise HTTPException(422, issue["message"])
+                return archive_normative_block(code, description)
 
         app.include_router(auth_router, prefix="/api/auth")
-        protected_dependencies = [Depends(require_authenticated_user)]
-
-    @app.post("/api/non_tariff/normative-block", dependencies=protected_dependencies)
-    def protected_service_unavailable():
-        raise HTTPException(503, "Защищённый нормативный сервис не подключён к локальному профилю")
+        app.dependency_overrides[normative_position_checker] = lambda: check_local_position
+        app.add_api_route("/api/non_tariff/normative-block", non_tariff_normative_block, methods=["POST"])
+    else:
+        @app.post("/api/non_tariff/normative-block")
+        def protected_service_unavailable():
+            raise HTTPException(503, "Защищённый нормативный сервис не подключён к локальному профилю")
 
     # Mount after the additional endpoints so the existing SPA keeps its routes.
     app.mount("/", catalog)

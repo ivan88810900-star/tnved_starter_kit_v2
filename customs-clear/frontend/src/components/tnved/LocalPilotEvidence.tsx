@@ -1,3 +1,4 @@
+import { LocalNormativeCheck } from './LocalNormativeCheck';
 import { Link } from 'react-router-dom';
 import React from 'react';
 import { localDutyDisplay } from './localDutyDisplay';
@@ -74,7 +75,7 @@ export function LocalPilotEvidence({ code, simplified, children, canCalculate }:
         <details className="text-sm">
           <summary className="cursor-pointer">Нетарифные требования</summary>
           <div className="mt-2 space-y-2">
-            <p>Применимость требований к товару не установлена.</p>
+            {canCalculate && <LocalNormativeCheck key={code} code={code} />}
             <label className="block">Найти справочную карточку ТР по номеру или названию
               <input value={query} onChange={event => setQuery(event.target.value)} maxLength={160} className="mt-1 block rounded border p-1" /></label>
             {registryError && <p role="alert">Реестр ТР недоступен.</p>}

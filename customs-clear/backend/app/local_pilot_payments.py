@@ -31,6 +31,18 @@ def catalog_code_issue(store: TnvedRecoveryStore, code: str) -> dict | None:
         "suggested_codes": [],
     }
 
+
+@contextmanager
+def pilot_catalog_reader(catalog: Path, check_snapshot: Callable[[], None]):
+    try:
+        check_snapshot()
+        with TnvedRecoveryStore(catalog) as store:
+            yield store
+        check_snapshot()
+    except (OSError, sqlite3.Error, SourceTextProvenanceError, PresentationIntegrityError) as exc:
+        raise HTTPException(503, "Не удалось проверить товар по локальному справочнику.") from exc
+
+
 def pilot_payment_router(catalog: Path, check_snapshot: Callable[[], None], scratch_db: Path) -> APIRouter:
     if engine.url.drivername != "sqlite" or engine.url.database != str(scratch_db):
         raise RuntimeError("Expected the pilot's disposable SQLite copy")
@@ -48,29 +60,19 @@ def pilot_payment_router(catalog: Path, check_snapshot: Callable[[], None], scra
     def read_only_checkout(dbapi_connection, _record, _proxy):
         dbapi_connection.execute("PRAGMA query_only=ON")
 
-    @contextmanager
-    def catalog_reader():
-        try:
-            check_snapshot()
-            with TnvedRecoveryStore(catalog) as store:
-                yield store
-            check_snapshot()
-        except (OSError, sqlite3.Error, SourceTextProvenanceError, PresentationIntegrityError) as exc:
-            raise HTTPException(503, "Не удалось проверить товар по локальному справочнику.") from exc
-
     router = APIRouter()
 
     @router.post("/api/calculator/calculate", include_in_schema=False)
     @router.post("/api/calculator/compute")
     async def compute(req: CalculatorRequest):
-        with catalog_reader() as store:
+        with pilot_catalog_reader(catalog, check_snapshot) as store:
             # The pilot has no history service. Discard the normal form's save flag.
             preview = req.model_copy(update={"hs_code": req.hs_code.strip().replace(" ", ""), "save_history": False})
             return await compute_checked(preview, lambda code: catalog_code_issue(store, code))
 
     @router.post("/api/payments/quote", response_model=PaymentQuoteResponse)
     async def quote(req: PaymentQuoteRequest):
-        with catalog_reader() as store:
+        with pilot_catalog_reader(catalog, check_snapshot) as store:
             code = req.hs_code.strip().replace(" ", "")
             issue = catalog_code_issue(store, code)
             if issue:

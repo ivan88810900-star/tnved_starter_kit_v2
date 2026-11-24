@@ -1,5 +1,6 @@
 """API нетарифного контроля."""
 import re
+from collections.abc import Callable
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -63,17 +64,22 @@ class RiskBlockRequest(BaseModel):
     items: List[RiskBlockItemIn]
 
 
+def normative_position_checker():
+    return check_position_non_tariff
+
+
 @router.post("/normative-block")
 async def non_tariff_normative_block(
     req: NormativeBlockRequest,
     _user: dict = Depends(require_authenticated_user),
+    check_position: Callable = Depends(normative_position_checker),
 ) -> JSONResponse:
     """Продуктовый блок нормативных требований по позициям (без расчёта платежей)."""
     if not req.items:
         raise HTTPException(status_code=400, detail="Список позиций пуст")
     results: List[Dict[str, Any]] = []
     for item in req.items:
-        nt = await check_position_non_tariff(
+        nt = await check_position(
             item.hs_code,
             item.description,
             item.country,
