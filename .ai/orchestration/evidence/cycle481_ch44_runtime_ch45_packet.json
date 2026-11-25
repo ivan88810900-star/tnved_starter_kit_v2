@@ -1,0 +1,111 @@
+{
+  "cycle": 481,
+  "owner_checkpoint": 7160571382,
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7160843090",
+  "product": "7550f78a496ebafd374511cab5c2c6d6d6b96217",
+  "tree": "702d7fbad4b46625b3d9e2d3c8dd79fd0e3f3765",
+  "catalog": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "ci": {
+    "id": 45601025505,
+    "head": "7550f78a496ebafd374511cab5c2c6d6d6b96217",
+    "tree": "702d7fbad4b46625b3d9e2d3c8dd79fd0e3f3765",
+    "conclusion": "success",
+    "jobs": [
+      [
+        139159668658,
+        "payment-regression",
+        "success"
+      ],
+      [
+        139159669023,
+        "offline-safety",
+        "success"
+      ]
+    ],
+    "payment_summaries": [
+      "612 passed, 2 warnings, 229 subtests passed in 23.37s",
+      "12 passed, 1 warning in 1.01s"
+    ],
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/45601025505"
+  },
+  "local_runtime": {
+    "stage_browser": 465,
+    "working_browser": 3,
+    "http_rows_per_port": 465,
+    "ports": [
+      18016,
+      18017,
+      18018
+    ],
+    "search_and_manual_calculation": true,
+    "smoke_stage": true,
+    "local_unit_tests": 12
+  },
+  "current_profile": {
+    "chapters": 15,
+    "parts": 27,
+    "rows": 1627,
+    "parsed": 1441,
+    "ambiguous": 186,
+    "verified": 0,
+    "admitted": 0
+  },
+  "packets": {
+    "44": {
+      "pdf": "8b4e020efcd88c782089f2b9a0e1ce2689ea012694b23d80ff253ca6ef1281ab",
+      "layout": "3ce6fefc67d63a3ac72ebc4e9882c5be6e7f0a01c3e749ed5be35d4fe9121e65",
+      "records": 465,
+      "parts": [
+        86,
+        86,
+        86,
+        86,
+        86,
+        35
+      ],
+      "outcomes": {
+        "PARSED": 464,
+        "AMBIGUOUS": 1
+      },
+      "negative_controls": 2288,
+      "sha256": "a9997f13932c82115b5504b86808b1c5630267dab1c0a775299c985fc627600d",
+      "bytes": 13831180
+    },
+    "45": {
+      "pdf": "700a1770a9bb19d9ed00f4e9f5a8d4a55089ee58dfd2e871f79678774f6114ce",
+      "layout": "b68b74d84b04fcbc201732dfdefed395d44d04af412b1878ef097d0069c48768",
+      "records": 12,
+      "parts": [
+        12
+      ],
+      "outcomes": {
+        "PARSED": 12
+      },
+      "negative_controls": 50,
+      "sha256": "c95c427404607916f865547bf0d82c91952105b16688c783b616d19c10f781e0",
+      "bytes": 693110
+    }
+  },
+  "staged_only": {
+    "chapter": 45,
+    "rows": 12
+  },
+  "ntm": {
+    "changes": 3,
+    "transition_observations": 4,
+    "applicability_assessed": false
+  },
+  "execution": {
+    "native_workers": 0,
+    "one_writer_explicit_in_chat_and_hourly_prompt": true,
+    "worker_tool_available": true,
+    "automation_tool_available": true,
+    "standing_prompt_sha256": "8f578b875e0eb5b115f7a2a3ab9a536b134370731f0f94962049d9a7373409f1",
+    "request_sent_to_original_chat": true
+  },
+  "next": "В существующем черновике инвойса подключить кандидатов из принятого дерева для строки о 12 парах кожаных перчаток. Уточнить назначение и сохранить явный выбор на изолированной копии. В линии ставок подключить отдельный готовый пакет главы 45 по его хешу; по НТМ сверить матрицу остальных семейств официальных источников.",
+  "manifest": "evidence/2026-11-25-ch44/r481/MANIFEST.json",
+  "manifest_sha256": "28cea03199383fe73d13d4e37b6df1e75c3ae227b65bae8c66a7f756c12f3fc5",
+  "db_hold": true,
+  "review": "same-context A0"
+}
