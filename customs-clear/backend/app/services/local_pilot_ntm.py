@@ -110,6 +110,104 @@ def _cosmetics_review(description: str, country: str | None, permits: list[dict]
     }
 
 
+# Only the source rows examined in the official publication are projected here.
+_TABLEWARE_SOURCE = "https://publication.pravo.gov.ru/document/0001202505150040"
+_TABLEWARE_ROWS = {
+    "2.1": (
+        "Стальная эмалированная хозяйственная посуда для взрослых.",
+        "7323 94 000 0", 219,
+    ),
+    "3.1": (
+        "Хозяйственная посуда из коррозионностойкой стали для взрослых.",
+        "7323 93 000 0", 221,
+    ),
+    "4.1": (
+        "Столовые приборы и кухонные принадлежности из коррозионностойкой стали, кроме изделий для детей.",
+        "7323 93 000 0 или из группы 82", 221,
+    ),
+    "47.1": (
+        "Хозяйственная посуда из бесцветного жаростойкого стекла либо из ситаллов.",
+        "из 7013", 407,
+    ),
+}
+
+
+def _tableware_candidates(code: str) -> tuple[str, ...]:
+    if code.startswith("7013"):
+        return ("47.1",)
+    # The published «из 82» is narrower than group 82. The local catalog
+    # explicitly identifies these cutlery positions as stainless steel.
+    return {
+        "7323940000": ("2.1",),
+        "7323930000": ("3.1", "4.1"),
+        "8215201000": ("4.1",),
+        "8215991000": ("4.1",),
+    }.get(code, ())
+
+
+def _tableware_review(positions: tuple[str, ...], permits: list[dict] | None) -> dict:
+    routes = []
+    for position in positions:
+        description, selector, page = _TABLEWARE_ROWS[position]
+        routes.append({
+            "document_type": "Декларация о соответствии",
+            "condition": description + " Проверяется сочетание описания и кода: " + selector + ".",
+            "locator": f"ПП РФ № 2425, перечень декларирования, п. {position}, сноска 2. Редакция № 642, PDF с. {page}.",
+            "source_url": f"{_TABLEWARE_SOURCE}?index={page}",
+        })
+    questions = [
+        "Каковы материал и покрытие по этикетке или паспорту изделия?",
+        "Что это за изделие и для какого возраста оно предназначено? Для детской продукции отдельно проверьте область ТР ТС 007/2011.",
+        "Когда и где товар выпускают в обращение? Проверьте применимость российских правил и переходных положений на эту дату.",
+        "Есть ли протокол аккредитованной лаборатории и документ, охватывающий данный товар, изготовителя и партию или серию?",
+    ]
+    if "47.1" in positions:
+        questions[0] = "Подтверждены ли бесцветное жаростойкое стекло или ситалл и хозяйственное назначение посуды?"
+    elif "4.1" in positions:
+        questions[0] = "Это посуда, столовый прибор или кухонная принадлежность? Подтверждена ли коррозионностойкая сталь?"
+    else:
+        questions[0] = "Подтверждены ли стальная основа и эмаль? Изделие из чугунного литья имеет другой код."
+
+    submitted = sum(1 for p in permits or [] if p.get("type", "").strip() and p.get("number", "").strip())
+    return {
+        "family": "RF_TABLEWARE",
+        "status": "NEEDS_CLARIFICATION",
+        "questions": questions,
+        "source_routes": routes,
+        "product_documents": {
+            "submitted_count": submitted,
+            "status": "SUBMITTED_UNVERIFIED" if submitted else "NOT_PROVIDED",
+            "registry_checked": False, "registry_matches": 0, "shipment_verified": False,
+        },
+        "edition": {
+            "status": "PARTIALLY_RECONSTRUCTED",
+            "review_date": "2026-11-25",
+            "scope": {"locator": "ПП РФ № 2425, перечень декларирования, сноска 2 в редакции № 642",
+                      "source_url": _TABLEWARE_SOURCE + "?index=670"},
+            "scope_limit": (
+                "Сноска 2 связывает декларацию с протоколом испытаний аккредитованной лаборатории. "
+                "ПП № 63 перенесло возможность выбора эквивалентной схемы сертификации в заголовок перечня. "
+                "Для товара детского назначения отдельно проверяется союзный регламент."
+            ),
+            "decisions": [
+                {"number": 642, "label": "ПП РФ № 642", "general_effective_date": "2025-09-01",
+                 "source_url": _TABLEWARE_SOURCE},
+                {"number": 1403, "label": "ПП РФ № 1403", "general_effective_date": "2025-09-11",
+                 "source_url": "https://publication.pravo.gov.ru/document/0001202509110019"},
+                {"number": 63, "label": "ПП РФ № 63", "general_effective_date": "2026-01-29",
+                 "source_url": "https://publication.pravo.gov.ru/document/0001202601290022"},
+                {"number": 797, "label": "Решение КТС № 797 о ТР ТС 007/2011",
+                 "source_url": "https://docs.eaeunion.org/documents/201/670/"},
+            ],
+            "limit": (
+                "№ 63 распространяется на отношения с 01.09.2025. Для охваченной № 1403 продукции "
+                "с изменившимися стандартами предел действия старых документов — 01.09.2026. "
+                "Заключение о поставке требует даты операции и проверки документа в реестре."
+            ),
+        },
+    }
+
+
 def archive_normative_block(
     code: str, description: str, *, country: str | None = None, permits: list[dict] | None = None
 ) -> dict:
@@ -132,6 +230,9 @@ def archive_normative_block(
             for act in acts if act["in_registry"]
         ],
     )
-    if any(act["act_code"] == "009/2011" for act in block["archive_acts"]):
+    positions = _tableware_candidates(code)
+    if positions:
+        block["product_review"] = _tableware_review(positions, permits)
+    elif any(act["act_code"] == "009/2011" for act in block["archive_acts"]):
         block["product_review"] = _cosmetics_review(description, country, permits)
     return {**result, "normative_block": block}

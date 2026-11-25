@@ -95,6 +95,50 @@ class LocalNormativeBlockTests(unittest.TestCase):
                 self.assertEqual(check([{"type": "СГР", "number": "EXAMPLE-1"}])["comparison"], "EXCERPT_NOT_CONFIGURED")
 
 
+    @patch("app.services.local_pilot_ntm.lookup_tr_ts_acts_by_codes", return_value=[])
+    def test_national_tableware_routes_are_scoped_by_product_and_code(self, lookup):
+        cases = {
+            "7323940000": ["2.1"],
+            "7323930000": ["3.1", "4.1"],
+            "8215201000": ["4.1"],
+            "8215991000": ["4.1"],
+            "7013420000": ["47.1"],
+        }
+        for code, expected in cases.items():
+            with self.subTest(code=code):
+                block = archive_normative_block(code, "товар")["normative_block"]
+                review = block["product_review"]
+                self.assertEqual(review["family"], "RF_TABLEWARE")
+                self.assertEqual(len(review["source_routes"]), len(expected))
+                for row, position in zip(review["source_routes"], expected, strict=True):
+                    self.assertIn(f"п. {position},", row["locator"])
+                    self.assertIn("?index=", row["source_url"])
+                self.assertEqual(block["required_documents"], [])
+                self.assertEqual(block["missing_documents"], [])
+        for code in ("8205598099", "7323920000", "8215999000", "9403208009"):
+            with self.subTest(code=code):
+                self.assertNotIn("product_review", archive_normative_block(code, "кастрюля")["normative_block"])
+
+    @patch("app.services.local_pilot_ntm.lookup_tr_ts_acts_by_codes", return_value=[])
+    def test_child_intent_and_document_numbers_never_admit_a_shipment(self, lookup):
+        permits = [{"type": "ДС", "number": "EXAMPLE-ONLY"}, {"type": "СГР", "number": "EXAMPLE-ONLY"}]
+        with patch("app.services.local_pilot_ntm._product_documents", side_effect=AssertionError("unrelated certificate register")):
+            result = archive_normative_block("7323940000", "Кастрюля для детей", permits=permits)
+        block = result["normative_block"]
+        review = block["product_review"]
+        self.assertEqual(result["status"], "WARNING")
+        self.assertEqual(block["assessment"], "INSUFFICIENT_EVIDENCE")
+        self.assertIn("для взрослых", review["source_routes"][0]["condition"])
+        self.assertTrue(any("детской" in q for q in review["questions"]))
+        self.assertEqual(review["product_documents"]["submitted_count"], 2)
+        self.assertFalse(review["product_documents"]["registry_checked"])
+        self.assertFalse(review["product_documents"]["shipment_verified"])
+        self.assertNotIn("EXAMPLE-ONLY", str(result))
+        self.assertEqual(review["edition"]["status"], "PARTIALLY_RECONSTRUCTED")
+        self.assertIn("Сноска 2", review["edition"]["scope_limit"])
+        self.assertIn("заголовок", review["edition"]["scope_limit"])
+        self.assertIn("01.09.2026", review["edition"]["limit"])
+
     def test_standard_route_keeps_authenticated_default_checker(self):
         from app.api import auth, non_tariff
         from tests.support_auth import login_declarant
