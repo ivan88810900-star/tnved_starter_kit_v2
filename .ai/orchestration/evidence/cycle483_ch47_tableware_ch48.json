@@ -1,0 +1,196 @@
+{
+  "cycle": 483,
+  "mode": "NATIVE_AUTOMATION_HEARTBEAT",
+  "native_turn_id": "01a21291-b4d2-7562-b4aa-ffbf2b15a96f",
+  "check_in": "2026-11-25T11:57:48.617Z",
+  "automation_id": "tariff",
+  "host": "MacBook-Air-Flint.local",
+  "cwd": "/Users/fl/Documents/ChatGPT/Tariff",
+  "start_product": "aca1936f889fe3fa68374c6c7cf0cb7ac5408747",
+  "product": "4a8644f8120c7763a64efbaad4c9a273c937a7a6",
+  "tree": "f4df8d9cc3e5dd740b33a51f69874fdce9c1b48e",
+  "main": "eeef5028d45ea14af09e0afb01f600bca5602316",
+  "catalog": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "worker_assignments": {
+    "ett": {
+      "dir": "ett-worker-worktree",
+      "branch": "agent/mac-ett-47-48",
+      "files": [
+        "customs-clear/backend/data/local_pilot_pins.json",
+        "customs-clear/backend/data/local_pilot_profile.example.json",
+        "customs-clear/backend/scripts/run_local_catalog_pilot.sh",
+        "customs-clear/backend/tests/local_pilot_smoke.py"
+      ]
+    },
+    "ntm": {
+      "dir": "ntm-worker-worktree",
+      "branch": "agent/mac-tableware-ntm",
+      "files": [
+        "customs-clear/backend/app/services/local_pilot_ntm.py",
+        "customs-clear/backend/tests/test_local_pilot_ntm.py",
+        "docs/operations/NTM_SOURCE_COVERAGE_RU.md"
+      ]
+    },
+    "invoice": {
+      "dir": "invoice-worker-worktree",
+      "branch": "agent/mac-tableware-invoice",
+      "files": [
+        "customs-clear/backend/app/services/local_pilot_invoice.py",
+        "customs-clear/backend/app/api/local_pilot_invoice.py",
+        "customs-clear/backend/tests/test_local_pilot_invoice.py"
+      ]
+    }
+  },
+  "workers": [
+    {
+      "id": "/root/ett",
+      "head": "8d463a62840fe10b31e81d6fca6dafaeaf53bf1d",
+      "review": "Invoice candidate selection and local drafts handoff"
+    },
+    {
+      "id": "/root/invoice",
+      "head": "789ae9ba53048bfa79c9350f91dac438148b1a15",
+      "review": "Chapter 47 and dated tableware conditions in HTTP and Chrome"
+    },
+    {
+      "id": "/root/ntm",
+      "head": "a3f1c4db5774e9b5d320cef42a07f6ec5cd6662c",
+      "review": "Chapter 48 from original PDF to six SQLite files"
+    }
+  ],
+  "ci": {
+    "id": 45611601506,
+    "head": "4a8644f8120c7763a64efbaad4c9a273c937a7a6",
+    "jobs": [
+      [
+        139196267780,
+        "offline-safety",
+        "completed",
+        "success"
+      ],
+      [
+        139196268064,
+        "payment-regression",
+        "completed",
+        "success"
+      ]
+    ],
+    "sums": [
+      "612 passed, 2 warnings, 229 subtests passed in 20.83s",
+      "22 passed, 1 warning, 18 subtests passed in 1.41s"
+    ],
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/45611601506"
+  },
+  "local_regressions": 22,
+  "ports": [
+    18016,
+    18018
+  ],
+  "working_frontend": {
+    "assets/index-DYYbGiB6.css": "3fd445d90afd002e24c5b46f313d2e99ff3c3db94eb20a80a6de53282b620dc7",
+    "assets/index-DfFlNTe8.js": "9071765078098748dd7f4f1209492a81e36416d171503dd4016a94d24a6fc6b9",
+    "favicon.ico": "4fe1ff53a3c444f7e347fb4b2356c2987b08e312ea467709d8377d7ccdf29271",
+    "favicon.svg": "02e525afaa6826cba9d242f06c385e03cf912c78286ad80e7910bdf087030da8",
+    "index.html": "29296de9159e6f36020031b49e43b9b7d98de785520fa4f111feb38f7ced9742"
+  },
+  "connected": {
+    "chapters": 18,
+    "parts": 30,
+    "rows": 1688,
+    "parsed": 1495,
+    "ambiguous": 193,
+    "verified": 0,
+    "admitted": 0
+  },
+  "chapter47": {
+    "rows": 26,
+    "parsed": 19,
+    "qualified": 7,
+    "unit": "кг 90% с/в",
+    "footnote": "67С)",
+    "pdf": "d6218c263892b8d5b49981961c0a903d62376aefe8d5efe9a3aab10e92a3d8ca",
+    "zip": "62cd33b65021c17b2b8599f33f625d8f33366e976a217f71b23634d2f8914607",
+    "sqlite": "65103fff24fe9a78ee1cc91299bc404667e25fea851c2687e1fb0a04e10133a9",
+    "http_cards_stage": 26,
+    "http_cards_working": 26
+  },
+  "chapter48": {
+    "prepared": true,
+    "connected": false,
+    "records": 173,
+    "partition_sizes": [
+      86,
+      86,
+      1
+    ],
+    "parsed": 150,
+    "ambiguous": 23,
+    "footnotes": 22,
+    "compound": 1,
+    "admitted": 0,
+    "pdf": "a5ec4385eee6bcefc9b4893c54f4ed3d8453050f01bcc4cf8f0c7f226985dbdb",
+    "bundle": "2362ebce1ff35fe38ca756a7a87ae5ad3b2aafb7aff4d070c6aaf3e2c9e26480",
+    "negative_checks": 739,
+    "independent": "ntm/review-ch48.json"
+  },
+  "invoice": {
+    "code": "7323940000",
+    "reference": "six synthetic enameled steel pots",
+    "explicit": true,
+    "clarification_restored": true,
+    "manual_duty_rub": 7550,
+    "customs_value_rub": 100000,
+    "manual_percent": "7.55",
+    "total_payable_rub": null,
+    "previous_private_draft_keys_present": true
+  },
+  "ntm": {
+    "official_and_public_files": 18,
+    "bytes": 106306961,
+    "previous_sources": 4,
+    "conditions": [
+      "2.1",
+      "3.1",
+      "4.1",
+      "47.1"
+    ],
+    "scope": "Russia, conditional, date-bound",
+    "shipment_verified": false,
+    "assessment": "INSUFFICIENT_EVIDENCE",
+    "field_test": "Adult enamel cookware, no verified shipment document"
+  },
+  "limits": [
+    "DB HOLD",
+    "local isolated files only",
+    "no Neon, merge, deployment, enforcement or A6"
+  ],
+  "lease_acquisition": "7c88cfd904e83c1fc3044820a9ec9b7d622475b4",
+  "artifact": {
+    "path": "evidence/2026-11-25-parallel/r483/MANIFEST.json",
+    "manifest": "2ce113dad47626ea75287f7323d402e9e54861fce247a247e4653a1b186dd8f0",
+    "files": 131,
+    "bytes": 117992022
+  },
+  "next": {
+    "rates": {
+      "chapter": 48,
+      "stage": "READY_TO_CONNECT_INDEPENDENT_SOURCE_QA_PASS",
+      "records": 173,
+      "parsed": 150,
+      "ambiguous": 23,
+      "parts": [
+        86,
+        86,
+        1
+      ],
+      "zip": "evidence/2026-11-25-parallel/r483/ett/ch48/Tariff-ETT-Chapter48-offline-20261125.zip",
+      "sha256": "2362ebce1ff35fe38ca756a7a87ae5ad3b2aafb7aff4d070c6aaf3e2c9e26480"
+    },
+    "ntm": "Для детской посуды по ТР ТС 007/2011 из сохранённого первичного текста сверить возраст, материал, вид документа и дату выпуска. Сопоставить условия с национальными позициями для взрослой посуды.",
+    "invoice": "Пройти следующий случай детской или стеклянной посуды через уточнение материала и назначения. Сохранить явный выбор и отдельно проверить ссылку на предметные условия.",
+    "parallel_execution": "Один A0 и до трёх штатных Codex-работников, проверяющий входит в лимит.",
+    "primary": "Подключить три готовые части главы 48 в новом локальном профиле. Проверить 173 карточки, 22 сноски, минимальную ставку у 4814200000 и отсутствие действующей ставки у отметки [4815]."
+  },
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7161935018"
+}
