@@ -113,7 +113,7 @@ function DraftEditor({ username }: { username: string }) {
     {draft ? <>
       <div className="flex items-center justify-between"><h2 className="font-semibold">Позиции инвойса</h2>
         <button className="underline" onClick={() => { sessionStorage.removeItem(storageKey); setDraft(undefined); setFile(undefined); setDescription(''); setMessage(''); }}>Начать новый инвойс</button></div>
-      {draft.lines.map(item => <InvoiceLine key={draft.draft_id + '-' + item.line} draftId={draft.draft_id} item={item} onSaved={saved => setDraft(current => current && ({ ...current, lines: current.lines.map(row => row.line === saved.line ? saved : row) }))} />)}
+      {draft.lines.map(item => <InvoiceLine key={draft.draft_id + '-' + item.line} draftId={draft.draft_id} item={item} onSaved={saved => setDraft(current => current?.draft_id === draft.draft_id ? { ...current, lines: current.lines.map(row => row.line === saved.line ? saved : row) } : current)} />)}
     </> : <form className="max-w-2xl space-y-4" onSubmit={create}>
       <label className="block">Файл инвойса (.xlsx)<input type="file" accept=".xlsx" disabled={busy} className="mt-1 block" onChange={e => setFile(e.target.files?.[0])} /></label>
       {!file && <label className="block">Или описание позиции<textarea className="cc-input mt-1 w-full" rows={3} value={description} onChange={e => setDescription(e.target.value)} /></label>}
