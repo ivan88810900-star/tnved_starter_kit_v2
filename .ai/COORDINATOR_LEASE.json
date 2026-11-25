@@ -1,6 +1,6 @@
 {
   "acquisition_note": "Reconcile verified cycle 450 PR270 adjudication into persistent state",
-  "expires_at": "2026-11-24T12:07:20.097509Z",
+  "expires_at": "2026-11-25T09:24:14.291572Z",
   "generation": 480,
   "holder": "/root/codex-01a1b044-0f10-7941-b8a5-999cf67f41cc",
   "lease_repair": {
@@ -45,5 +45,5 @@
   },
   "state": "active",
   "token": "825ff5d660fe434dbdab3a62f43ef698",
-  "updated_at": "2026-11-24T11:07:20.097509Z"
+  "updated_at": "2026-11-25T08:24:14.291572Z"
 }
