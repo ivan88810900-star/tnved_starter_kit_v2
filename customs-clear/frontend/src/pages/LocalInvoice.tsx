@@ -167,6 +167,6 @@ export function LocalInvoice() {
       : !available ? <p>Для работы с инвойсом откройте локальный профиль с входом.{window.location.hostname === '127.0.0.1' && window.location.port === '18016' && <> <a className="underline" href="http://127.0.0.1:18018/invoice">Открыть инвойс</a></>}</p>
       : !user ? <button className="cc-btn-primary" onClick={openLoginDialog}>Войти для работы с инвойсом</button>
       : role !== 'admin' && role !== 'declarant' ? <p>Для работы с черновиком войдите как декларант или администратор.</p>
-      : <><p className="text-sm text-cargo-mid">Черновик хранится на этом Mac до остановки локального профиля.</p><DraftEditor key={user} username={user} /></>}
+      : <><p className="text-sm text-cargo-mid">Черновик хранится временно на этом Mac. После остановки профиля восстановление зависит от сохранности его файла.</p><DraftEditor key={user} username={user} /></>}
   </section>;
 }

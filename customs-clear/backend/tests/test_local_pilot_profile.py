@@ -29,6 +29,27 @@ class LocalProfileTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "Fresh pilot"):
                     restore_local_drafts(before.path, after.path)
 
+    def test_incomplete_handoff_keeps_the_destination_empty(self):
+        from app.services.local_pilot_invoice import PilotDrafts
+
+        with TemporaryDirectory(prefix="tariff-invoice-handoff-") as old, TemporaryDirectory() as fresh:
+            before = PilotDrafts(Path(old))
+            after = PilotDrafts(Path(fresh))
+            before.create("declarant", [{"line": 1, "description": "Стакан", "quantity": 6, "unit": "шт"}])
+            for suffix in ("-journal", "-wal", "-shm"):
+                with self.subTest(suffix=suffix):
+                    marker = Path(str(before.path) + suffix)
+                    marker.touch()
+                    with self.assertRaisesRegex(ValueError, "outstanding SQLite journal"):
+                        restore_local_drafts(before.path, after.path)
+                    marker.unlink()
+            with closing(sqlite3.connect(before.path)) as db:
+                self.assertEqual(db.execute("PRAGMA journal_mode=WAL").fetchone(), ("wal",))
+            with self.assertRaisesRegex(ValueError, "rollback-journal mode"):
+                restore_local_drafts(before.path, after.path)
+            with closing(sqlite3.connect(after.path)) as db:
+                self.assertEqual(db.execute("SELECT count(*) FROM draft_lines").fetchone(), (0,))
+
     def test_empty_owner_file_is_incomplete(self):
         with TemporaryDirectory() as tmp:
             path = Path(tmp) / "profile"

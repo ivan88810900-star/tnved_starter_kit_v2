@@ -68,9 +68,10 @@ export function LocalNormativeCheck({ code }: { code: string }) {
         <select className="cc-input mt-1 block" value={tablewareUse} onChange={e => { setTablewareUse(e.target.value); setAge('unknown'); clearAssessment(); }}>
           <option value="unknown">Не указано</option>
           <option value="child_food_glass">Детская стеклянная посуда для еды или питья</option>
+          {code === '7013371000' && <option value="child_drinking_cup">Изготовитель подтвердил назначение детской чашки, поильника или аналогичного изделия для питья</option>}
         </select>
       </label>
-      {tablewareUse === 'child_food_glass' && <label className="block">Для какого возраста предназначено изделие
+      {tablewareUse !== 'unknown' && <label className="block">Для какого возраста предназначено изделие
         <select className="cc-input mt-1 block" value={age} onChange={e => { setAge(e.target.value); clearAssessment(); }}>
           <option value="unknown">Возраст не указан</option>
           <option value="under_3">До 3 лет</option>

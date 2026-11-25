@@ -167,7 +167,7 @@ def create_app():
         from .services.local_pilot_ntm import archive_normative_block
 
         class LocalNormativeItem(NormativeBlockItemIn):
-            tableware_use: Literal["unknown", "child_food_glass"] = "unknown"
+            tableware_use: Literal["unknown", "child_food_glass", "child_drinking_cup"] = "unknown"
             tableware_age: Literal["unknown", "under_3", "over_3", "exactly_3", "adult"] = "unknown"
 
         class LocalNormativeRequest(NormativeBlockRequest):

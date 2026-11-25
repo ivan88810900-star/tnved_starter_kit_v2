@@ -47,6 +47,14 @@ def restore_local_drafts(previous: Path, current: Path) -> None:
             or parent.stat().st_uid != os.getuid() or stat.S_IMODE(parent.stat().st_mode) != 0o700
             or previous.stat().st_uid != os.getuid() or previous.samefile(current)):
         raise ValueError("Expected the private handoff of a stopped local pilot")
+    # An immutable SQLite reader would ignore unapplied journal contents.
+    if any(Path(str(previous) + suffix).exists() for suffix in ("-wal", "-shm", "-journal")):
+        raise ValueError("Draft handoff contains an outstanding SQLite journal")
+    with previous.open("rb") as source:
+        # Header bytes 18 and 19 are SQLite's write/read format versions.
+        source.seek(18)
+        if source.read(2) != bytes((1, 1)):
+            raise ValueError("Draft handoff requires the pilot rollback-journal mode")
     base = ("owner", "draft_id", "line", "description", "quantity", "unit", "selected_code")
     with closing(sqlite3.connect(previous.resolve().as_uri() + "?mode=ro&immutable=1", uri=True)) as src, closing(sqlite3.connect(current)) as dst:
         src.execute("PRAGMA trusted_schema=OFF")
