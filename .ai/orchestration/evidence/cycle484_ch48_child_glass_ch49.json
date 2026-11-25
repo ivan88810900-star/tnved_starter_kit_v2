@@ -1,0 +1,306 @@
+{
+  "cycle": 484,
+  "mode": "NATIVE_AUTOMATION_HEARTBEAT",
+  "native_turn_id": "01a212c7-58c6-7d53-a6e5-f8364b89e66e",
+  "check_in": "2026-11-25T12:56:24.000Z",
+  "automation_id": "tariff",
+  "schedule": {
+    "prompt_sha256": "328fcd4cc5539b8f718211317bbfcfad495a8d7a404f47bf058953c552537dde",
+    "hourly_interval": 1,
+    "thread": "01a1b044-0f10-7941-b8a5-999cf67f41cc",
+    "active": true
+  },
+  "host": "MacBook-Air-Flint.local",
+  "cwd": "/Users/fl/Documents/ChatGPT/Tariff",
+  "start_product": "4a8644f8120c7763a64efbaad4c9a273c937a7a6",
+  "product": "54342e91407f11babb5e4aedbcc82c1988792168",
+  "tree": "766bf0de95501a55d21b287533e9fc5df47fc7c2",
+  "main": "eeef5028d45ea14af09e0afb01f600bca5602316",
+  "catalog": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "worker_assignments": {
+    "ett": {
+      "dir": "ett-worker-worktree",
+      "branch": "agent/mac-ett-48-49",
+      "files": [
+        "customs-clear/backend/data/local_pilot_pins.json",
+        "customs-clear/backend/data/local_pilot_profile.example.json",
+        "customs-clear/backend/scripts/run_local_catalog_pilot.sh",
+        "customs-clear/backend/tests/local_pilot_smoke.py"
+      ]
+    },
+    "ntm": {
+      "dir": "ntm-worker-worktree",
+      "branch": "agent/mac-child-tableware-ntm",
+      "files": [
+        "customs-clear/backend/app/services/local_pilot_ntm.py",
+        "customs-clear/backend/tests/test_local_pilot_ntm.py",
+        "docs/operations/NTM_SOURCE_COVERAGE_RU.md"
+      ]
+    },
+    "invoice": {
+      "dir": "invoice-worker-worktree",
+      "branch": "agent/mac-glass-invoice",
+      "files": [
+        "customs-clear/backend/app/services/local_pilot_invoice.py",
+        "customs-clear/backend/app/api/local_pilot_invoice.py",
+        "customs-clear/backend/tests/test_local_pilot_invoice.py"
+      ]
+    }
+  },
+  "workers": [
+    {
+      "id": "/root/ett",
+      "head": "bf841ea59395da512979b2c83c53262dca6379f3",
+      "review": "Инвойс HTTP/Chrome, ё/е и явное сохранение"
+    },
+    {
+      "id": "/root/ntm",
+      "head": "5119a0f56c179ef8c0ebc8f2bb659c3fb54023b3",
+      "review": "Глава 49 от PDF до двух SQLite"
+    },
+    {
+      "id": "/root/invoice",
+      "head": "144c5db7b367f64b8e807b7e9336764bd610387d",
+      "review": "Глава 48 в HTTP/Chrome, первичные условия детской посуды и все четыре возрастные ветви"
+    }
+  ],
+  "ci": {
+    "id": 45620250440,
+    "head": "54342e91407f11babb5e4aedbcc82c1988792168",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/45620250440",
+    "conclusion": "success",
+    "jobs": [
+      [
+        139226154051,
+        "offline-safety",
+        "completed",
+        "success"
+      ],
+      [
+        139226154565,
+        "payment-regression",
+        "completed",
+        "success"
+      ]
+    ],
+    "steps": [
+      [
+        "Run payment regression slice",
+        "success"
+      ],
+      [
+        "Run local pilot regression slice",
+        "success"
+      ]
+    ],
+    "sums": [
+      "612 passed, 2 warnings, 229 subtests passed in 29.96s",
+      "25 passed, 1 warning, 29 subtests passed in 2.16s"
+    ]
+  },
+  "local_regressions": 25,
+  "ports": [
+    18016,
+    18018
+  ],
+  "working_frontend": {
+    "assets/index-CWF3BNtX.js": "af1cf94b4f1de86827d136705cac89e5b5912d3c309093e5bec09fd71af17edd",
+    "assets/index-DYYbGiB6.css": "3fd445d90afd002e24c5b46f313d2e99ff3c3db94eb20a80a6de53282b620dc7",
+    "favicon.ico": "4fe1ff53a3c444f7e347fb4b2356c2987b08e312ea467709d8377d7ccdf29271",
+    "favicon.svg": "02e525afaa6826cba9d242f06c385e03cf912c78286ad80e7910bdf087030da8",
+    "index.html": "78adb7360863950e104cacaa16c127ad87cf113d865b75b8bd7204d428df8942"
+  },
+  "connected": {
+    "chapters": 19,
+    "parts": 33,
+    "rows": 1861,
+    "counts": {
+      "PARSED": 1645,
+      "AMBIGUOUS": 216
+    },
+    "admitted": 0,
+    "verified": 0,
+    "legal": [
+      "UNVERIFIED"
+    ]
+  },
+  "chapter48": {
+    "ZIP": "Tariff-ETT-Chapter48-offline-20261125.zip",
+    "ZIP_sha256": "2362ebce1ff35fe38ca756a7a87ae5ad3b2aafb7aff4d070c6aaf3e2c9e26480",
+    "parts": [
+      {
+        "first": "4801000000",
+        "last": "4810220001",
+        "file": "48-001-086.sqlite",
+        "sha256": "72ad8be383faa7537113be3f4d467852fe7957c244220a13160e86ed9c0b0ae6"
+      },
+      {
+        "first": "4810220009",
+        "last": "4823908596",
+        "file": "48-087-172.sqlite",
+        "sha256": "b09d283a11e05d5a3a091671913da065516a264b057213c4462188a5585d93c0"
+      },
+      {
+        "first": "4823908597",
+        "last": "4823908597",
+        "file": "48-173-173.sqlite",
+        "sha256": "23d95d264f5162e3a32bd8c8d2a46528e025743c04846e922c2d5697cc60cdc9"
+      }
+    ],
+    "pdf": "a5ec4385eee6bcefc9b4893c54f4ed3d8453050f01bcc4cf8f0c7f226985dbdb",
+    "rows": 173,
+    "parsed": 150,
+    "ambiguous": 23,
+    "duplicate_codes": 0,
+    "footnotes": {
+      "63С)": 4,
+      "67С)": 18
+    },
+    "minimum": "4814200000 · 5 %, но не менее 0,1 евро за 1 кг",
+    "inactive": "[4815]",
+    "runtime": [
+      {
+        "port": 18017,
+        "head": "54342e91407f11babb5e4aedbcc82c1988792168",
+        "evidence": "runtime-20261125T130535541664Z-18017",
+        "chrome_cards": 173,
+        "http_rows": 173,
+        "browser_errors": [],
+        "notes": {
+          "63С)": 4,
+          "67С)": 18
+        },
+        "combined_code": "4814200000",
+        "reserved": "[4815]",
+        "http_dump_sha256": "37facceccdf158faafa7e713f796fea8d3a0463a28aa5358484aabc8e25333a4",
+        "cards_sha256": "39ed3f8a1fb8ef06d8e43bc532b94b2e4f94dc05957a55866e460fdf46aeac69"
+      },
+      {
+        "port": 18016,
+        "head": "54342e91407f11babb5e4aedbcc82c1988792168",
+        "evidence": "runtime-20261125T131021554023Z-18016",
+        "chrome_cards": 173,
+        "http_rows": 173,
+        "browser_errors": [],
+        "notes": {
+          "63С)": 4,
+          "67С)": 18
+        },
+        "combined_code": "4814200000",
+        "reserved": "[4815]",
+        "http_dump_sha256": "01e738d50978c3ed65475e893239df9288be455a9df5b2feda2eab2b73b8ccd7",
+        "cards_sha256": "e5f416c5e5c9f1147ab6fe5fe22596a34ad3a85e455b0fb04c9de3b7fc10a568"
+      }
+    ],
+    "independent": "invoice/review-ch48-ui-18017.json"
+  },
+  "chapter49": {
+    "prepared": true,
+    "connected": false,
+    "zip": "Tariff-ETT-Chapter49-offline-20261125.zip",
+    "sha256": "5dd53b08b5411ec2d7beb03478e454691dd537964db4dae06be9232912c517b5",
+    "sqlite": "8fa2549213223d41b9f7c4fd312b0a34c93a70b5318aad0ba268ddaa8f97d952",
+    "pdf": "293ab81b29eb3c426d406c83a75bfea1f66da1d4171c39a8927b91ec7d57bb50",
+    "rows": 23,
+    "parsed": 21,
+    "ambiguous": 2,
+    "zero": 13,
+    "notes": 6,
+    "footnotes": 2,
+    "negative_checks": 101,
+    "repeat_dml": 0,
+    "independent": "ntm/review-ch49.json",
+    "independent_sha256": "b9b9f9d4d92694f2c0a77c5c09ec0970063f488ac1c4d80ed7cc03771f1b8a88"
+  },
+  "invoice": {
+    "code": "7013491000",
+    "alternate": "7013371000",
+    "synthetic_units": 8,
+    "reload": true,
+    "explicit": true,
+    "manual_percent": "7.55",
+    "customs_value_rub": 100000,
+    "manual_duty_rub": 7550,
+    "total_payable_rub": null,
+    "previous_profile": "FRESH_AFTER_PREVIOUS_PROFILES_STOPPED",
+    "previous_drafts_imported": false,
+    "previous_drafts_modified": false,
+    "independent": "ett/glass-ui-54342e91.json"
+  },
+  "ntm": {
+    "source_files": 17,
+    "source_bytes": 9550428,
+    "conditional_age_forms": {
+      "unknown": {
+        "conditional_form": null,
+        "article_12_paragraph": null,
+        "no_registered_document": true,
+        "no_admitted_shipment": true
+      },
+      "under_3": {
+        "conditional_form": "Государственная регистрация с последующим декларированием соответствия",
+        "article_12_paragraph": "2",
+        "no_registered_document": true,
+        "no_admitted_shipment": true
+      },
+      "exactly_3": {
+        "conditional_form": null,
+        "article_12_paragraph": null,
+        "no_registered_document": true,
+        "no_admitted_shipment": true
+      },
+      "over_3": {
+        "conditional_form": "Сертификат соответствия",
+        "article_12_paragraph": "4",
+        "no_registered_document": true,
+        "no_admitted_shipment": true
+      }
+    },
+    "scope": "four pinned glass table/kitchenware leaves; explicit child food use and age from label",
+    "dates": {
+      "51": "2018-09-25",
+      "147": "2023-03-26",
+      "195": "2023-01-15",
+      "797": "2012-07-01"
+    },
+    "negative_controls": [
+      "declared-age-without-purpose",
+      "contradictory-adult",
+      "adjacent-drinking-vessel",
+      "wrong-material"
+    ],
+    "shipment_verified": false,
+    "independent": "invoice/review-child-ntm-ui.json"
+  },
+  "next": {
+    "primary": "Подключить проверенную SQLite главы 49 к отдельной локальной копии профиля. Сверить 23 карточки в HTTP и Chrome, включая 13 нулевых ставок и две сноски 63С).",
+    "rates": {
+      "chapter": 49,
+      "stage": "READY_TO_CONNECT_INDEPENDENT_SOURCE_QA_PASS",
+      "records": 23,
+      "parsed": 21,
+      "ambiguous": 2,
+      "parts": [
+        23
+      ],
+      "zip": "evidence/2026-11-25-parallel/r484/ett/ch49/Tariff-ETT-Chapter49-offline-20261125.zip",
+      "sha256": "5dd53b08b5411ec2d7beb03478e454691dd537964db4dae06be9232912c517b5"
+    },
+    "ntm": "Проверить по первичным источникам отдельный стеклянный сосуд для питья с детской маркировкой и соответствующую строку импортного перечня. Сопоставить материал, возраст, форму и даты перед расширением охвата карточки.",
+    "invoice": "Пройти развилку «сосуд для питья» для второй учебной строки XLSX, сохранить отдельные выборы тарелки и стакана, проверить связь с условиями карточек. На изолированном учебном профиле проверить восстановление после остановки по заранее привязанному файлу; при отсутствии подтверждённого файла показать это пользователю.",
+    "parallel_execution": "A0 и до трёх работников, проверяющий входит в лимит."
+  },
+  "limits": [
+    "DB HOLD",
+    "Local isolated files only",
+    "No legal release of rates or shipment, no full dated payment total",
+    "Restart survival and long-term private invoice storage are open",
+    "No Neon, merge, deployment, enforcement, A6 or private external transfer"
+  ],
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7163234751",
+  "local_manifest": "evidence/2026-11-25-parallel/r484/MANIFEST.json",
+  "local_manifest_sha256": "234a93bef0d8fccb7f522351b5d16bce26529a466fbbe38c69eb1a413e59899f",
+  "manifest_count": 119,
+  "lease_generation": 484,
+  "acquisition_commit": "f132509b7c87eccb6e2d8c25ee98602adcea1a52"
+}
