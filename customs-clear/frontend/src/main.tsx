@@ -5,6 +5,7 @@ import './styles.css';
 import { Layout } from './components/Layout';
 import { SystemHealth } from './pages/admin/SystemHealth';
 import { BulkNormativeImport } from './pages/admin/BulkNormativeImport';
+import { LocalInvoice } from './pages/LocalInvoice';
 import { InvoicePage } from './pages/Invoice';
 import { HomeDashboard } from './pages/HomeDashboard';
 import { DocumentCheck } from './pages/DocumentCheck';
@@ -74,7 +75,7 @@ function AppRoutes() {
         <Route path="trois" element={<Trois />} />
         <Route path="permits" element={<PermitPicker />} />
         <Route path="calculator" element={import.meta.env.VITE_TARIFF_LOCAL_PILOT === '1' ? <LocalCatalogCalculator /> : <Calculator />} />
-        <Route path="invoice" element={<InvoicePage />} />
+        <Route path="invoice" element={import.meta.env.VITE_TARIFF_LOCAL_PILOT === '1' ? <LocalInvoice /> : <InvoicePage />} />
         <Route path="non-tariff" element={<NonTariff />} />
         <Route
           path="assistant"

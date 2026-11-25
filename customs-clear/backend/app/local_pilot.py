@@ -153,7 +153,14 @@ def create_app():
         ]
         return {"status": "OK", "items": items[:limit]}
 
-    if os.environ.get("TARIFF_PILOT_LOGIN") == "1":
+    login_enabled = os.environ.get("TARIFF_PILOT_LOGIN") == "1"
+
+    @app.get("/api/local-invoice/profile")
+    def invoice_profile():
+        return {"enabled": login_enabled}
+
+    if login_enabled:
+        from .api.local_pilot_invoice import pilot_invoice_router
         from .api.auth import router as auth_router
         from .api.non_tariff import non_tariff_normative_block, normative_position_checker
         from .services.local_pilot_ntm import archive_normative_block
@@ -164,9 +171,10 @@ def create_app():
                 issue = catalog_code_issue(store, code)
                 if issue:
                     raise HTTPException(422, issue["message"])
-                return archive_normative_block(code, description)
+                return archive_normative_block(code, description, country=country, permits=permits)
 
         app.include_router(auth_router, prefix="/api/auth")
+        app.include_router(pilot_invoice_router(catalog_path, check_catalog_snapshot, Path(scratch.name)))
         app.dependency_overrides[normative_position_checker] = lambda: check_local_position
         app.add_api_route("/api/non_tariff/normative-block", non_tariff_normative_block, methods=["POST"])
     else:

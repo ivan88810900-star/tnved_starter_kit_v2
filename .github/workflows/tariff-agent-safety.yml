@@ -108,3 +108,4 @@ jobs:
           tests/test_local_pilot_profile.py
           tests/test_local_pilot_payments.py
           tests/test_local_pilot_ntm.py
+          tests/test_local_pilot_invoice.py

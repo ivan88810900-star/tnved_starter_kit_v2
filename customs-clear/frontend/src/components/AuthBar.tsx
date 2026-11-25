@@ -5,6 +5,7 @@ import { getApiErrorMessage } from '../api/error';
 import type { AuthLoginResponse, AuthSessionResponse } from '../types/api.types';
 
 const requestLogin = 'tariff:request-login';
+export const logoutCompleted = 'tariff:logout-completed';
 export const loginCompleted = 'tariff:login-completed';
 
 export function openLoginDialog() {
@@ -58,6 +59,7 @@ export function AuthBar({ variant = 'default' }: Props) {
       /* ignore */
     } finally {
       setSession(null);
+      window.dispatchEvent(new Event(logoutCompleted));
       setOpen(false);
       setPassword('');
       setBusy(false);
