@@ -175,6 +175,10 @@ def create_app():
 
         app.include_router(auth_router, prefix="/api/auth")
         app.include_router(pilot_invoice_router(catalog_path, check_catalog_snapshot, Path(scratch.name)))
+        if prior_drafts := os.environ.pop("TARIFF_PILOT_RESUME_DRAFTS", None):
+            from .local_pilot_profile import restore_local_drafts
+
+            restore_local_drafts(Path(prior_drafts), Path(scratch.name) / "invoice-drafts.sqlite")
         app.dependency_overrides[normative_position_checker] = lambda: check_local_position
         app.add_api_route("/api/non_tariff/normative-block", non_tariff_normative_block, methods=["POST"])
     else:

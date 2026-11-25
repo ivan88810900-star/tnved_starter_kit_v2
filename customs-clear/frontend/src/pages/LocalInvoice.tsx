@@ -4,10 +4,10 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { loginCompleted, logoutCompleted, openLoginDialog } from '../components/AuthBar';
 
-type Line = { line: number; description: string; quantity?: number | null; unit?: string | null; selected_code: string | null };
+type Line = { clarification?: string; line: number; description: string; quantity?: number | null; unit?: string | null; selected_code: string | null };
 type Draft = { draft_id: string; lines: Line[] };
 type Match = { code: string; label: string; path: string[] };
-type Choice = { notice?: string; candidates: Match[]; question: { text: string; options: { value: string; label: string }[] } | null; limited: boolean; selected_code: string | null };
+type Choice = { product_question?: string | null; notice?: string; candidates: Match[]; question: { text: string; options: { value: string; label: string }[] } | null; limited: boolean; selected_code: string | null };
 
 function errorText(error: unknown) {
   const detail = isAxiosError(error) && error.response?.data?.detail;
@@ -17,16 +17,19 @@ function errorText(error: unknown) {
 
 function InvoiceLine({ draftId, item, onSaved }: { draftId: string; item: Line; onSaved: (line: Line) => void }) {
   const [choices, setChoices] = useState<Choice>();
+  const [clarification, setClarification] = useState(item.clarification || '');
+  const [submitted, setSubmitted] = useState(item.clarification || '');
   const [answers, setAnswers] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const path = '/local-invoice/drafts/' + draftId + '/lines/' + item.line;
 
-  async function search(next: string[]) {
+  async function search(next: string[], detail = submitted) {
     setBusy(true);
     setError('');
     try {
-      const { data } = await api.post<Choice>(path + '/candidates', { answers: next });
+      const { data } = await api.post<Choice>(path + '/candidates', { answers: next, clarification: detail });
+      setSubmitted(detail);
       setAnswers(next);
       setChoices(data);
     } catch (e) { setError(errorText(e)); }
@@ -37,7 +40,7 @@ function InvoiceLine({ draftId, item, onSaved }: { draftId: string; item: Line; 
     setBusy(true);
     setError('');
     try {
-      const { data } = await api.put<Draft>(path + '/choice', { code, answers });
+      const { data } = await api.put<Draft>(path + '/choice', { code, answers, clarification: submitted });
       const saved = data.lines.find(row => row.line === item.line);
       if (!saved) throw new Error('Missing invoice line');
       onSaved(saved);
@@ -51,19 +54,26 @@ function InvoiceLine({ draftId, item, onSaved }: { draftId: string; item: Line; 
     <h3 className="font-semibold">{item.description}</h3>
     {item.quantity != null && <p>{item.quantity} {item.unit}</p>}
     <p>{item.selected_code ? <>Выбранный код · <Link className="underline" to={'/tnved?code=' + item.selected_code}>{item.selected_code}</Link></> : 'Код ещё не выбран'}</p>
+    {item.clarification && <p className="text-sm text-cargo-mid">Уточнение · {item.clarification}</p>}
     {!choices && <button type="button" disabled={busy} className="cc-btn-secondary" onClick={() => void search([])}>{item.selected_code ? 'Изменить выбор' : 'Подобрать код'}</button>}
     {choices && <div className="space-y-3">
-      {choices.question && <fieldset disabled={busy}>
+      {(choices.product_question || submitted) && <form className="space-y-2" onSubmit={e => { e.preventDefault(); void search([], clarification.trim()); }}>
+        <label className="block">{choices.product_question || 'Уточнение вида изделия'}
+          <input className="cc-input mt-1 block" maxLength={240} value={clarification} onChange={e => setClarification(e.target.value)} disabled={busy} />
+        </label>
+        <button className="cc-btn-secondary" disabled={busy || !clarification.trim() || clarification.trim() === submitted}>Применить уточнение</button>
+      </form>}
+      {clarification.trim() === submitted && choices.question && <fieldset disabled={busy}>
         <legend className="font-medium">{choices.question.text}</legend>
         <div className="mt-2 flex flex-wrap gap-2">{choices.question.options.map(o => <button type="button" className="cc-btn-secondary" key={o.value} onClick={() => void search([...answers, o.value])}>{o.label}</button>)}</div>
       </fieldset>}
       {answers.length > 0 && <button className="underline" disabled={busy} onClick={() => void search(answers.slice(0, -1))}>Вернуться к предыдущему ответу</button>}
       {choices.limited && <p>Показана часть совпадений. Уточните характеристики товара.</p>}
-      {!choices.candidates.length && !choices.question && <p>{choices.notice || 'По описанию в справочнике не удалось подобрать код.'}</p>}
+      {!choices.candidates.length && !choices.question && !choices.product_question && <p>{choices.notice || 'По описанию в справочнике не удалось подобрать код.'}</p>}
       <ul className="divide-y divide-cargo-border">{choices.candidates.map(c => <li key={c.code} className="space-y-1 py-2">
         <Link to={'/tnved?code=' + c.code} className="font-medium underline">{c.code} · {c.label}</Link>
         <p className="text-sm text-cargo-mid">{c.path.join(' › ')}</p>
-        <button type="button" className="cc-btn-secondary" disabled={busy} onClick={() => void save(c.code)}>Выбрать {c.code}</button>
+        <button type="button" className="cc-btn-secondary" disabled={busy || clarification.trim() !== submitted} onClick={() => void save(c.code)}>Выбрать {c.code}</button>
       </li>)}</ul>
     </div>}
     {error && <p role="alert">{error}</p>}

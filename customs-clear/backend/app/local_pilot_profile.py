@@ -3,7 +3,9 @@ import argparse
 import json
 import os
 from pathlib import Path
+import sqlite3
 import stat
+from contextlib import closing
 import sys
 
 BACKEND = Path(__file__).resolve().parents[1]
@@ -37,6 +39,30 @@ def read_auth_file(path: Path) -> dict[str, str]:
     return values
 
 
+def restore_local_drafts(previous: Path, current: Path) -> None:
+    """Carry a stopped pilot's draft rows into its replacement before serving HTTP."""
+    parent = previous.parent
+    if (previous.name != "invoice-drafts.sqlite" or not parent.name.startswith("tariff-invoice-handoff-")
+            or parent.is_symlink() or previous.is_symlink() or not previous.is_file()
+            or parent.stat().st_uid != os.getuid() or stat.S_IMODE(parent.stat().st_mode) != 0o700
+            or previous.stat().st_uid != os.getuid() or previous.samefile(current)):
+        raise ValueError("Expected the private handoff of a stopped local pilot")
+    base = ("owner", "draft_id", "line", "description", "quantity", "unit", "selected_code")
+    with closing(sqlite3.connect(previous.resolve().as_uri() + "?mode=ro&immutable=1", uri=True)) as src, closing(sqlite3.connect(current)) as dst:
+        src.execute("PRAGMA trusted_schema=OFF")
+        if src.execute("SELECT type FROM sqlite_schema WHERE name='draft_lines'").fetchall() != [("table",)]:
+            raise ValueError("Unexpected draft table")
+        columns = tuple(r[1] for r in src.execute("PRAGMA table_info(draft_lines)"))
+        if columns not in (base, (*base, "clarification")) or src.execute("PRAGMA quick_check").fetchone() != ("ok",):
+            raise ValueError("Unrecognized or damaged local drafts")
+        if dst.execute("SELECT 1 FROM draft_lines LIMIT 1").fetchone():
+            raise ValueError("Fresh pilot drafts expected")
+        fields = ",".join(columns)
+        with dst:
+            dst.executemany(f"INSERT INTO draft_lines ({fields}) VALUES ({','.join('?' for _ in columns)})",
+                            src.execute(f"SELECT {fields} FROM draft_lines"))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
@@ -44,7 +70,10 @@ def main():
     parser.add_argument("--port", type=int, default=18017)
     parser.add_argument("--auth-file", type=Path)
     parser.add_argument("--sgr-evidence", type=Path, help="Pinned local public registry excerpt for the authenticated pilot")
+    parser.add_argument("--resume-local-drafts", type=Path, help="Private temporary handoff during an authenticated pilot update")
     args = parser.parse_args()
+    if args.resume_local_drafts and not args.auth_file:
+        parser.error("draft handoff requires the authenticated local profile")
     if args.sgr_evidence and not args.auth_file:
         parser.error("the optional local registry excerpt requires the authenticated profile")
     if not 1 <= args.port <= 65535:
@@ -80,6 +109,8 @@ def main():
         if not path.is_file():
             parser.error("expected a local registry evidence file")
         env["TARIFF_PILOT_SGR_EVIDENCE"] = str(path)
+    if args.resume_local_drafts:
+        env["TARIFF_PILOT_RESUME_DRAFTS"] = str(args.resume_local_drafts.absolute())
     os.execve(sys.executable, [
         sys.executable, "-B", "-m", "uvicorn", "app.local_pilot:create_app", "--factory",
         "--app-dir", str(BACKEND), "--host", "127.0.0.1", "--port", str(args.port),
