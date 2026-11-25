@@ -80,6 +80,29 @@ class LocalInvoiceTests(unittest.TestCase):
         self.assertEqual(self.client.get(address).status_code, 404)
         self.assertEqual(self.client.put(line + "/choice", json={"code":"9401000001"}).status_code, 404)
 
+    def test_unrecognized_name_requires_a_product_type_before_selecting(self):
+        login_declarant(self.client)
+        draft = self.client.post(self.base, json={"description": "Креслице деревянное"}).json()
+        addr = self.base + "/" + draft["draft_id"]
+        line = addr + "/lines/1"
+        initial = self.client.post(line + "/candidates", json={}).json()
+        self.assertTrue(initial["product_question"])
+        self.assertEqual(initial["candidates"], [])
+        self.assertIsNone(initial["selected_code"])
+        self.assertEqual(self.client.put(line + "/choice", json={"code":"9401000001"}).status_code, 422)
+        wrong_category = self.client.post(line + "/candidates", json={"clarification": "Стулья стеклянные"}).json()
+        self.assertEqual(wrong_category["candidates"], [])
+        clarified = self.client.post(line + "/candidates", json={"clarification":"Стулья"}).json()
+        self.assertEqual([r["code"] for r in clarified["candidates"]], ["9401000001"])
+        self.assertIsNone(clarified["selected_code"])
+        self.assertIsNone(clarified["product_question"])
+        self.assertEqual(self.client.put(line + "/choice", json={
+            "code":"9999999999","clarification":"Стулья"}).status_code, 422)
+        result = self.client.put(line + "/choice", json={"code":"9401000001","clarification":"Стулья"})
+        self.assertEqual(result.status_code, 200)
+        saved = self.client.get(addr).json()["lines"][0]
+        self.assertEqual((saved["selected_code"], saved["clarification"]), ("9401000001", "Стулья"))
+
     def test_negated_property_is_not_a_positive_candidate(self):
         login_declarant(self.client)
         draft = self.client.post(self.base, json={"description": "Стулья без дерева"}).json()
