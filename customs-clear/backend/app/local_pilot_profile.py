@@ -43,7 +43,10 @@ def main():
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--port", type=int, default=18017)
     parser.add_argument("--auth-file", type=Path)
+    parser.add_argument("--sgr-evidence", type=Path, help="Pinned local public registry excerpt for the authenticated pilot")
     args = parser.parse_args()
+    if args.sgr_evidence and not args.auth_file:
+        parser.error("the optional local registry excerpt requires the authenticated profile")
     if not 1 <= args.port <= 65535:
         parser.error("invalid loopback port")
     config = json.loads(args.config.read_text())
@@ -72,6 +75,11 @@ def main():
             parser.error("cannot load the private local authentication file")
         env.update(TARIFF_PILOT_LOGIN="1", AUTH_ACCESS_COOKIE_NAME="tariff_pilot_session",
                    AUTH_ACCESS_COOKIE_PATH="/api", AUTH_ACCESS_COOKIE_SAMESITE="strict")
+    if args.sgr_evidence:
+        path = args.sgr_evidence.resolve(strict=True)
+        if not path.is_file():
+            parser.error("expected a local registry evidence file")
+        env["TARIFF_PILOT_SGR_EVIDENCE"] = str(path)
     os.execve(sys.executable, [
         sys.executable, "-B", "-m", "uvicorn", "app.local_pilot:create_app", "--factory",
         "--app-dir", str(BACKEND), "--host", "127.0.0.1", "--port", str(args.port),

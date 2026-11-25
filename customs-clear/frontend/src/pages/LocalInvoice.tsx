@@ -7,7 +7,7 @@ import { loginCompleted, logoutCompleted, openLoginDialog } from '../components/
 type Line = { line: number; description: string; quantity?: number | null; unit?: string | null; selected_code: string | null };
 type Draft = { draft_id: string; lines: Line[] };
 type Match = { code: string; label: string; path: string[] };
-type Choice = { candidates: Match[]; question: { text: string; options: { value: string; label: string }[] } | null; limited: boolean; selected_code: string | null };
+type Choice = { notice?: string; candidates: Match[]; question: { text: string; options: { value: string; label: string }[] } | null; limited: boolean; selected_code: string | null };
 
 function errorText(error: unknown) {
   const detail = isAxiosError(error) && error.response?.data?.detail;
@@ -59,7 +59,7 @@ function InvoiceLine({ draftId, item, onSaved }: { draftId: string; item: Line; 
       </fieldset>}
       {answers.length > 0 && <button className="underline" disabled={busy} onClick={() => void search(answers.slice(0, -1))}>Вернуться к предыдущему ответу</button>}
       {choices.limited && <p>Показана часть совпадений. Уточните характеристики товара.</p>}
-      {!choices.candidates.length && !choices.question && <p>По описанию в справочнике не удалось подобрать код.</p>}
+      {!choices.candidates.length && !choices.question && <p>{choices.notice || 'По описанию в справочнике не удалось подобрать код.'}</p>}
       <ul className="divide-y divide-cargo-border">{choices.candidates.map(c => <li key={c.code} className="space-y-1 py-2">
         <Link to={'/tnved?code=' + c.code} className="font-medium underline">{c.code} · {c.label}</Link>
         <p className="text-sm text-cargo-mid">{c.path.join(' › ')}</p>

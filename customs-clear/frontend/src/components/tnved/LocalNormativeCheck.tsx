@@ -4,11 +4,13 @@ import { loginCompleted, openLoginDialog } from '../AuthBar';
 import { api } from '../../api/client';
 
 type ArchiveAct = { act_code: string; short_name: string; source_revision: string };
-type Block = { hs_code: string; assessment: string; empty_message: string; notes: string[]; archive_acts: ArchiveAct[]; product_review?: { questions: string[]; source_routes: { document_type: string; condition: string; locator: string; source_url: string }[] } };
+type Block = { hs_code: string; assessment: string; empty_message: string; notes: string[]; archive_acts: ArchiveAct[]; product_review?: { product_documents: { comparison?: string }; questions: string[]; source_routes: { document_type: string; condition: string; locator: string; source_url: string }[] } };
 type Reply = { items: { normative_block: Block }[] };
 
 export function LocalNormativeCheck({ code }: { code: string }) {
   const [description, setDescription] = useState('');
+  const [country, setCountry] = useState('');
+  const [documentNumber, setDocumentNumber] = useState('');
   const [busy, setBusy] = useState(false);
   const [block, setBlock] = useState<Block>();
   const [message, setMessage] = useState('');
@@ -21,7 +23,8 @@ export function LocalNormativeCheck({ code }: { code: string }) {
     setBlock(undefined);
     setMessage('');
     try {
-      const { data } = await api.post<Reply>('/non_tariff/normative-block', { items: [{ hs_code: code, description: description.trim() }] });
+      const { data } = await api.post<Reply>('/non_tariff/normative-block', { items: [{ hs_code: code, description: description.trim(),
+        country: country.trim() || null, permits: documentNumber.trim() ? [{ type: 'СГР', number: documentNumber.trim() }] : [] }] });
       const result = data.items[0]?.normative_block;
       if (result?.hs_code !== code || result.assessment !== 'INSUFFICIENT_EVIDENCE') {
         throw new Error('Unexpected local assessment');
@@ -36,7 +39,7 @@ export function LocalNormativeCheck({ code }: { code: string }) {
     } finally {
       setBusy(false);
     }
-  }, [code, description]);
+  }, [code, description, country, documentNumber]);
 
   useEffect(() => {
     if (!needsLogin) return;
@@ -45,11 +48,27 @@ export function LocalNormativeCheck({ code }: { code: string }) {
     return () => window.removeEventListener(loginCompleted, repeat);
   }, [needsLogin, check]);
 
+  function clearAssessment() {
+    setBlock(undefined);
+    setMessage('');
+    setNeedsLogin(false);
+  }
+
   return <div className="space-y-2">
     <label className="block">Характеристики товара
       <input className="cc-input mt-1 w-full" value={description} maxLength={1000} disabled={busy}
-        onChange={e => { setDescription(e.target.value); setBlock(undefined); setMessage(''); setNeedsLogin(false); }} />
+        onChange={e => { setDescription(e.target.value); clearAssessment(); }} />
     </label>
+    <details><summary className="cursor-pointer">Страна и реквизиты для проверки</summary>
+      <div className="mt-2 space-y-2">
+        <label className="block">Страна происхождения
+          <input className="cc-input mt-1 w-full" maxLength={100} value={country} disabled={busy} onChange={e => { setCountry(e.target.value); clearAssessment(); }} />
+        </label>
+        <label className="block">Номер СГР, если известен
+          <input className="cc-input mt-1 w-full" maxLength={160} autoComplete="off" value={documentNumber} disabled={busy} onChange={e => { setDocumentNumber(e.target.value); clearAssessment(); }} />
+        </label>
+      </div>
+    </details>
     <button type="button" disabled={busy} onClick={check} className="rounded border px-3 py-1">
       {busy ? 'Идёт проверка…' : 'Проверить требования к товару'}
     </button>
@@ -59,6 +78,8 @@ export function LocalNormativeCheck({ code }: { code: string }) {
         <p className="font-medium">{block.empty_message}</p>
         {block.notes.map(note => <p key={note}>{note}</p>)}
         {block.product_review && <section className="space-y-2">
+          {block.product_review.product_documents.comparison === 'NUMBER_MATCH_ONLY' && <p>Номер найден в локальной выписке. Соответствие документа товару и поставке требует проверки.</p>}
+          {block.product_review.product_documents.comparison === 'NO_NUMBER_IN_LOCAL_EXCERPT' && <p>В подключённой локальной выписке этот номер не найден.</p>}
           {block.product_review.questions.length > 0 && <><h4 className="font-medium">Что уточнить</h4><ul className="list-disc pl-5">{block.product_review.questions.map(q => <li key={q}>{q}</li>)}</ul></>}
           <details><summary className="cursor-pointer">Условия по официальным источникам</summary>
             <ul className="space-y-2 pt-2">{block.product_review.source_routes.map(r => <li key={r.document_type + r.locator}>
