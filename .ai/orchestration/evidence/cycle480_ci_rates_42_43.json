@@ -1,0 +1,91 @@
+{
+  "cycle": 480,
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7158061303",
+  "owner_priority": 7127543181,
+  "owner_ack_request": 7130028773,
+  "product": "e73aa0a61b402a48013d28078ffd3fb6eec47a4c",
+  "tree": "7a123283aea71288fc61c7da1ffb3afd814a1127",
+  "main": "eeef5028d45ea14af09e0afb01f600bca5602316",
+  "ci": {
+    "id": 45384238643,
+    "head": "e73aa0a61b402a48013d28078ffd3fb6eec47a4c",
+    "conclusion": "success",
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/45384238643"
+  },
+  "ci_tests": [
+    "612 passed, 2 warnings, 229 subtests passed in 30.79s",
+    "12 passed, 1 warning in 1.34s"
+  ],
+  "catalog": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "frontend_sha256": {
+    "assets/index-BijCE65O.js": "2ab2e509b6b5f41db72044cc8b20f2165dfbe0c122a0cc37a6e6b2c2f40359c5",
+    "assets/index-CmhgDIdr.css": "e3d3b854268c3b6fe93b75d703573d81ad333ba1ae7c4abe5335909052d1736c",
+    "index.html": "1487f11cbcd97a5c24cddab5bd3c6e3c4f04070609f38ff634782d7c2e29a169"
+  },
+  "chapters": {
+    "42": {
+      "rows": 38,
+      "parsed": 38,
+      "ambiguous": 0,
+      "negative_controls": 159
+    },
+    "43": {
+      "rows": 109,
+      "parsed": 107,
+      "ambiguous": 2,
+      "negative_controls": 444
+    }
+  },
+  "checked": {
+    "http_18016": 147,
+    "http_18018": 147,
+    "chrome_cards": 147,
+    "all_rates": 1162,
+    "parts": 21,
+    "chapters": 14,
+    "PARSED": 977,
+    "AMBIGUOUS": 185,
+    "legal_status": "UNVERIFIED",
+    "review": "A0 same-context"
+  },
+  "parallel": {
+    "native_workers": 0,
+    "distinct_local_builds": 2,
+    "overlap_seconds": 1.956385,
+    "elapsed_seconds": 3.536106
+  },
+  "next_source": {
+    "sha256": "8b4e020efcd88c782089f2b9a0e1ce2689ea012694b23d80ff253ca6ef1281ab",
+    "url": "https://eec.eaeunion.org/comission/department/catr/ett/ru.2022/ru.44_2022_01.11.2026.pdf",
+    "pages": 56,
+    "bytes": 1152640,
+    "codes": 465,
+    "generated_layout_sha256": "3ce6fefc67d63a3ac72ebc4e9882c5be6e7f0a01c3e749ed5be35d4fe9121e65"
+  },
+  "remaining": {
+    "chapters": 82,
+    "catalog_leaves": 12132,
+    "minimum_parts_conditional": 186
+  },
+  "ntm": {
+    "dated_clauses": 17,
+    "original": "TR TS 009/2011",
+    "new_documents": [
+      114,
+      24,
+      74,
+      31
+    ],
+    "applicability": "not adjudicated"
+  },
+  "invoice": {
+    "synthetic": true,
+    "quantity_pairs": 12,
+    "selected_by_draft": null,
+    "candidates_under_manual_4203": 3
+  },
+  "artifact": "evidence/2026-11-24-batch-ci/r480/MANIFEST.json",
+  "manifest_sha256": "93b09eb4db63a183c247a7c3601e84309bed0e1b57309ee2182f96e228deed59",
+  "next": "Глава 44: по PDF 8b4e020e… привязать 465 ставок, единицы, продолжения и сноски; шесть частей 86/86/86/86/86/35. По ТР ТС 009/2011 сопоставить отдельные пункты с решениями №114 и №74 и переходными актами №24 и №31. Для синтетической строки инвойса передать кандидатов из существующего дерева в черновик и проверить уточнение и сохранение явного выбора.",
+  "lease_generation": 480
+}
