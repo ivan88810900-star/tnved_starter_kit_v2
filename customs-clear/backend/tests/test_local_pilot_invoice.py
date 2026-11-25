@@ -154,6 +154,68 @@ class LocalInvoiceTests(unittest.TestCase):
         self.assertFalse(limited)
         self.assertIsNone(notice)
 
+    def test_excluded_words_in_official_label_do_not_support_a_choice(self):
+        from app.services.local_pilot_invoice import find_candidates
+
+        for exclusion in ("кроме", "исключая", "за исключением"):
+            with self.subTest(exclusion=exclusion):
+                official = f"Посуда ({exclusion} сосудов для питья (в том числе кружек)) кухонная"
+                rows = [row("7013491000", "coded", [official]),
+                        row("7013371000", "coded", ["Сосуды для питья"])]
+                with patch.object(SmallCatalog, "rows", rows):
+                    catalog = SmallCatalog()
+                    found, _, _ = find_candidates(catalog, "Сосуды", "Сосуды для питья")
+                    self.assertEqual([item["code"] for item in found], ["7013371000"])
+                    found, _, _ = find_candidates(catalog, "Кружек")
+                    self.assertEqual(found, [])
+                    found, _, _ = find_candidates(catalog, "Посуда кухонная")
+                    self.assertEqual([item["label"] for item in found], [official])
+
+    def test_unparenthesized_exception_cannot_make_an_ineligible_material_match(self):
+        from app.services.local_pilot_invoice import find_candidates
+
+        vessel = "Сосуды (бытовые) для питья, кроме изготовленных из стеклокерамики, из дерева:"
+        plate = "Посуда (жаростойкая, кроме украшений) столовая"
+        rows = [
+            row("7013371000", "coded", [vessel, "из упрочненного стекла"]),
+            row("7013491000", "coded", [plate]),
+        ]
+        with patch.object(SmallCatalog, "rows", rows):
+            catalog = SmallCatalog()
+            for excluded in ("стеклокерамики", "дерева"):
+                self.assertEqual(find_candidates(catalog, "Сосуды", f"Сосуды для питья из {excluded}")[0], [])
+            self.assertEqual(find_candidates(catalog, "Украшения")[0], [])
+            for clarification, official in (("Бытовые из упрочнённого стекла", "7013371000"),
+                                            ("Жаростойкая посуда столовая", "7013491000")):
+                result = find_candidates(catalog, "Посуда", clarification)[0]
+                self.assertEqual([item["code"] for item in result], [official])
+            self.assertEqual(find_candidates(catalog, "Сосуды")[0][0]["path"][0], vessel)
+
+    def test_two_xlsx_lines_keep_separate_confirmed_choices(self):
+        login_declarant(self.client)
+        book = Workbook()
+        book.active.append(["Описание", "Количество", "Единица"])
+        book.active.append(["Стулья", 8, "шт"])
+        book.active.append(["Стулья", 6, "шт"])
+        stream = io.BytesIO()
+        book.save(stream)
+        book.close()
+        draft = self.client.post(self.base + "/upload", files={"file": ("two.xlsx", stream.getvalue())}).json()
+        address = self.base + "/" + draft["draft_id"]
+        for i, (label, code, wrong) in enumerate([
+            ("деревянные", "9401000001", "9401000002"),
+            ("металлические", "9401000002", "9401000001"),
+        ], start=1):
+            line = address + f"/lines/{i}"
+            choices = self.client.post(line + "/candidates", json={}).json()
+            answer = next(o["value"] for o in choices["question"]["options"] if o["label"] == label)
+            self.assertEqual(self.client.put(line + "/choice", json={"answers": [answer], "code": wrong}).status_code, 422)
+            self.assertIsNone(self.client.get(address).json()["lines"][i - 1]["selected_code"])
+            self.assertEqual(self.client.put(line + "/choice", json={"answers": [answer], "code": code}).status_code, 200)
+        restored = self.client.get(address).json()["lines"]
+        self.assertEqual([(line["line"], line["description"], line["quantity"], line["unit"], line["selected_code"])
+                          for line in restored], [(1, "Стулья", 8, "шт", "9401000001"), (2, "Стулья", 6, "шт", "9401000002")])
+
     def test_negated_property_is_not_a_positive_candidate(self):
         login_declarant(self.client)
         draft = self.client.post(self.base, json={"description": "Стулья без дерева"}).json()

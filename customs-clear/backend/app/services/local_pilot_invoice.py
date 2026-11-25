@@ -27,6 +27,34 @@ def _search_text(text: str) -> str:
     return unicodedata.normalize("NFC", text).casefold().replace("ё", "е")
 
 
+_SCOPE_TOKENS = re.compile(r"[()]|\b(?:кроме|исключая|за\s+исключением)\b")
+
+
+def _positive_label(label: str) -> str:
+    """Use positive wording as evidence, while keeping the original label for display."""
+    text = _search_text(label)
+    positive = []
+    depth = 0
+    excluded_at = None
+    start = 0
+    for token in _SCOPE_TOKENS.finditer(text):
+        if token[0] == "(":
+            depth += 1
+        elif token[0] == ")":
+            if depth > 0 and excluded_at == depth:
+                excluded_at = None
+                start = token.end()
+            depth = max(0, depth - 1)
+        elif excluded_at is None:
+            # A comma can introduce another excluded item. Only the end of this
+            # label or of its enclosing parentheses reliably ends the exception.
+            positive.append(text[start:token.start()])
+            excluded_at = depth
+    if excluded_at is None:
+        positive.append(text[start:])
+    return " ".join(positive)
+
+
 def _terms(description: str) -> list[str]:
     words = re.findall(r"[а-яa-z]{3,}", _search_text(description))
     terms = []
@@ -70,9 +98,10 @@ def find_candidates(store: TnvedRecoveryStore, description: str, clarification: 
             code = item.get("code") or ""
             if item["kind"] != "coded" or not re.fullmatch(r"[0-9]{10}", code) or code in scored:
                 continue
-            words = re.findall(r"[а-яa-z]+", _search_text(" ".join(item["path"])))
+            positive_path = " ".join(_positive_label(label) for label in item["path"])
+            words = re.findall(r"[а-яa-z]+", positive_path)
             matched = {term for term in active_terms if any(word.startswith(term) for word in words)}
-            if not required.issubset(matched) or store.has_children(code):
+            if not matched or not required.issubset(matched) or store.has_children(code):
                 continue
             score = len(matched)
             scored[code] = (score, {"code": code, "label": item["label"], "path": item["path"]})
