@@ -4,7 +4,7 @@ import { loginCompleted, openLoginDialog } from '../AuthBar';
 import { api } from '../../api/client';
 
 type ArchiveAct = { act_code: string; short_name: string; source_revision: string };
-type Block = { hs_code: string; assessment: string; empty_message: string; notes: string[]; archive_acts: ArchiveAct[]; product_review?: { product_documents: { comparison?: string }; edition: { decisions: { number: number; label?: string; general_effective_date: string | null; source_url: string }[]; limit: string }; questions: string[]; source_routes: { document_type: string; condition: string; locator: string; source_url: string }[] } };
+type Block = { hs_code: string; assessment: string; empty_message: string; notes: string[]; archive_acts: ArchiveAct[]; product_review?: { product_documents: { comparison?: string }; edition: { scope_limit?: string; scope?: {locator: string; source_url: string}; decisions: { number: number; label?: string; general_effective_date?: string | null; source_url: string }[]; limit: string }; questions: string[]; source_routes: { document_type: string; condition: string; locator: string; source_url: string }[] } };
 type Reply = { items: { normative_block: Block }[] };
 
 export function LocalNormativeCheck({ code }: { code: string }) {
@@ -95,6 +95,9 @@ export function LocalNormativeCheck({ code }: { code: string }) {
               <strong>{r.document_type}</strong> · {r.condition}
               {r.source_url.startsWith('https://') && <> · <a className="underline" href={r.source_url} target="_blank" rel="noreferrer">{r.locator}</a></>}
             </li>)}</ul>
+            {block.product_review.edition.scope_limit && <p className="mt-2">{block.product_review.edition.scope_limit}
+              {block.product_review.edition.scope?.source_url.startsWith('https://') && <> · <a className="underline" href={block.product_review.edition.scope.source_url} target="_blank" rel="noreferrer">{block.product_review.edition.scope.locator}</a></>}
+            </p>}
             <p className="mt-2 font-medium">Общие даты вступления в силу</p>
             <ul>{block.product_review.edition.decisions.map(d => <li key={d.source_url + d.number}>
               <a className="underline" href={d.source_url} target="_blank" rel="noreferrer">{d.label || 'Решение № ' + d.number}</a> · {d.general_effective_date ? <time dateTime={d.general_effective_date}>{d.general_effective_date.split('-').reverse().join('.')}</time> : 'дата требует проверки'}
