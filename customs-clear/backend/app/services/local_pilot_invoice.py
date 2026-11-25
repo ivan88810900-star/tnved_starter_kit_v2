@@ -45,17 +45,18 @@ def find_candidates(store: TnvedRecoveryStore, description: str, clarification: 
     category = _terms(clarification)
     description_terms = _terms(description)
     terms = list(dict.fromkeys([*category, *description_terms]))
-    if not terms or len(category) > 8 or (clarification and not category):
+    if not terms or len(category or terms) > 8 or (clarification and not category):
         return [], False, PRODUCT_KIND_QUESTION
-    first = store.search_page(terms[0], limit=200)
-    if not first["total"]:
-        # Other attributes alone (e.g. coating, age) cannot identify a product type.
-        return [], False, PRODUCT_KIND_QUESTION
-    pages = [(terms[0], first)]
-    pages.extend((term, store.search_page(term, limit=200)) for term in terms[1:8])
+    # A word missing from the tree may be the product itself, anywhere in the
+    # description. Matching only known modifiers cannot establish its category.
+    required = set(category)
+    pages = []
+    for term in terms[:8]:
+        page = store.search_page(term, limit=200)
+        if not page["total"] and (not category or term in required):
+            return [], False, PRODUCT_KIND_QUESTION
+        pages.append((term, page))
     active_terms = [term for term, page in pages if page["total"]]
-    # The customer's category is an explicit constraint, not another ranking hint.
-    required = set(category or terms[:1])
     scored = {}
     best = 0
     for _, page in pages:

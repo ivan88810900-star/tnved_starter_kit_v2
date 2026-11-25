@@ -103,6 +103,19 @@ class LocalInvoiceTests(unittest.TestCase):
         saved = self.client.get(addr).json()["lines"][0]
         self.assertEqual((saved["selected_code"], saved["clarification"]), ("9401000001", "Стулья"))
 
+    def test_unknown_product_type_is_not_inferred_from_leading_modifiers(self):
+        login_declarant(self.client)
+        for description in ("Креслице деревянное", "Деревянное креслице"):
+            with self.subTest(description=description):
+                draft = self.client.post(self.base, json={"description":description}).json()
+                line = self.base + "/" + draft["draft_id"] + "/lines/1"
+                reply = self.client.post(line + "/candidates", json={}).json()
+                self.assertTrue(reply["product_question"])
+                self.assertEqual(reply["candidates"], [])
+                reply = self.client.post(line + "/candidates", json={"clarification":"Стулья"}).json()
+                self.assertEqual([c["code"] for c in reply["candidates"]], ["9401000001"])
+                self.assertIsNone(reply["selected_code"])
+
     def test_negated_property_is_not_a_positive_candidate(self):
         login_declarant(self.client)
         draft = self.client.post(self.base, json={"description": "Стулья без дерева"}).json()
