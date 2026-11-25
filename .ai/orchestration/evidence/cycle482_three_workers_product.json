@@ -1,0 +1,203 @@
+{
+  "cycle": 482,
+  "manual": true,
+  "product": "aca1936f889fe3fa68374c6c7cf0cb7ac5408747",
+  "tree": "bac981e429ac108f57d32405745ec16cd319f535",
+  "automation": {
+    "sha": "328fcd4cc5539b8f718211317bbfcfad495a8d7a404f47bf058953c552537dde",
+    "id": "tariff",
+    "target": "01a1b044-0f10-7941-b8a5-999cf67f41cc",
+    "kind": "heartbeat",
+    "active": "ACTIVE",
+    "rule": "FREQ=HOURLY;INTERVAL=1",
+    "created": 1795076023061,
+    "names": [
+      "tariff"
+    ]
+  },
+  "workers": {
+    "/root/ett": {
+      "role": "agent/mac-ett-45-46",
+      "worktree": "ett-worker-worktree",
+      "files": [
+        "customs-clear/backend/data/local_pilot_pins.json",
+        "customs-clear/backend/data/local_pilot_profile.example.json",
+        "customs-clear/backend/scripts/run_local_catalog_pilot.sh",
+        "customs-clear/backend/tests/local_pilot_smoke.py"
+      ],
+      "head": "ba0b922a3ba42cddaca6aee794097bfc16c4165a"
+    },
+    "/root/ntm": {
+      "role": "agent/mac-ntm-coverage",
+      "worktree": "ntm-worker-worktree",
+      "files": [
+        "docs/operations/NTM_SOURCE_COVERAGE_RU.md",
+        "customs-clear/backend/app/services/local_pilot_ntm.py",
+        "customs-clear/backend/tests/test_local_pilot_ntm.py"
+      ],
+      "head": "f7c81acb47e3258250cbdec3d2ed44366bb9872d"
+    },
+    "/root/invoice": {
+      "role": "agent/mac-invoice-choice",
+      "worktree": "invoice-worker-worktree",
+      "files": [
+        "customs-clear/backend/app/api/local_pilot_invoice.py",
+        "customs-clear/backend/app/services/declaration_draft_service.py",
+        "customs-clear/backend/app/services/local_pilot_invoice.py",
+        "customs-clear/backend/tests/test_local_pilot_invoice.py"
+      ],
+      "head": "b0601ec18f73214c26f3943ebb4a52072da46431"
+    }
+  },
+  "early_receipt": 7161285206,
+  "integrator": "A0",
+  "ci": {
+    "id": 45608230441,
+    "head": "aca1936f889fe3fa68374c6c7cf0cb7ac5408747",
+    "conclusion": "success",
+    "jobs": [
+      [
+        139184599625,
+        "payment-regression",
+        "completed",
+        "success"
+      ],
+      [
+        139184600074,
+        "offline-safety",
+        "completed",
+        "success"
+      ]
+    ],
+    "summaries": [
+      "612 passed, 2 warnings, 229 subtests passed in 30.06s",
+      "17 passed, 1 warning, 5 subtests passed in 2.04s"
+    ],
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/45608230441"
+  },
+  "mac_ports": [
+    18016,
+    18018
+  ],
+  "catalog_sha256": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "frontend": {
+    "assets/index-Bfrcpl3T.js": "773557cba76c8ded5ef3f53df12eaca4b2e023f7ea0d4ec00b06b96fe5b9341f",
+    "assets/index-DYYbGiB6.css": "3fd445d90afd002e24c5b46f313d2e99ff3c3db94eb20a80a6de53282b620dc7",
+    "favicon.ico": "4fe1ff53a3c444f7e347fb4b2356c2987b08e312ea467709d8377d7ccdf29271",
+    "favicon.svg": "02e525afaa6826cba9d242f06c385e03cf912c78286ad80e7910bdf087030da8",
+    "index.html": "ed656cbe34d033427f08d0fb90537c9405b7917516f0f6f5bf7bd58106a47139"
+  },
+  "running_product_revision": "a2cbdd8eadcc16c4a54f5c0be4386eefaafe04b8",
+  "remote_difference_from_running_revision": [
+    "docs/operations/NTM_SOURCE_COVERAGE_RU.md"
+  ],
+  "local_regressions": 17,
+  "current_profile": {
+    "chapters": 17,
+    "parts": 29,
+    "rows": 1662,
+    "parsed": 1476,
+    "ambiguous": 186,
+    "verified": 0,
+    "admitted": 0
+  },
+  "rates_new": {
+    "45": {
+      "rows": 12,
+      "percent": {
+        "5": 12
+      },
+      "sqlite": "b1c42768ccb02375b04da076042184b2388a4ce4d67b0a1e20f52dbeead96d86"
+    },
+    "46": {
+      "rows": 23,
+      "percent": {
+        "6": 10,
+        "8": 2,
+        "10": 11
+      },
+      "sqlite": "f2f8f53295558685326c9d9b6dbf088a2c36e8abe98cff6c79b84352b9f764fe",
+      "bundle": "a8888aa41c15c9f6b0cfd05feeb3262110cde3ad87976b266190ec01d6bdd916"
+    }
+  },
+  "prepared": {
+    "chapter": 47,
+    "records": 26,
+    "parsed": 19,
+    "ambiguous": 7,
+    "bundle": "62cd33b65021c17b2b8599f33f625d8f33366e976a217f71b23634d2f8914607",
+    "connected": false,
+    "reviewer": "/root/ntm",
+    "review_file": "ntm/review-ch47.json",
+    "review_status": "PASS"
+  },
+  "invoice": {
+    "input": "synthetic XLSX, 12 pairs",
+    "candidates": [
+      "4203210000",
+      "4203291000",
+      "4203299000"
+    ],
+    "explicit_selected": "4203291000",
+    "restored": true,
+    "unconfirmed_negated_material": "no candidates, requests clarification",
+    "retention": "authenticated local process lifetime"
+  },
+  "ntm": {
+    "as_of": "2026-11-25",
+    "families": 11,
+    "source_files": 25,
+    "official_documents_or_pages": 24,
+    "manufacturer_public_card": 1,
+    "bytes_verified": 52937069,
+    "coverage_blob": "52628972bc861f818ba90be1985f60efde56c19d",
+    "coverage_path": "docs/operations/NTM_SOURCE_COVERAGE_RU.md",
+    "limits": [
+      "The documents do not establish the current consolidated text of every family.",
+      "The one-record public registry excerpt permits an exact number match only. Product and shipment applicability remain unresolved."
+    ],
+    "cosmetics": {
+      "code": "3304100000",
+      "response": "INSUFFICIENT_EVIDENCE",
+      "conditional_forms": 2,
+      "decision_dates": 4,
+      "local_excerpt_count": 1,
+      "matched_by_number": 1,
+      "shipment_verified": false,
+      "exceptions": "Article 1 paragraphs 2 and 3; transition rules verified separately."
+    }
+  },
+  "independent_review": {
+    "rates": "/root/invoice independently checked 35 rows from original PDFs, SQLite, HTTP, 35 Chrome cards and four blank manual rate fields",
+    "invoice": "/root/ett tested the integrated invoice and late-save repair, then the negated-material and quantity delta",
+    "ntm": "/root/invoice independently checked art. 1 para 2, four decision dates, two conditional routes, anonymous and mismatched records, and the source matrix"
+  },
+  "limits": [
+    "DB HOLD",
+    "local copies, no Neon writes or reads",
+    "no enforcement, release, merge, deployment, A6 or external private handoff"
+  ],
+  "primary_receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7161285206",
+  "mac_manifest": {
+    "path": "evidence/2026-11-25-parallel/r482/MANIFEST.json",
+    "manifest": "7962629eff5b6417d48daa0caad98b5215ce9de14b4f39ed0e3d546e93cba8ef",
+    "files": 137,
+    "bytes": 62212056
+  },
+  "next": {
+    "primary": "В следующем изолированном профиле подключить готовую главу 47. Сверить строковые единицы и надстрочные сноски до переключения рабочего экземпляра.",
+    "rates": {
+      "chapter": 47,
+      "stage": "READY_TO_CONNECT",
+      "records": 26,
+      "parsed": 19,
+      "ambiguous": 7,
+      "zip": "evidence/2026-11-25-parallel/r482/ett/ch47/Tariff-ETT-Chapter47-offline-20261125.zip",
+      "sha256": "62cd33b65021c17b2b8599f33f625d8f33366e976a217f71b23634d2f8914607",
+      "checks": "26 видимых карточек, «кг 90% с/в» в 19 строках, сноска 67С) в семи; затем переход к следующей сохранённой главе."
+    },
+    "ntm": "Для российской посуды сопоставить четыре найденные строки ПП №2425 и сноску с применимой на дату редакцией, материалом и возрастным назначением конкретного изделия. Открытые указатели реестров рассматривать отдельно.",
+    "invoice": "Взять вторую предметную строку инвойса о посуде. Проверить различение материала и назначения, восстановление явного выбора, передачу в существующую карточку и справочный платёж.",
+    "parallel_execution": "Один A0 и до трёх отдельных Codex-работников одновременно, включая независимого проверяющего. Использовать действующее часовое расписание tariff."
+  }
+}
