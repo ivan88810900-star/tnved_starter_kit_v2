@@ -1,7 +1,7 @@
 {
   "catalog_and_rates": "evidence/2026-11-19-integration/r466/data",
   "additional_rates": "evidence/2026-11-23-ch37-pilot/r471/data",
-  "partitioned_rates": "evidence/2026-11-25-parallel/r482/ett/data",
+  "partitioned_rates": "evidence/2026-11-25-parallel/r483/ett/data",
   "partitioned_chapters": [
     "38",
     "39",
@@ -11,7 +11,8 @@
     "43",
     "44",
     "45",
-    "46"
+    "46",
+    "47"
   ],
   "frontend": "catalog-payments-worktree/customs-clear/frontend/dist"
 }
