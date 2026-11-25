@@ -4,7 +4,7 @@ import { loginCompleted, openLoginDialog } from '../AuthBar';
 import { api } from '../../api/client';
 
 type ArchiveAct = { act_code: string; short_name: string; source_revision: string };
-type Block = { hs_code: string; assessment: string; empty_message: string; notes: string[]; archive_acts: ArchiveAct[]; product_review?: { product_documents: { comparison?: string }; questions: string[]; source_routes: { document_type: string; condition: string; locator: string; source_url: string }[] } };
+type Block = { hs_code: string; assessment: string; empty_message: string; notes: string[]; archive_acts: ArchiveAct[]; product_review?: { product_documents: { comparison?: string }; edition: { decisions: { number: number; general_effective_date: string; source_url: string }[]; limit: string }; questions: string[]; source_routes: { document_type: string; condition: string; locator: string; source_url: string }[] } };
 type Reply = { items: { normative_block: Block }[] };
 
 export function LocalNormativeCheck({ code }: { code: string }) {
@@ -80,12 +80,18 @@ export function LocalNormativeCheck({ code }: { code: string }) {
         {block.product_review && <section className="space-y-2">
           {block.product_review.product_documents.comparison === 'NUMBER_MATCH_ONLY' && <p>Номер найден в локальной выписке. Соответствие документа товару и поставке требует проверки.</p>}
           {block.product_review.product_documents.comparison === 'NO_NUMBER_IN_LOCAL_EXCERPT' && <p>В подключённой локальной выписке этот номер не найден.</p>}
+          {block.product_review.product_documents.comparison === 'EXCERPT_NOT_CONFIGURED' && <p>В этом профиле локальная выписка для сверки номера не подключена.</p>}
           {block.product_review.questions.length > 0 && <><h4 className="font-medium">Что уточнить</h4><ul className="list-disc pl-5">{block.product_review.questions.map(q => <li key={q}>{q}</li>)}</ul></>}
           <details><summary className="cursor-pointer">Условия по официальным источникам</summary>
             <ul className="space-y-2 pt-2">{block.product_review.source_routes.map(r => <li key={r.document_type + r.locator}>
               <strong>{r.document_type}</strong> · {r.condition}
               {r.source_url.startsWith('https://') && <> · <a className="underline" href={r.source_url} target="_blank" rel="noreferrer">{r.locator}</a></>}
             </li>)}</ul>
+            <p className="mt-2 font-medium">Общие даты вступления в силу</p>
+            <ul>{block.product_review.edition.decisions.map(d => <li key={d.number}>
+              <a className="underline" href={d.source_url} target="_blank" rel="noreferrer">Решение № {d.number}</a> · <time dateTime={d.general_effective_date}>{d.general_effective_date.split('-').reverse().join('.')}</time>
+            </li>)}</ul>
+            <p>{block.product_review.edition.limit}</p>
           </details>
         </section>}
         {block.archive_acts.length > 0 && <ul>{block.archive_acts.map(act =>
