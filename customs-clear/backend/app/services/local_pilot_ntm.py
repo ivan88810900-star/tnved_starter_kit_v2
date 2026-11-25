@@ -135,4 +135,3 @@ def archive_normative_block(
     if any(act["act_code"] == "009/2011" for act in block["archive_acts"]):
         block["product_review"] = _cosmetics_review(description, country, permits)
     return {**result, "normative_block": block}
-
