@@ -116,6 +116,44 @@ class LocalInvoiceTests(unittest.TestCase):
                 self.assertEqual([c["code"] for c in reply["candidates"]], ["9401000001"])
                 self.assertIsNone(reply["selected_code"])
 
+    def test_yo_in_description_and_clarification_preserves_originals(self):
+        entries = [
+            row("7013491000", "coded", ["Посуда", "из упрочненного стекла"]),
+            row("7013371000", "coded", ["Сосуды", "из упрочненного стекла"]),
+        ]
+        login_declarant(self.client)
+        with patch.object(SmallCatalog, "rows", entries):
+            for spelling in ("упрочненного", "упрочнённого", "упрочне\u0308нного"):
+                with self.subTest(spelling=spelling):
+                    text = "Тарелка из " + spelling + " стекла"
+                    clarification = "Посуда из " + spelling + " стекла"
+                    draft = self.client.post(self.base, json={"description":text}).json()
+                    addr = self.base + "/" + draft["draft_id"]
+                    line = addr + "/lines/1"
+                    hit = self.client.post(line + "/candidates", json={"clarification":clarification}).json()
+                    self.assertEqual([c["code"] for c in hit["candidates"]], ["7013491000"])
+                    self.assertEqual(hit["candidates"][0]["label"], "из упрочненного стекла")
+                    self.assertIsNone(hit["selected_code"])
+                    self.assertEqual(self.client.put(line + "/choice",
+                        json={"code":"7013491000","clarification":clarification}).status_code, 200)
+                    saved = self.client.get(addr).json()["lines"][0]
+                    self.assertEqual((saved["description"], saved["clarification"]), (text, clarification))
+
+    def test_complete_category_page_covers_truncated_modifier_search(self):
+        from app.services.local_pilot_invoice import find_candidates
+
+        candidate = row("7013491000", "coded", ["Посуда", "из упрочненного стекла"])
+        class Catalog(SmallCatalog):
+            def search_page(self, term, limit):
+                if term == "декор":
+                    return {"results": [], "total": 250, "limit": limit, "has_more": True}
+                return {"results": [candidate], "total": 1, "limit": limit, "has_more": False}
+
+        found, limited, notice = find_candidates(Catalog(), "Декор", "Посуда")
+        self.assertEqual([c["code"] for c in found], ["7013491000"])
+        self.assertFalse(limited)
+        self.assertIsNone(notice)
+
     def test_negated_property_is_not_a_positive_candidate(self):
         login_declarant(self.client)
         draft = self.client.post(self.base, json={"description": "Стулья без дерева"}).json()

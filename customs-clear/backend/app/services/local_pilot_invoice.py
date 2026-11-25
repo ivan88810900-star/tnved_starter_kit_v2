@@ -6,6 +6,7 @@ import json
 import re
 import sqlite3
 import uuid
+import unicodedata
 from contextlib import closing
 from pathlib import Path
 
@@ -21,8 +22,13 @@ def _description_notice(description: str) -> str | None:
     return None
 
 
+def _search_text(text: str) -> str:
+    # The pinned PDF vocabulary uses е for ё. Keep document and source labels intact.
+    return unicodedata.normalize("NFC", text).casefold().replace("ё", "е")
+
+
 def _terms(description: str) -> list[str]:
-    words = re.findall(r"[а-яёa-z]{3,}", description.casefold())
+    words = re.findall(r"[а-яa-z]{3,}", _search_text(description))
     terms = []
     for word in words:
         if word in {"для", "или", "как", "при", "без", "with", "and", "the", "from"}:
@@ -64,7 +70,7 @@ def find_candidates(store: TnvedRecoveryStore, description: str, clarification: 
             code = item.get("code") or ""
             if item["kind"] != "coded" or not re.fullmatch(r"[0-9]{10}", code) or code in scored:
                 continue
-            words = re.findall(r"[а-яёa-z]+", " ".join(item["path"]).casefold())
+            words = re.findall(r"[а-яa-z]+", _search_text(" ".join(item["path"])))
             matched = {term for term in active_terms if any(word.startswith(term) for word in words)}
             if not required.issubset(matched) or store.has_children(code):
                 continue
@@ -73,9 +79,12 @@ def find_candidates(store: TnvedRecoveryStore, description: str, clarification: 
             best = max(best, score)
     matches = [item for score, item in scored.values() if score == best]
     matches.sort(key=lambda row: row["code"])
-    covered = any(0 < page["total"] <= page["limit"] for _, page in pages)
+    # Every candidate satisfies every explicit category term. One complete
+    # category page covers the whole intersection, even if a modifier is common.
+    complete = {term for term, page in pages if page["total"] and not page["has_more"]}
     omitted_pages = any(page["has_more"] for _, page in pages)
-    partial = omitted_pages and not (covered and best == len(active_terms))
+    all_best_covered = bool(complete & required) or (bool(complete) and best == len(active_terms))
+    partial = omitted_pages and not all_best_covered
     limited = partial or len(matches) > 40 or len(terms) > 8
     return matches[:40], limited, None if matches else PRODUCT_KIND_QUESTION
 
