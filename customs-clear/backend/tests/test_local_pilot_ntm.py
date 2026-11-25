@@ -139,6 +139,50 @@ class LocalNormativeBlockTests(unittest.TestCase):
         self.assertIn("заголовок", review["edition"]["scope_limit"])
         self.assertIn("01.09.2026", review["edition"]["limit"])
 
+    @patch("app.services.local_pilot_ntm.lookup_tr_ts_acts_by_codes", return_value=[])
+    def test_glass_plate_needs_explicit_use_and_manufacturer_age(self, lookup):
+        code = "7013491000"
+        permits = [{"type": "СС", "number": "EXAMPLE-ONLY"}]
+
+        def check(use, age, code=code):
+            block = archive_normative_block(
+                code, "Тарелка для детей 4+", permits=permits,
+                tableware_use=use, tableware_age=age,
+            )["normative_block"]
+            self.assertEqual(block["assessment"], "INSUFFICIENT_EVIDENCE")
+            self.assertEqual((block["required_documents"], block["missing_documents"]), ([], []))
+            rv = block["product_review"]
+            self.assertEqual(rv["product_documents"]["submitted_count"], 1)
+            self.assertFalse(rv["product_documents"]["registry_checked"])
+            self.assertFalse(rv["product_documents"]["shipment_verified"])
+            return rv
+
+        self.assertEqual(check(None, None)["family"], "RF_TABLEWARE")
+        self.assertEqual(check("unknown", "adult")["family"], "RF_TABLEWARE")
+        types = {"under_3": ("Государственная регистрация с последующим декларированием соответствия", "ст. 12 п. 2"),
+                 "over_3": ("Сертификат соответствия", "ст. 12 п. 4")}
+        for age, (document, locator) in types.items():
+            with self.subTest(age=age):
+                rv = check("child_food_glass", age)
+                self.assertEqual(rv["family"], "EAEU_CHILD_GLASS_TABLEWARE")
+                self.assertEqual([r["document_type"] for r in rv["source_routes"]], [document])
+                self.assertIn(locator, rv["source_routes"][0]["locator"])
+                self.assertIn("/317/3175/", rv["source_routes"][0]["source_url"])
+                self.assertIn("маркиров", " ".join(rv["questions"]) + rv["edition"]["scope_limit"])
+                self.assertNotIn("ПП РФ № 2425", str(rv))
+        for use, age, target, question in [
+            ("child_food_glass", "unknown", code, "полный диапазон"),
+            ("child_food_glass", "exactly_3", code, "одному указанию"),
+            ("child_food_glass", "adult", code, "противоречат"),
+            ("child_food_glass", "over_3", "7013990000", "выбранный код"),
+            ("child_food_glass", "over_3", "7323940000", "выбранный код"),
+            ("unknown", "over_3", code, "материал"),
+        ]:
+            with self.subTest(use=use, age=age, target=target):
+                rv = check(use, age, target)
+                self.assertEqual(rv["source_routes"], [])
+                self.assertIn(question, rv["questions"][0])
+
     def test_standard_route_keeps_authenticated_default_checker(self):
         from app.api import auth, non_tariff
         from tests.support_auth import login_declarant
