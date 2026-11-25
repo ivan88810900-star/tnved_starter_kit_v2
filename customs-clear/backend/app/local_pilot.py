@@ -7,9 +7,9 @@ import sqlite3
 import tempfile
 from contextlib import closing
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
-from fastapi import FastAPI, HTTPException, Path as PathParam, Query
+from fastapi import Depends, FastAPI, HTTPException, Path as PathParam, Query
 
 from .recovery_main import create_recovery_app
 
@@ -162,16 +162,28 @@ def create_app():
     if login_enabled:
         from .api.local_pilot_invoice import pilot_invoice_router
         from .api.auth import router as auth_router
-        from .api.non_tariff import non_tariff_normative_block, normative_position_checker
+        from .api.non_tariff import NormativeBlockItemIn, NormativeBlockRequest, normative_response
+        from .security import require_authenticated_user
         from .services.local_pilot_ntm import archive_normative_block
 
-        async def check_local_position(hs_code, description, country, permits):
-            code = hs_code.strip().replace(" ", "")
+        class LocalNormativeItem(NormativeBlockItemIn):
+            tableware_use: Literal["unknown", "child_food_glass"] = "unknown"
+            tableware_age: Literal["unknown", "under_3", "over_3", "exactly_3", "adult"] = "unknown"
+
+        class LocalNormativeRequest(NormativeBlockRequest):
+            items: list[LocalNormativeItem]
+
+        async def check_local_position(item: LocalNormativeItem):
+            code = item.hs_code.strip().replace(" ", "")
             with pilot_catalog_reader(catalog_path, check_catalog_snapshot) as store:
                 issue = catalog_code_issue(store, code)
                 if issue:
                     raise HTTPException(422, issue["message"])
-                return archive_normative_block(code, description, country=country, permits=permits)
+                return archive_normative_block(
+                    code, item.description, country=item.country,
+                    permits=[permit.model_dump() for permit in item.permits],
+                    tableware_use=item.tableware_use, tableware_age=item.tableware_age,
+                )
 
         app.include_router(auth_router, prefix="/api/auth")
         app.include_router(pilot_invoice_router(catalog_path, check_catalog_snapshot, Path(scratch.name)))
@@ -179,8 +191,10 @@ def create_app():
             from .local_pilot_profile import restore_local_drafts
 
             restore_local_drafts(Path(prior_drafts), Path(scratch.name) / "invoice-drafts.sqlite")
-        app.dependency_overrides[normative_position_checker] = lambda: check_local_position
-        app.add_api_route("/api/non_tariff/normative-block", non_tariff_normative_block, methods=["POST"])
+
+        @app.post("/api/non_tariff/normative-block")
+        async def local_normative_block(req: LocalNormativeRequest, _user: dict = Depends(require_authenticated_user)):
+            return await normative_response(req.items, check_local_position)
     else:
         @app.post("/api/non_tariff/normative-block")
         def protected_service_unavailable():

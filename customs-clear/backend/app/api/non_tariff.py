@@ -75,16 +75,23 @@ async def non_tariff_normative_block(
     check_position: Callable = Depends(normative_position_checker),
 ) -> JSONResponse:
     """Продуктовый блок нормативных требований по позициям (без расчёта платежей)."""
-    if not req.items:
-        raise HTTPException(status_code=400, detail="Список позиций пуст")
-    results: List[Dict[str, Any]] = []
-    for item in req.items:
-        nt = await check_position(
+    async def check_item(item):
+        return await check_position(
             item.hs_code,
             item.description,
             item.country,
             [{"type": p.type, "number": p.number} for p in item.permits],
         )
+
+    return await normative_response(req.items, check_item)
+
+
+async def normative_response(items, check_item):
+    if not items:
+        raise HTTPException(status_code=400, detail="Список позиций пуст")
+    results: List[Dict[str, Any]] = []
+    for item in items:
+        nt = await check_item(item)
         results.append(
             {
                 "hs_code": item.hs_code,

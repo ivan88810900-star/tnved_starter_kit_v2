@@ -57,7 +57,7 @@ function InvoiceLine({ draftId, item, onSaved }: { draftId: string; item: Line; 
     {item.clarification && <p className="text-sm text-cargo-mid">Уточнение · {item.clarification}</p>}
     {!choices && <button type="button" disabled={busy} className="cc-btn-secondary" onClick={() => void search([])}>{item.selected_code ? 'Изменить выбор' : 'Подобрать код'}</button>}
     {choices && <div className="space-y-3">
-      {(choices.product_question || submitted) && <form className="space-y-2" onSubmit={e => { e.preventDefault(); void search([], clarification.trim()); }}>
+      {(choices.product_question || choices.limited || submitted) && <form className="space-y-2" onSubmit={e => { e.preventDefault(); void search([], clarification.trim()); }}>
         <label className="block">{choices.product_question || 'Уточнение вида изделия'}
           <input className="cc-input mt-1 block" maxLength={240} value={clarification} onChange={e => setClarification(e.target.value)} disabled={busy} />
         </label>

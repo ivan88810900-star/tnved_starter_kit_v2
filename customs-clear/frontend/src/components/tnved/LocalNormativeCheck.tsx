@@ -9,6 +9,8 @@ type Reply = { items: { normative_block: Block }[] };
 
 export function LocalNormativeCheck({ code }: { code: string }) {
   const [description, setDescription] = useState('');
+  const [tablewareUse, setTablewareUse] = useState('unknown');
+  const [age, setAge] = useState('unknown');
   const [country, setCountry] = useState('');
   const [documentType, setDocumentType] = useState('СГР');
   const [documentNumber, setDocumentNumber] = useState('');
@@ -25,6 +27,7 @@ export function LocalNormativeCheck({ code }: { code: string }) {
     setMessage('');
     try {
       const { data } = await api.post<Reply>('/non_tariff/normative-block', { items: [{ hs_code: code, description: description.trim(),
+        ...(code.startsWith('7013') && { tableware_use: tablewareUse, tableware_age: age }),
         country: country.trim() || null, permits: documentNumber.trim() ? [{ type: documentType, number: documentNumber.trim() }] : [] }] });
       const result = data.items[0]?.normative_block;
       if (result?.hs_code !== code || result.assessment !== 'INSUFFICIENT_EVIDENCE') {
@@ -40,7 +43,7 @@ export function LocalNormativeCheck({ code }: { code: string }) {
     } finally {
       setBusy(false);
     }
-  }, [code, description, country, documentType, documentNumber]);
+  }, [code, description, country, documentType, documentNumber, tablewareUse, age]);
 
   useEffect(() => {
     if (!needsLogin) return;
@@ -60,6 +63,22 @@ export function LocalNormativeCheck({ code }: { code: string }) {
       <input className="cc-input mt-1 w-full" value={description} maxLength={1000} disabled={busy}
         onChange={e => { setDescription(e.target.value); clearAssessment(); }} />
     </label>
+    {code.startsWith('7013') && <fieldset className="space-y-2" disabled={busy}>
+      <label className="block">Назначение по маркировке изготовителя
+        <select className="cc-input mt-1 block" value={tablewareUse} onChange={e => { setTablewareUse(e.target.value); setAge('unknown'); clearAssessment(); }}>
+          <option value="unknown">Не указано</option>
+          <option value="child_food_glass">Детская стеклянная посуда для еды или питья</option>
+        </select>
+      </label>
+      {tablewareUse === 'child_food_glass' && <label className="block">Для какого возраста предназначено изделие
+        <select className="cc-input mt-1 block" value={age} onChange={e => { setAge(e.target.value); clearAssessment(); }}>
+          <option value="unknown">Возраст не указан</option>
+          <option value="under_3">До 3 лет</option>
+          <option value="exactly_3">Ровно 3 года</option>
+          <option value="over_3">Старше 3 лет, включая подростков</option>
+        </select>
+      </label>}
+    </fieldset>}
     <details><summary className="cursor-pointer">Страна и реквизиты для проверки</summary>
       <div className="mt-2 space-y-2">
         <label className="block">Страна происхождения
