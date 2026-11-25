@@ -163,6 +163,48 @@
           "sha256": "03035d64f9a444323554f1c5415feff7dd1cab1b6725d24ab3fa7d27fafc3f43"
         }
       ]
+    },
+    "44": {
+      "ZIP": "Tariff-ETT-Chapter44-offline-20261125.zip",
+      "ZIP_sha256": "a9997f13932c82115b5504b86808b1c5630267dab1c0a775299c985fc627600d",
+      "parts": [
+        {
+          "first": "4401110001",
+          "last": "4407121603",
+          "file": "44-001-086.sqlite",
+          "sha256": "c10d35c4939a768c062069b9154b59616e221fd11407a7bf691d0bec7bffeb85"
+        },
+        {
+          "first": "4407121604",
+          "last": "4407919001",
+          "file": "44-087-172.sqlite",
+          "sha256": "ff108f72f0942392ebbe50f4c692dc2066f410bffc35e4994c3ce7a3c8cae15f"
+        },
+        {
+          "first": "4407919005",
+          "last": "4407994009",
+          "file": "44-173-258.sqlite",
+          "sha256": "ffd96e466c617972824a538944f94d14b0a3f9990b1a3145a9395072db976290"
+        },
+        {
+          "first": "4407999001",
+          "last": "4408908507",
+          "file": "44-259-344.sqlite",
+          "sha256": "27d0c18486e83135f8785d88dae8cb5ac7337c6f6565d1f6726cf90c39e21af4"
+        },
+        {
+          "first": "4408908508",
+          "last": "4418211000",
+          "file": "44-345-430.sqlite",
+          "sha256": "1ca95c43cf5e5c3cba5f1d062c47d75881ae1a52c2ca8c6674bb130c5b69cb86"
+        },
+        {
+          "first": "4418219000",
+          "last": "4421999000",
+          "file": "44-431-465.sqlite",
+          "sha256": "4fc88ea73c6f142c0568864e11e4a06d8591b866a39f791edc0afe3c9d020403"
+        }
+      ]
     }
   }
 }
