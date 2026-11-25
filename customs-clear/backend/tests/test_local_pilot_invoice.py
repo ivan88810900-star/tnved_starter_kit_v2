@@ -1,0 +1,102 @@
+import io
+import tempfile
+import unittest
+from contextlib import contextmanager
+from pathlib import Path
+from unittest.mock import patch
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from openpyxl import Workbook
+
+from app.api.auth import router as auth_router
+from app.api.local_pilot_invoice import pilot_invoice_router
+from tests.support_auth import login_admin, login_declarant, login_viewer
+
+
+def row(code, kind, path):
+    return {"code": code, "kind": kind, "path": path, "label": path[-1]}
+
+
+class SmallCatalog:
+    rows = [
+        row(None, "codeless", ["Мебель", "Стулья:"]),
+        row("9401000000", "coded", ["Мебель", "Стулья:"]),
+        row("9401000001", "coded", ["Мебель", "Стулья:", "деревянные"]),
+        row("9401000002", "coded", ["Мебель", "Стулья:", "металлические"]),
+        row("9401999999", "reserved_marker", ["Мебель", "Стулья:", "зарезервировано"]),
+        row("9999999999", "coded", ["Мебель", "Шкафы"]),
+    ]
+
+    def search_page(self, term, limit):
+        hits = [r for r in self.rows if term in " ".join(r["path"]).casefold()]
+        return {"results": hits, "total": len(hits), "limit": limit, "has_more": False}
+
+    def has_children(self, code):
+        return code == "9401000000"
+
+
+@contextmanager
+def catalog_reader(path, check):
+    check()
+    yield SmallCatalog()
+    check()
+
+
+class LocalInvoiceTests(unittest.TestCase):
+    def setUp(self):
+        scratch = self.enterContext(tempfile.TemporaryDirectory())
+        app = FastAPI()
+        app.include_router(auth_router, prefix="/api/auth")
+        app.include_router(pilot_invoice_router(Path("unused"), lambda: None, Path(scratch)))
+        self.enterContext(patch("app.api.local_pilot_invoice.pilot_catalog_reader", catalog_reader))
+        self.client = self.enterContext(TestClient(app))
+        self.base = "/api/local-invoice/drafts"
+
+    def test_tree_answers_candidates_and_saved_explicit_choice(self):
+        response = self.client.post(self.base, json={"description": "  Стулья "})
+        self.assertEqual(response.status_code, 401)
+        login_declarant(self.client)
+        created = self.client.post(self.base, json={"description": "  Стулья "}).json()
+        address = self.base + "/" + created["draft_id"]
+        line = address + "/lines/1"
+        self.assertEqual(created["lines"][0]["description"], "Стулья")
+        self.assertIsNone(created["lines"][0]["selected_code"])
+        initial = self.client.post(line + "/candidates", json={}).json()
+        self.assertEqual([r["code"] for r in initial["candidates"]], ["9401000001", "9401000002"])
+        self.assertFalse(initial["limited"])
+        answer = next(o["value"] for o in initial["question"]["options"] if o["label"] == "деревянные")
+        narrowed = self.client.post(line + "/candidates", json={"answers": [answer]}).json()
+        self.assertIsNone(narrowed["question"])
+        self.assertIsNone(narrowed["selected_code"])
+        self.assertEqual([r["code"] for r in narrowed["candidates"]], ["9401000001"])
+        for code in ("9401000000", "9401000002", "9401999999", "9999999999", "9401"):
+            with self.subTest(code=code):
+                self.assertEqual(self.client.put(line + "/choice", json={"code": code, "answers":[answer]}).status_code, 422)
+        saved = self.client.put(line + "/choice", json={"code": "9401000001", "answers":[answer]})
+        self.assertEqual(saved.json()["lines"][0]["selected_code"], "9401000001")
+        self.assertEqual(self.client.get(address).json(), saved.json())
+        login_admin(self.client)
+        self.assertEqual(self.client.get(address).status_code, 404)
+        self.assertEqual(self.client.put(line + "/choice", json={"code":"9401000001"}).status_code, 404)
+
+    def test_xlsx_lines_and_invalid_inputs(self):
+        login_viewer(self.client)
+        self.assertEqual(self.client.post(self.base, json={"description":"Стулья"}).status_code, 403)
+        login_declarant(self.client)
+        workbook = Workbook()
+        workbook.active.append(["Description","Quantity","Unit"])
+        workbook.active.append(["Стулья", 12, "шт"])
+        workbook.active.append(["Неизвестныйтовар", 2, "шт"])
+        stream = io.BytesIO()
+        workbook.save(stream)
+        workbook.close()
+        upload = self.base + "/upload"
+        created = self.client.post(upload, files={"file":("lines.xlsx", stream.getvalue())}).json()
+        self.assertEqual([(l["quantity"], l["unit"]) for l in created["lines"]], [(12, "шт"), (2, "шт")])
+        addr = self.base + "/" + created["draft_id"] + "/lines"
+        self.assertEqual(self.client.post(addr + "/2/candidates", json={}).json()["candidates"], [])
+        self.assertEqual(self.client.post(addr + "/1/candidates", json={"answers":["a"*24]}).status_code, 422)
+        self.assertEqual(self.client.post(addr + "/3/candidates", json={}).status_code, 404)
+        for filename in ("bad.xlsx","other.txt"):
+            self.assertEqual(self.client.post(upload, files={"file":(filename,b"bad")}).status_code, 422)
