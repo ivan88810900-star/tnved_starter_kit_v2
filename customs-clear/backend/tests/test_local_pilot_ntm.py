@@ -183,6 +183,46 @@ class LocalNormativeBlockTests(unittest.TestCase):
                 self.assertEqual(rv["source_routes"], [])
                 self.assertIn(question, rv["questions"][0])
 
+    @patch("app.services.local_pilot_ntm.lookup_tr_ts_acts_by_codes", return_value=[])
+    def test_drinking_vessel_requires_its_own_manufacturer_designation(self, lookup):
+        def review(code, use, age):
+            block = archive_normative_block(
+                code, "Детский стакан для воды, 4+", tableware_use=use, tableware_age=age,
+                permits=[{"type": "СС", "number": "EXAMPLE-ONLY"}],
+            )["normative_block"]
+            self.assertEqual(block["assessment"], "INSUFFICIENT_EVIDENCE")
+            self.assertEqual((block["required_documents"], block["missing_documents"]), ([], []))
+            item = block["product_review"]
+            self.assertFalse(item["product_documents"]["shipment_verified"])
+            return item
+
+        code = "7013371000"
+        for age, form, locator, url in [
+            ("under_3", "Государственная регистрация с последующим декларированием соответствия", "поз. 6,", "/251/9400/"),
+            ("over_3", "Сертификат соответствия", "поз. 6¹,", "/335/4893/"),
+        ]:
+            with self.subTest(age=age):
+                (route,) = review(code, "child_drinking_cup", age)["source_routes"]
+                self.assertEqual(route["document_type"], form)
+                self.assertIn(locator, route["locator"])
+                self.assertIn("из 7013", route["locator"])
+                self.assertIn("аналогичный сосуд", route["condition"])
+                self.assertTrue(route["source_url"].endswith(url))
+        for target, use, age, question in [
+            (code, "child_food_glass", "over_3", "поильник"),
+            (code, "unknown", "under_3", "поильник"),
+            (code, "child_drinking_cup", "exactly_3", "одному указанию"),
+            (code, "child_drinking_cup", "unknown", "полный диапазон"),
+            (code, "child_drinking_cup", "adult", "противоречат"),
+            ("7013375100", "child_drinking_cup", "over_3", "выбранный код"),
+            ("7013379900", "child_drinking_cup", "over_3", "выбранный код"),
+            ("7013491000", "child_drinking_cup", "over_3", "выбранный код"),
+        ]:
+            with self.subTest(target=target, use=use, age=age):
+                item = review(target, use, age)
+                self.assertEqual(item["source_routes"], [])
+                self.assertIn(question, item["questions"][0])
+
     def test_standard_route_keeps_authenticated_default_checker(self):
         from app.api import auth, non_tariff
         from tests.support_auth import login_declarant

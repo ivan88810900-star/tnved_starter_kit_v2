@@ -217,28 +217,37 @@ _CHILD_AMENDMENT = "https://docs.eaeunion.org/documents/317/3175/"
 
 
 def _child_tableware_review(code: str, use: str | None, age: str | None, permits: list[dict] | None) -> dict:
-    # These leaves identify glass table/kitchenware. The caller must separately
-    # supply the manufacturer's child and food-use designation.
-    table_plate = code in {"7013420000", "7013491000", "7013499100", "7013499900"}
+    drinking_vessel = code == "7013371000"
+    tableware = code in {"7013420000", "7013491000", "7013499100", "7013499900"}
     routes = []
     questions = [
         "Выпускается ли новая посуда в обращение в ЕАЭС? Проверьте этикетку и назначение для контакта с пищей. Изделия медицинского назначения, игрушки и изделия по индивидуальному заказу исключены из области регламента.",
         "Есть ли документ на это изделие и изготовителя в официальном реестре? Сверьте дату выпуска, партию или серию и срок документа.",
     ]
-    if not table_plate:
+    if not drinking_vessel and (not tableware or use == "child_drinking_cup"):
         questions.insert(0, "Указанный код выходит за проверенные позиции стеклянной столовой посуды. Сверьте материал, вид изделия и выбранный код.")
-    elif use != "child_food_glass":
+    elif drinking_vessel and use != "child_drinking_cup":
+        questions.insert(0, "Обозначил ли изготовитель стакан для питья как детскую чашку, поильник или аналогичное по функции изделие? Проверьте маркировку или техническое описание.")
+    elif not drinking_vessel and use != "child_food_glass":
         questions.insert(0, "Уточните материал и пищевое назначение посуды по маркировке изготовителя.")
     elif age in ("under_3", "over_3"):
         younger = age == "under_3"
         document = "Государственная регистрация с последующим декларированием соответствия" if younger else "Сертификат соответствия"
         category = "для детей до 3 лет" if younger else "для детей старше 3 лет и подростков"
         paragraph, amendment = ("2", "а") if younger else ("4", "в")
+        product = "новую стеклянную пищевую посуду"
+        locator = f"ТР ТС 007/2011, ст. 12 п. {paragraph}. Решение Совета ЕЭК № 51, приложение, п. 6 подп. «{amendment}»."
+        source = _CHILD_AMENDMENT
+        if drinking_vessel:
+            product = "новую детскую стеклянную чашку, поильник или функционально аналогичный сосуд для питья"
+            entry = "6" if younger else "6¹"
+            locator += f" Перечень № 28, раздел IV, поз. {entry}, «из 7013», с изменениями № 235."
+            source = "https://docs.eaeunion.org/documents/251/9400/" if younger else "https://docs.eaeunion.org/documents/335/4893/"
         routes.append({
             "document_type": document,
-            "condition": f"Если изготовитель обозначил новую стеклянную пищевую посуду как предназначенную {category} и выполнены условия статьи 1.",
-            "locator": f"ТР ТС 007/2011, ст. 12 п. {paragraph}. Решение Совета ЕЭК № 51, приложение, п. 6 подп. «{amendment}».",
-            "source_url": _CHILD_AMENDMENT,
+            "condition": f"Если изготовитель предназначил {product} {category} и выполнены условия статьи 1.",
+            "locator": locator,
+            "source_url": source,
         })
     elif age == "exactly_3":
         questions.insert(0, "Формулировки статьи 12 — «до 3 лет» и «старше 3 лет». Уточните у изготовителя полный возрастной диапазон: по одному указанию «3 года» форма документа не определена.")
@@ -293,7 +302,7 @@ def archive_normative_block(
     )
     positions = _tableware_candidates(code)
     child_age_given = tableware_age in {"under_3", "exactly_3", "over_3"}
-    if tableware_use == "child_food_glass" or (code.startswith("7013") and child_age_given):
+    if tableware_use in {"child_food_glass", "child_drinking_cup"} or (code.startswith("7013") and child_age_given):
         block["product_review"] = _child_tableware_review(code, tableware_use, tableware_age, permits)
     elif positions:
         block["product_review"] = _tableware_review(positions, permits)
