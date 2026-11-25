@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, StringConstraints
 
 from ..local_pilot_payments import pilot_catalog_reader
 from ..security import require_authenticated_user
+from ..services.declaration_draft_service import normalize_declaration_line
 from ..services.extractor import extract_invoice_and_packing_from_files
 from ..services.local_pilot_invoice import PilotDrafts, find_candidates, narrow_candidates
 
@@ -57,8 +58,9 @@ def pilot_invoice_router(catalog: Path, check_snapshot: Callable[[], None], scra
         await file.seek(0)
         result = await extract_invoice_and_packing_from_files(file)
         rows = []
-        for item in result["invoice"]["items"]:
-            desc = str(item["description"]).strip()
+        for extracted in result["invoice"]["items"]:
+            item = normalize_declaration_line(extracted)
+            desc = item["description"]
             if not desc or desc.casefold() == "nan":
                 continue
             if len(desc) > 1200 or not math.isfinite(item["quantity"]):
@@ -75,10 +77,10 @@ def pilot_invoice_router(catalog: Path, check_snapshot: Callable[[], None], scra
     def inspect_line(draft_id: str, number: int, owner: str, answers: list[str]) -> dict:
         line = drafts.line(owner, draft_id, number)
         with pilot_catalog_reader(catalog, check_snapshot) as store:
-            matches, limited = find_candidates(store, line["description"])
+            matches, limited, notice = find_candidates(store, line["description"])
             candidates, question = narrow_candidates(matches, answers)
         return {"candidates": candidates, "question": question, "limited": limited,
-                "selected_code": line["selected_code"]}
+                "selected_code": line["selected_code"], "notice": notice}
 
     @router.post("/{draft_id}/lines/{line}/candidates")
     def candidates(draft_id: str, line: int, body: TreeAnswers, owner: str = owner_dep):

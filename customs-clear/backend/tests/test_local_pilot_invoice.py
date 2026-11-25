@@ -80,6 +80,16 @@ class LocalInvoiceTests(unittest.TestCase):
         self.assertEqual(self.client.get(address).status_code, 404)
         self.assertEqual(self.client.put(line + "/choice", json={"code":"9401000001"}).status_code, 404)
 
+    def test_negated_property_is_not_a_positive_candidate(self):
+        login_declarant(self.client)
+        draft = self.client.post(self.base, json={"description": "Стулья без дерева"}).json()
+        addr = self.base + "/" + draft["draft_id"] + "/lines/1"
+        reply = self.client.post(addr + "/candidates", json={}).json()
+        self.assertEqual(reply["candidates"], [])
+        self.assertIsNone(reply["question"])
+        self.assertIn("положительной форме", reply["notice"])
+        self.assertEqual(self.client.put(addr + "/choice", json={"code":"9401000001"}).status_code, 422)
+
     def test_xlsx_lines_and_invalid_inputs(self):
         login_viewer(self.client)
         self.assertEqual(self.client.post(self.base, json={"description":"Стулья"}).status_code, 403)

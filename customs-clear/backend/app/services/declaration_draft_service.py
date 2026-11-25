@@ -72,9 +72,9 @@ def _aggregate_rules(hs_code: str) -> Dict[str, Any]:
     }
 
 
-def _normalize_line(
+def normalize_declaration_line(
     row: Dict[str, Any],
-    pack_row: Optional[Dict[str, Any]],
+    pack_row: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Объединяет инвойс и упаковку по индексу."""
     q = float(row.get("quantity") or 0)
@@ -136,7 +136,7 @@ async def build_declaration_draft(
     normalized: List[Dict[str, Any]] = []
     for i, row in enumerate(items):
         pk = pack_items[i] if i < len(pack_items) else None
-        norm = _normalize_line(row, pk)
+        norm = normalize_declaration_line(row, pk)
         normalized.append(norm)
         lines_for_llm.append(
             {

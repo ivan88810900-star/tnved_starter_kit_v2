@@ -14,6 +14,13 @@ from fastapi import HTTPException
 from .tnved_recovery_store import TnvedRecoveryStore
 
 
+def _description_notice(description: str) -> str | None:
+    # A simple word match cannot assign scope to a negation (material, use, etc.).
+    if re.search(r"\b(без|не|нет|кроме|исключая|without|not|except|excluding)\b", description, re.I):
+        return "В описании есть исключение. Укажите материал или назначение в положительной форме, чтобы подобрать кандидатов."
+    return None
+
+
 def _terms(description: str) -> list[str]:
     words = re.findall(r"[а-яёa-z]{3,}", description.casefold())
     terms = []
@@ -28,7 +35,10 @@ def _terms(description: str) -> list[str]:
     return terms
 
 
-def find_candidates(store: TnvedRecoveryStore, description: str) -> tuple[list[dict], bool]:
+def find_candidates(store: TnvedRecoveryStore, description: str) -> tuple[list[dict], bool, str | None]:
+    notice = _description_notice(description)
+    if notice:
+        return [], False, notice
     terms = _terms(description)
     pages = [(term, store.search_page(term, limit=200)) for term in terms[:8]]
     active_terms = [term for term, page in pages if page["total"]]
@@ -50,7 +60,7 @@ def find_candidates(store: TnvedRecoveryStore, description: str) -> tuple[list[d
     covered = any(0 < page["total"] <= page["limit"] for _, page in pages)
     omitted_pages = any(page["has_more"] for _, page in pages)
     partial = omitted_pages and not (covered and best == len(active_terms))
-    return matches[:40], partial or len(matches) > 40 or len(terms) > 8
+    return matches[:40], partial or len(matches) > 40 or len(terms) > 8, None
 
 
 def _groups(candidates: list[dict]) -> dict[str, list[dict]]:
