@@ -254,7 +254,8 @@ class LocalNormativeBlockTests(unittest.TestCase):
                 qs = " ".join(review["questions"])
                 self.assertEqual("5 мм" in qs, kind == "child_coloring_book" and 3 <= age <= 6)
                 self.assertEqual("массу бумаги раскраски" in qs, kind == "child_coloring_book")
-                self.assertEqual("текста на иллюстрациях" in qs, kind == "child_picture_book")
+                self.assertEqual("для графитного карандаша" in qs, kind == "child_coloring_book")
+                self.assertEqual("многокрасочных иллюстрациях" in qs, kind == "child_picture_book")
                 self.assertEqual("дистиллированной воде" in qs, age <= 3)
 
         for code, kind, age, text in [
