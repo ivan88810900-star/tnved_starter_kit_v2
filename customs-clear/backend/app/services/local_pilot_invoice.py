@@ -72,12 +72,32 @@ def _terms(description: str) -> list[str]:
 PRODUCT_KIND_QUESTION = "Какой это вид изделия и для чего оно предназначено? Укажите общее название товара."
 
 
+BOOK_FORM_QUESTION = (
+    "Что составляет основное содержание детской книги — текст для чтения, картинки или рисунки для раскрашивания? "
+    "Уточните вид по самому изданию, например «печатные книги сброшюрованные», "
+    "«книги-картинки» или «книги для раскрашивания»."
+)
+PRODUCT_QUESTIONS = {PRODUCT_KIND_QUESTION, BOOK_FORM_QUESTION}
+
+
+def _needs_book_form(terms: list[str], description_terms: list[str]) -> bool:
+    # Audience, medium and age alone do not distinguish a reading book from
+    # a picture or coloring book. An explicit clarification can supply the form.
+    book = {"книг", "книжк"}
+    audience = {"дет", "детск", "детям", "детьм", "подростк", "подростков"}
+    general = book | audience | {"бумажн", "печатн", "издан", "лет", "год", "возраст"}
+    words = set(terms)
+    return bool(book & words and audience.intersection([*terms, *description_terms]) and words <= general)
+
+
 def find_candidates(store: TnvedRecoveryStore, description: str, clarification: str = "") -> tuple[list[dict], bool, str | None]:
     notice = _description_notice(description) or _description_notice(clarification)
     if notice:
         return [], False, notice
     category = _terms(clarification)
     description_terms = _terms(description)
+    if _needs_book_form(category or description_terms, description_terms):
+        return [], False, BOOK_FORM_QUESTION
     terms = list(dict.fromkeys([*category, *description_terms]))
     if not terms or len(category or terms) > 8 or (clarification and not category):
         return [], False, PRODUCT_KIND_QUESTION

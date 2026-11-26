@@ -103,6 +103,29 @@ class LocalInvoiceTests(unittest.TestCase):
             own = find_candidates(catalog, "Издание", "Ноты в переплёте")[0]
             self.assertEqual([item["code"] for item in own], [notes["code"]])
 
+    def test_child_book_audience_does_not_identify_content(self):
+        rows = [row("4901990000", "coded", ["Печатные книги сброшюрованные", "прочие"]),
+                row("4903000000", "coded", ["Книги-картинки, книги для рисования или раскрашивания, детские"])]
+        login_declarant(self.client)
+        with patch.object(SmallCatalog, "rows", rows):
+            created = self.client.post(self.base, json={"description": "Детская книга"}).json()
+            line = self.base + "/" + created["draft_id"] + "/lines/1"
+            for clarification in ("", "Детские книги", "Бумажная книжка для детей от 4 лет", "Книги"):
+                arguments = {"clarification": clarification}
+                result = self.client.post(line + "/candidates", json=arguments).json()
+                self.assertIn("текст для чтения", result["product_question"])
+                self.assertIn("картинки", result["product_question"])
+                self.assertIn("раскрашивания", result["product_question"])
+                self.assertEqual(result["candidates"], [])
+                self.assertIsNone(result["selected_code"])
+                self.assertEqual(self.client.put(line + "/choice", json={**arguments, "code": "4903000000"}).status_code, 422)
+            for term, expected in (("Печатные книги сброшюрованные", "4901990000"), ("Книги-картинки", "4903000000"),
+                                   ("Книги для раскрашивания", "4903000000")):
+                result = self.client.post(line + "/candidates", json={"clarification": term}).json()
+                self.assertEqual([c["code"] for c in result["candidates"]], [expected])
+                self.assertIsNone(result["selected_code"])
+                self.assertIsNone(result["product_question"])
+
     def test_unrecognized_name_requires_a_product_type_before_selecting(self):
         login_declarant(self.client)
         draft = self.client.post(self.base, json={"description": "Креслице деревянное"}).json()

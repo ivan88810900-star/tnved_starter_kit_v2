@@ -12,7 +12,7 @@ from ..local_pilot_payments import pilot_catalog_reader
 from ..security import require_authenticated_user
 from ..services.declaration_draft_service import normalize_declaration_line
 from ..services.extractor import extract_invoice_and_packing_from_files
-from ..services.local_pilot_invoice import PRODUCT_KIND_QUESTION, PilotDrafts, find_candidates, narrow_candidates
+from ..services.local_pilot_invoice import PRODUCT_QUESTIONS, PilotDrafts, find_candidates, narrow_candidates
 
 
 class TextLine(BaseModel):
@@ -81,8 +81,8 @@ def pilot_invoice_router(catalog: Path, check_snapshot: Callable[[], None], scra
             matches, limited, notice = find_candidates(store, line["description"], body.clarification)
             candidates, question = narrow_candidates(matches, body.answers)
         return {"candidates": candidates, "question": question, "limited": limited,
-                "selected_code": line["selected_code"], "product_question": notice if notice == PRODUCT_KIND_QUESTION else None,
-                "notice": None if notice == PRODUCT_KIND_QUESTION else notice}
+                "selected_code": line["selected_code"], "product_question": notice if notice in PRODUCT_QUESTIONS else None,
+                "notice": None if notice in PRODUCT_QUESTIONS else notice}
 
     @router.post("/{draft_id}/lines/{line}/candidates")
     def candidates(draft_id: str, line: int, body: TreeAnswers, owner: str = owner_dep):
