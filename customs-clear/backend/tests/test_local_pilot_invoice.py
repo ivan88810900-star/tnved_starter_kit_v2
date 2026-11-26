@@ -15,7 +15,7 @@ from tests.support_auth import login_admin, login_declarant, login_viewer
 
 
 def row(code, kind, path):
-    return {"code": code, "kind": kind, "path": path, "label": path[-1]}
+    return {"code": code, "kind": kind, "path": ["Учебная группа", *path], "label": path[-1]}
 
 
 class SmallCatalog:
@@ -79,6 +79,29 @@ class LocalInvoiceTests(unittest.TestCase):
         login_admin(self.client)
         self.assertEqual(self.client.get(address).status_code, 404)
         self.assertEqual(self.client.put(line + "/choice", json={"code":"9401000001"}).status_code, 404)
+
+    def test_chapter_title_is_not_a_product_description(self):
+        from app.services.local_pilot_invoice import find_candidates
+
+        title = "Печатные книги, газеты и другие изделия полиграфической промышленности"
+        book = row("4901990000", "coded", ["Печатные книги сброшюрованные:", "прочие"])
+        notes = row("4904000000", "coded", ["Ноты, печатные или рукописные, в переплете"])
+        binders = row("4820300000", "coded", ["Бухгалтерские книги, съемные переплеты:", "папки"])
+        for item in (book, notes, binders):
+            item["path"][0] = title
+        with patch.object(SmallCatalog, "rows", [book, notes]):
+            catalog = SmallCatalog()
+            for description, clarification in (("Книги", ""), ("Издание", "Печатные книги")):
+                matches, _, _ = find_candidates(catalog, description, clarification)
+                self.assertEqual([item["code"] for item in matches], [book["code"]])
+                self.assertEqual(matches[0]["path"][0], title)
+            self.assertEqual(find_candidates(catalog, "Издание", "Книги в переплёте")[0], [])
+            with patch.object(SmallCatalog, "rows", [binders]):
+                self.assertEqual(find_candidates(catalog, "Издание", "Книги в переплёте")[0], [])
+                matched = find_candidates(catalog, "Изделие", "Съёмные переплёты")[0]
+                self.assertEqual([item["code"] for item in matched], [binders["code"]])
+            own = find_candidates(catalog, "Издание", "Ноты в переплёте")[0]
+            self.assertEqual([item["code"] for item in own], [notes["code"]])
 
     def test_unrecognized_name_requires_a_product_type_before_selecting(self):
         login_declarant(self.client)
@@ -189,7 +212,7 @@ class LocalInvoiceTests(unittest.TestCase):
                                             ("Жаростойкая посуда столовая", "7013491000")):
                 result = find_candidates(catalog, "Посуда", clarification)[0]
                 self.assertEqual([item["code"] for item in result], [official])
-            self.assertEqual(find_candidates(catalog, "Сосуды")[0][0]["path"][0], vessel)
+            self.assertEqual(find_candidates(catalog, "Сосуды")[0][0]["path"][1], vessel)
 
     def test_two_xlsx_lines_keep_separate_confirmed_choices(self):
         login_declarant(self.client)

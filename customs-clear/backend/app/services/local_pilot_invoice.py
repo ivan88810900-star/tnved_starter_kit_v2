@@ -84,6 +84,14 @@ def find_candidates(store: TnvedRecoveryStore, description: str, clarification: 
     # A word missing from the tree may be the product itself, anywhere in the
     # description. Matching only known modifiers cannot establish its category.
     required = set(category)
+    # In a supplied clarification, "в переплёте" describes the product's form.
+    # Matching the noun in a list of separate goods (e.g. "съёмные переплёты")
+    # does not establish that form. Match the stated relation as well as the word.
+    locative = [
+        re.compile(r"\b(?:в|во)\s+" + re.escape(term))
+        for word in re.findall(r"\b(?:в|во)\s+([а-яa-z]{3,})\b", _search_text(clarification))
+        for term in _terms(word)
+    ]
     pages = []
     for term in terms[:8]:
         page = store.search_page(term, limit=200)
@@ -98,7 +106,12 @@ def find_candidates(store: TnvedRecoveryStore, description: str, clarification: 
             code = item.get("code") or ""
             if item["kind"] != "coded" or not re.fullmatch(r"[0-9]{10}", code) or code in scored:
                 continue
-            positive_path = " ".join(_positive_label(label) for label in item["path"])
+            # The first label is the chapter title. It can list unrelated kinds
+            # of goods and cannot establish a characteristic of every leaf.
+            product_path = item["path"][1:] or [item["label"]]
+            positive_path = " ".join(_positive_label(label) for label in product_path)
+            if any(not phrase.search(positive_path) for phrase in locative):
+                continue
             words = re.findall(r"[а-яa-z]+", positive_path)
             matched = {term for term in active_terms if any(word.startswith(term) for word in words)}
             if not matched or not required.issubset(matched) or store.has_children(code):
