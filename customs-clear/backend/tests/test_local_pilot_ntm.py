@@ -223,6 +223,53 @@ class LocalNormativeBlockTests(unittest.TestCase):
                 self.assertEqual(item["source_routes"], [])
                 self.assertIn(question, item["questions"][0])
 
+    @patch("app.services.local_pilot_ntm.lookup_tr_ts_acts_by_codes", return_value=[])
+    def test_printed_publications_match_type_reader_and_alternative_document(self, lookup):
+        def check(code, kind, age):
+            block = archive_normative_block(
+                code, "Книга для детей", publication_kind=kind, reader_age_years=age,
+                permits=[{"type": "ДС", "number": "EXAMPLE-ONLY"}],
+            )["normative_block"]
+            self.assertEqual(block["assessment"], "INSUFFICIENT_EVIDENCE")
+            self.assertEqual((block["required_documents"], block["missing_documents"]), ([], []))
+            item = block["product_review"]
+            self.assertFalse(item["product_documents"]["registry_checked"])
+            self.assertFalse(item["product_documents"]["shipment_verified"])
+            self.assertEqual(item["family"], "EAEU_CHILD_PRINTED_PUBLICATION")
+            return item
+
+        for code, kind, age in [
+            ("4901990000", "child_printed_book", 7),
+            ("4903000000", "child_coloring_book", 4),
+            ("4903000000", "child_picture_book", 3),
+            ("4903000000", "child_picture_book", 0),
+        ]:
+            with self.subTest(code=code, kind=kind, age=age):
+                review = check(code, kind, age)
+                self.assertEqual([r["document_type"] for r in review["source_routes"]],
+                                 ["Декларация о соответствии", "Сертификат соответствия по выбору заявителя"])
+                self.assertIn("поз. 40", review["source_routes"][1]["locator"])
+                self.assertIn("3д, 4д или 6д", review["source_routes"][0]["condition"])
+                qs = " ".join(review["questions"])
+                self.assertEqual("5 мм" in qs, kind == "child_coloring_book")
+                self.assertEqual("текста на иллюстрациях" in qs, kind == "child_picture_book")
+                self.assertEqual("дистиллированной воде" in qs, age <= 3)
+
+        for code, kind, age, text in [
+            ("4901990000", "unknown", 7, "Укажите вид"),
+            ("4901990000", "child_printed_book", None, "возрастную группу"),
+            ("4901990000", "child_printed_book", 18, "читательскому адресу"),
+            ("4903000000", "textbook", 7, "учебные пособия"),
+            ("4903000000", "toy_book", 4, "издание с игрушкой"),
+            ("4903000000", "child_printed_book", 7, "код расходятся"),
+            ("4901990000", "child_picture_book", 7, "код расходятся"),
+            ("4901910000", "child_printed_book", 7, "выходит за проверенные"),
+        ]:
+            with self.subTest(code=code, kind=kind, age=age):
+                review = check(code, kind, age)
+                self.assertEqual(review["source_routes"], [])
+                self.assertIn(text, review["questions"][0])
+
     def test_standard_route_keeps_authenticated_default_checker(self):
         from app.api import auth, non_tariff
         from tests.support_auth import login_declarant

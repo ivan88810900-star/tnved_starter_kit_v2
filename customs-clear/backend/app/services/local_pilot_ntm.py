@@ -145,7 +145,7 @@ def _tableware_candidates(code: str) -> tuple[str, ...]:
     }.get(code, ())
 
 
-def _unverified_tableware_documents(permits: list[dict] | None) -> dict:
+def _unverified_submitted_documents(permits: list[dict] | None) -> dict:
     submitted = sum(1 for p in permits or [] if p.get("type", "").strip() and p.get("number", "").strip())
     return {
         "submitted_count": submitted,
@@ -182,7 +182,7 @@ def _tableware_review(positions: tuple[str, ...], permits: list[dict] | None) ->
         "status": "NEEDS_CLARIFICATION",
         "questions": questions,
         "source_routes": routes,
-        "product_documents": _unverified_tableware_documents(permits),
+        "product_documents": _unverified_submitted_documents(permits),
         "edition": {
             "status": "PARTIALLY_RECONSTRUCTED",
             "review_date": "2026-11-25",
@@ -260,7 +260,7 @@ def _child_tableware_review(code: str, use: str | None, age: str | None, permits
         "status": "NEEDS_CLARIFICATION",
         "questions": questions,
         "source_routes": routes,
-        "product_documents": _unverified_tableware_documents(permits),
+        "product_documents": _unverified_submitted_documents(permits),
         "edition": {
             "status": "PARTIALLY_RECONSTRUCTED",
             "review_date": "2026-11-25",
@@ -277,9 +277,74 @@ def _child_tableware_review(code: str, use: str | None, age: str | None, permits
     }
 
 
+_CHILD_BOOK_TYPES = {
+    "4901990000": {"child_printed_book"},
+    "4903000000": {"child_picture_book", "child_coloring_book"},
+}
+_CHILD_BOOK_LIST = "https://docs.eaeunion.org/documents/251/9400/"
+
+
+def _child_publication_review(code: str, kind: str | None, age: int | None, permits: list[dict] | None) -> dict:
+    routes = []
+    questions = []
+    if code not in _CHILD_BOOK_TYPES:
+        questions.append("Выбранный код выходит за проверенные позиции детских печатных книг. Сверьте вид издания и код.")
+    elif kind == "textbook":
+        questions.append("Статья 1 п. 1 исключает учебники, учебные пособия и электронные учебные издания. Сверьте назначение по выходным сведениям издателя.")
+    elif kind == "toy_book":
+        questions.append("Самостоятельная игрушка исключена из ст. 1 п. 1. Если это печатное издание с игрушкой, отдельно проверьте его текст по ст. 8 п. 10 и характеристики вложения.")
+    elif not kind or kind == "unknown":
+        questions.append("Укажите вид нового бумажного издания по сведениям издателя: книга для чтения, книжка-картинка или раскраска.")
+    elif kind not in _CHILD_BOOK_TYPES[code]:
+        questions.append("Вид издания и выбранный код расходятся. Сверьте назначение текста и рисунков по экземпляру и выходным сведениям.")
+    elif age is None or not 0 <= age < 18:
+        questions.append("Уточните младшую возрастную группу по читательскому адресу издателя. Одна отметка о содержании «0+» или «18+» не определяет назначение издания.")
+    else:
+        routes = [
+            {"document_type": "Декларация о соответствии",
+             "condition": "Для новой бумажной книги детской литературы, охваченной ст. 1, применяются схемы 3д, 4д или 6д с участием аккредитованной испытательной лаборатории.",
+             "locator": "ТР ТС 007/2011, ст. 12 п. 3, издательская книжная и журнальная продукция",
+             "source_url": _CHILD_TR},
+            {"document_type": "Сертификат соответствия по выбору заявителя",
+             "condition": "Заявитель может заменить декларирование сертификацией. В строке 40 для «из 4901» и «из 4903 00 000 0» предусмотрена альтернатива.",
+             "locator": "Перечень № 28, раздел XIV, поз. 40, PDF с. 13. ТР ТС 007/2011, ст. 12 п. 3",
+             "source_url": _CHILD_BOOK_LIST},
+        ]
+        if kind == "child_coloring_book" and 3 <= age <= 6:
+            questions.append("Для дошкольной раскраски проверьте размер элементов рисунка от 5 мм и вид и массу бумаги по ст. 8 п. 4.")
+        if kind == "child_picture_book":
+            questions.append("В книжке-картинке проверьте оформление текста на иллюстрациях, если оно применено, по ст. 8 п. 9.")
+        if age >= 3:
+            appendix = next(number for maximum, number in ((6, 16), (10, 17), (14, 18), (17, 19)) if age <= maximum)
+            questions.append(f"Сверено ли шрифтовое оформление с приложением № {appendix} для возраста читателя (ст. 8 п. 7)?")
+        medium = "модельной среде (дистиллированной воде)" if age <= 3 else "воздушной среде"
+        questions.append(f"Проверьте данные испытаний по ст. 8 п. 12 для указанного возраста в {medium}.")
+        questions.append("Сверены ли вид бумаги, оформление, область и срок документа, издатель и идентичность партии или серии?")
+    return {
+        "family": "EAEU_CHILD_PRINTED_PUBLICATION",
+        "status": "NEEDS_CLARIFICATION",
+        "questions": questions,
+        "source_routes": routes,
+        "product_documents": _unverified_submitted_documents(permits),
+        "edition": {
+            "status": "PARTIALLY_RECONSTRUCTED", "review_date": "2026-11-26",
+            "scope": {"locator": "ТР ТС 007/2011, ст. 1, ст. 8, приложение № 1 (издательская продукция)", "source_url": _CHILD_TR},
+            "scope_limit": "Для новой продукции на рынке ЕАЭС сверяют книжный формат и читательский адрес издателя. Для 2–3 возрастных групп ст. 8 п. 2 требует учитывать самую младшую. Примечание к перечню № 28 требует сверять название вместе с кодом.",
+            "decisions": [
+                {"number": 797, "label": "Решение КТС № 797 (начало действия ТР)", "general_effective_date": "2012-07-01", "source_url": _CHILD_TR},
+                {"number": 51, "label": "Решение Совета ЕЭК № 51", "general_effective_date": "2018-09-25", "source_url": _CHILD_AMENDMENT},
+                {"number": 235, "label": "Решение Коллегии ЕЭК № 235 (изменение перечня)", "general_effective_date": "2020-01-26", "source_url": "https://docs.eaeunion.org/documents/335/4893/"},
+                {"number": 147, "label": "Решение Совета ЕЭК № 147", "general_effective_date": "2023-03-26", "source_url": "https://docs.eaeunion.org/documents/401/6944/"},
+            ],
+            "limit": "Форму и редакцию сверяют на дату выпуска продукции. Для старого документа проверяют срок, запись реестра и применимость переходных условий.",
+        },
+    }
+
+
 def archive_normative_block(
     code: str, description: str, *, country: str | None = None, permits: list[dict] | None = None,
     tableware_use: str | None = None, tableware_age: str | None = None,
+    publication_kind: str | None = None, reader_age_years: int | None = None,
 ) -> dict:
     # The catalog prefixes are lookup hints. Only cards present in the pinned
     # registry may be displayed, and none of them establish applicability.
@@ -302,7 +367,9 @@ def archive_normative_block(
     )
     positions = _tableware_candidates(code)
     child_age_given = tableware_age in {"under_3", "exactly_3", "over_3"}
-    if tableware_use in {"child_food_glass", "child_drinking_cup"} or (code.startswith("7013") and child_age_given):
+    if code in _CHILD_BOOK_TYPES or publication_kind not in (None, "unknown"):
+        block["product_review"] = _child_publication_review(code, publication_kind, reader_age_years, permits)
+    elif tableware_use in {"child_food_glass", "child_drinking_cup"} or (code.startswith("7013") and child_age_given):
         block["product_review"] = _child_tableware_review(code, tableware_use, tableware_age, permits)
     elif positions:
         block["product_review"] = _tableware_review(positions, permits)
