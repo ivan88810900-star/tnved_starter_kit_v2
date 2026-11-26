@@ -70,6 +70,10 @@ export function LocalPilotEvidence({ code, simplified, children, canCalculate }:
           {duty.note && <p>Сноска {duty.note} относится к ставке. Условия её применения не проверены.</p>}
           <p>Редакция {rate.source_revision} · строка {rate.line_number} · {rate.legal_status}</p>
           <a className="underline" href={rate.source_url.split('#')[0] + '#page=' + rate.page_number} target="_blank" rel="noreferrer">PDF ЕЭК, стр. {rate.page_number}</a>
+          {rate.pdf_sha256 === 'bbf3618a251f6f77ba04ae264c655f195650c8fe1935c7a891e3a16738c89b96' && <ul aria-label="Примечания раздела XI">
+            <li><a className="underline" href={rate.source_url.split('#')[0] + '#page=1'} target="_blank" rel="noreferrer">Примечания к разделу XI (1–15)</a></li>
+            <li><a className="underline" href={rate.source_url.split('#')[0] + '#page=6'} target="_blank" rel="noreferrer">Примечания к субпозициям раздела XI (1–2)</a></li>
+          </ul>}
         </section>}
         {children}
         <details className="text-sm">

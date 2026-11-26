@@ -11,6 +11,10 @@ export function LocalNormativeCheck({ code }: { code: string }) {
   const [description, setDescription] = useState('');
   const [tablewareUse, setTablewareUse] = useState('unknown');
   const [age, setAge] = useState('unknown');
+  const isBook = code === '4901990000' || code === '4903000000';
+  const [publication, setPublication] = useState('unknown');
+  const [readerAge, setReaderAge] = useState('');
+  const ageValid = readerAge === '' || (/^\d{1,2}$/.test(readerAge) && Number(readerAge) <= 18);
   const [country, setCountry] = useState('');
   const [documentType, setDocumentType] = useState('СГР');
   const [documentNumber, setDocumentNumber] = useState('');
@@ -28,6 +32,7 @@ export function LocalNormativeCheck({ code }: { code: string }) {
     try {
       const { data } = await api.post<Reply>('/non_tariff/normative-block', { items: [{ hs_code: code, description: description.trim(),
         ...(code.startsWith('7013') && { tableware_use: tablewareUse, tableware_age: age }),
+        ...(isBook && { publication_kind: publication, reader_age_years: readerAge === '' ? null : Number(readerAge) }),
         country: country.trim() || null, permits: documentNumber.trim() ? [{ type: documentType, number: documentNumber.trim() }] : [] }] });
       const result = data.items[0]?.normative_block;
       if (result?.hs_code !== code || result.assessment !== 'INSUFFICIENT_EVIDENCE') {
@@ -43,7 +48,7 @@ export function LocalNormativeCheck({ code }: { code: string }) {
     } finally {
       setBusy(false);
     }
-  }, [code, description, country, documentType, documentNumber, tablewareUse, age]);
+  }, [code, description, country, documentType, documentNumber, tablewareUse, age, isBook, publication, readerAge]);
 
   useEffect(() => {
     if (!needsLogin) return;
@@ -63,6 +68,23 @@ export function LocalNormativeCheck({ code }: { code: string }) {
       <input className="cc-input mt-1 w-full" value={description} maxLength={1000} disabled={busy}
         onChange={e => { setDescription(e.target.value); clearAssessment(); }} />
     </label>
+    {isBook && <fieldset className="space-y-2" disabled={busy}>
+      <label className="block">Вид издания по сведениям издателя
+        <select className="cc-input mt-1 block" value={publication} onChange={e => { setPublication(e.target.value); clearAssessment(); }}>
+          <option value="unknown">Не указан</option>
+          <option value="child_printed_book">Детская печатная книга для чтения</option>
+          <option value="child_picture_book">Детская книжка-картинка</option>
+          <option value="child_coloring_book">Детская книга для раскрашивания</option>
+          <option value="textbook">Учебник или учебное пособие</option>
+          <option value="toy_book">Игрушка в форме книги</option>
+        </select>
+      </label>
+      <label className="block">Минимальный возраст читателя по сведениям издателя, лет
+        <input className="cc-input mt-1 block" type="text" inputMode="numeric" maxLength={2} value={readerAge} aria-invalid={!ageValid}
+          onChange={e => { setReaderAge(e.target.value); clearAssessment(); }} />
+      </label>
+      {!ageValid && <p role="alert">Укажите целое число от 0 до 18 или оставьте поле пустым.</p>}
+    </fieldset>}
     {code.startsWith('7013') && <fieldset className="space-y-2" disabled={busy}>
       <label className="block">Назначение по маркировке изготовителя
         <select className="cc-input mt-1 block" value={tablewareUse} onChange={e => { setTablewareUse(e.target.value); setAge('unknown'); clearAssessment(); }}>
@@ -97,7 +119,7 @@ export function LocalNormativeCheck({ code }: { code: string }) {
         </label>
       </div>
     </details>
-    <button type="button" disabled={busy} onClick={check} className="rounded border px-3 py-1">
+    <button type="button" disabled={busy || !ageValid} onClick={check} className="rounded border px-3 py-1">
       {busy ? 'Идёт проверка…' : 'Проверить требования к товару'}
     </button>
     <div role="status" className="space-y-1">

@@ -166,7 +166,13 @@ def create_app():
         from .security import require_authenticated_user
         from .services.local_pilot_ntm import archive_normative_block
 
+        from pydantic import Field
+
         class LocalNormativeItem(NormativeBlockItemIn):
+            publication_kind: Literal[
+                "unknown", "child_printed_book", "child_picture_book", "child_coloring_book", "textbook", "toy_book"
+            ] = "unknown"
+            reader_age_years: Annotated[int, Field(strict=True, ge=0, le=18)] | None = None
             tableware_use: Literal["unknown", "child_food_glass", "child_drinking_cup"] = "unknown"
             tableware_age: Literal["unknown", "under_3", "over_3", "exactly_3", "adult"] = "unknown"
 
@@ -183,6 +189,7 @@ def create_app():
                     code, item.description, country=item.country,
                     permits=[permit.model_dump() for permit in item.permits],
                     tableware_use=item.tableware_use, tableware_age=item.tableware_age,
+                    publication_kind=item.publication_kind, reader_age_years=item.reader_age_years,
                 )
 
         app.include_router(auth_router, prefix="/api/auth")
