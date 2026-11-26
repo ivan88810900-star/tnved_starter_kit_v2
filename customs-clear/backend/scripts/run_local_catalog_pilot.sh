@@ -13,8 +13,8 @@ if [[ ! -f "$frontend_dir/dist/index.html" ]]; then
 fi
 exec env -i PATH=/usr/bin:/bin PYTHONDONTWRITEBYTECODE=1 PYTHON_DOTENV_DISABLED=1 \
   PYTHONPATH="$public_libs:$runtime_dir/python/lib/python3.12/site-packages" \
-  TARIFF_PILOT_PARTITIONED_CHAPTERS=38,39,40,41,42,43,44,45,46,47,48,49 \
-  TARIFF_PILOT_PARTITIONED_RATES="$project_dir/evidence/2026-11-25-parallel/r485/ett/data" \
+  TARIFF_PILOT_PARTITIONED_CHAPTERS=38,39,40,41,42,43,44,45,46,47,48,49,50 \
+  TARIFF_PILOT_PARTITIONED_RATES="$project_dir/evidence/2026-11-26-parallel/r486/ett/data" \
   TARIFF_PILOT_ADDITIONAL_RATES="$project_dir/evidence/2026-11-23-ch37-pilot/r471/data" \
   TARIFF_PILOT_DATA="$data_dir" TNVED_RECOVERY_FRONTEND="$frontend_dir/dist" \
   "$project_dir/.venv-tariff/bin/python" -m uvicorn app.local_pilot:create_app \

@@ -47,6 +47,8 @@ def check(port, config, root):
         codes.extend(["4801000000", "4814200000", "4819400000", "4823908597"])
     if "49" in config["partitioned_chapters"]:
         codes.extend(["4901100000", "4907001010", "4908900000", "4911990000"])
+    if "50" in config["partitioned_chapters"]:
+        codes.extend(["5001000000", "5007100000", "5007901000", "5007909000"])
     for code in codes:
         if code[:2] in pins["chapters"]:
             entry = pins["chapters"][code[:2]]
