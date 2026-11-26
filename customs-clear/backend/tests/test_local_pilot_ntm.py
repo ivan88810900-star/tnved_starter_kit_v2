@@ -241,6 +241,7 @@ class LocalNormativeBlockTests(unittest.TestCase):
         for code, kind, age in [
             ("4901990000", "child_printed_book", 7),
             ("4903000000", "child_coloring_book", 4),
+            ("4903000000", "child_coloring_book", 8),
             ("4903000000", "child_picture_book", 3),
             ("4903000000", "child_picture_book", 0),
         ]:
@@ -251,7 +252,8 @@ class LocalNormativeBlockTests(unittest.TestCase):
                 self.assertIn("поз. 40", review["source_routes"][1]["locator"])
                 self.assertIn("3д, 4д или 6д", review["source_routes"][0]["condition"])
                 qs = " ".join(review["questions"])
-                self.assertEqual("5 мм" in qs, kind == "child_coloring_book")
+                self.assertEqual("5 мм" in qs, kind == "child_coloring_book" and 3 <= age <= 6)
+                self.assertEqual("массу бумаги раскраски" in qs, kind == "child_coloring_book")
                 self.assertEqual("текста на иллюстрациях" in qs, kind == "child_picture_book")
                 self.assertEqual("дистиллированной воде" in qs, age <= 3)
 

@@ -310,8 +310,11 @@ def _child_publication_review(code: str, kind: str | None, age: int | None, perm
              "locator": "Перечень № 28, раздел XIV, поз. 40, PDF с. 13. ТР ТС 007/2011, ст. 12 п. 3",
              "source_url": _CHILD_BOOK_LIST},
         ]
-        if kind == "child_coloring_book" and 3 <= age <= 6:
-            questions.append("Для дошкольной раскраски проверьте размер элементов рисунка от 5 мм и вид и массу бумаги по ст. 8 п. 4.")
+        if kind == "child_coloring_book":
+            paper = "Сверьте вид и массу бумаги раскраски по ст. 8 п. 4."
+            if 3 <= age <= 6:
+                paper += " Для дошкольной раскраски размер элементов рисунка — от 5 мм."
+            questions.append(paper)
         if kind == "child_picture_book":
             questions.append("В книжке-картинке проверьте оформление текста на иллюстрациях, если оно применено, по ст. 8 п. 9.")
         if age >= 3:
