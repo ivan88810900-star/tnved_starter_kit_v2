@@ -1,0 +1,331 @@
+{
+  "cycle": 486,
+  "mode": "NATIVE_AUTOMATION_HEARTBEAT",
+  "automation_id": "tariff",
+  "native_turn_id": "01a216b4-8a2a-7da0-9fd6-3b6f60aa3761",
+  "thread_id": "01a1b044-0f10-7941-b8a5-999cf67f41cc",
+  "host": "MacBook-Air-Flint.local",
+  "cwd": "/Users/fl/Documents/ChatGPT/Tariff",
+  "start": "2026-11-26T07:14:20.000Z",
+  "check_in": "2026-11-26T07:14:20.323Z",
+  "start_product": "554c678eb191910064c3ff390bca0598db67af25",
+  "product": "85ebd51a50c0a2bce07bcccbcd408badadca268d",
+  "tree": "2dc21fb6af53f997c7219a95a9f7f2c78f33f6f4",
+  "main": "eeef5028d45ea14af09e0afb01f600bca5602316",
+  "catalog": "5970cdcf9a162417ea4264e3461accd64f1aeddf8e49ea137a3d8b29dedf5021",
+  "workers": [
+    {
+      "id": "/root/ett",
+      "head": "4c96ad2d6c52185c9e7cedc4e1db22798ca50cfd",
+      "review": "Книжные кандидаты и явное подтверждение, общий запрос до и после правки в конечном профиле"
+    },
+    {
+      "id": "/root/ntm",
+      "head": "a45b24e5a666164bdc75f1c004b090f1a0b1c946",
+      "review": "Глава 51 от исходных глифов PDF до двух SQLite; десять строк примечания главы"
+    },
+    {
+      "id": "/root/invoice",
+      "head": "dbb85a99ed0090cc73b2b13d17ffe10173fb34f9",
+      "review": "Глава 50 в браузере и книжные условия по первичным источникам, включая две исправленные формулировки"
+    }
+  ],
+  "worker_assignments": {
+    "ett": {
+      "dir": "ett-worker-worktree",
+      "branch": "agent/mac-ett-50-51",
+      "files": [
+        "customs-clear/backend/data/local_pilot_pins.json",
+        "customs-clear/backend/data/local_pilot_profile.example.json",
+        "customs-clear/backend/scripts/run_local_catalog_pilot.sh",
+        "customs-clear/backend/tests/local_pilot_smoke.py"
+      ]
+    },
+    "ntm": {
+      "dir": "ntm-worker-worktree",
+      "branch": "agent/mac-child-printed-books",
+      "files": [
+        "customs-clear/backend/app/services/local_pilot_ntm.py",
+        "customs-clear/backend/tests/test_local_pilot_ntm.py",
+        "docs/operations/NTM_SOURCE_COVERAGE_RU.md"
+      ]
+    },
+    "invoice": {
+      "dir": "invoice-worker-worktree",
+      "branch": "agent/mac-books-invoice",
+      "files": [
+        "customs-clear/backend/app/services/local_pilot_invoice.py",
+        "customs-clear/backend/app/api/local_pilot_invoice.py",
+        "customs-clear/backend/tests/test_local_pilot_invoice.py"
+      ]
+    }
+  },
+  "ci": {
+    "id": 45780047770,
+    "url": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/actions/runs/45780047770",
+    "head": "85ebd51a50c0a2bce07bcccbcd408badadca268d",
+    "conclusion": "success",
+    "jobs": [
+      [
+        139773024551,
+        "offline-safety",
+        "completed",
+        "success"
+      ],
+      [
+        139773024948,
+        "payment-regression",
+        "completed",
+        "success"
+      ]
+    ],
+    "steps": [
+      [
+        "Run payment regression slice",
+        "success"
+      ],
+      [
+        "Run local pilot regression slice",
+        "success"
+      ]
+    ],
+    "sums": [
+      "612 passed, 2 warnings, 229 subtests passed in 25.78s",
+      "33 passed, 1 warning, 58 subtests passed in 2.31s"
+    ]
+  },
+  "local_regressions": 33,
+  "connected": {
+    "chapters": 21,
+    "parts": 35,
+    "rows": 1909,
+    "counts": {
+      "PARSED": 1691,
+      "AMBIGUOUS": 218
+    },
+    "admitted": 0,
+    "verified": 0,
+    "legal": [
+      "UNVERIFIED"
+    ]
+  },
+  "working_frontend": {
+    "assets/index-DYYbGiB6.css": "3fd445d90afd002e24c5b46f313d2e99ff3c3db94eb20a80a6de53282b620dc7",
+    "assets/index-L9jL4rg0.js": "889ed67f983f6209355f181b95e2ff587ed2796ff12485483e89add9ae335db8",
+    "favicon.ico": "4fe1ff53a3c444f7e347fb4b2356c2987b08e312ea467709d8377d7ccdf29271",
+    "favicon.svg": "02e525afaa6826cba9d242f06c385e03cf912c78286ad80e7910bdf087030da8",
+    "index.html": "7e547b477ca9f79698fc6517a05131cf1984045a9cd5d0706df185bf9c96d554"
+  },
+  "ports": [
+    18016,
+    18018
+  ],
+  "chapter50": {
+    "runtime": {
+      "18016": {
+        "http": {
+          "file": "runtime-20261126T080741976641Z-18016/http.json",
+          "sha256": "83517aeb1136967b8176c3fbf267efcbcb63193761772a82531569ebca6f450d"
+        },
+        "chrome": {
+          "file": "runtime-20261126T080741976641Z-18016/cards-50-18016.json",
+          "sha256": "63aa49315dfb75966252beb222d61e43866fa8c86efa75270fd51498d7a6b3b0"
+        },
+        "screenshot": {
+          "file": "runtime-20261126T080741976641Z-18016/card-50-18016.png",
+          "sha256": "84271498c5bbc88434bcc71a64b121fcbc1dd07b232450655471051ea93e3331"
+        },
+        "notes": {
+          "file": "runtime-20261126T080741976641Z-18016/note-provenance.json",
+          "sha256": "64b885019a371919757330602ae9abde8e703dc191177c74a626a70414ef862c"
+        },
+        "rows": 25,
+        "unit_m2": 16,
+        "unit_dash": 9,
+        "source_section_links_per_card": 2,
+        "at_commit": "85ebd51a50c0a2bce07bcccbcd408badadca268d"
+      },
+      "18017": {
+        "http": {
+          "file": "runtime-20261126T073206903278Z-18017/http.json",
+          "sha256": "6405ab8b384f508d373d8973a1b84ae0bba4ee34a05001e88aa19f30a4c3f660"
+        },
+        "chrome": {
+          "file": "runtime-20261126T073206903278Z-18017/cards-50-18017.json",
+          "sha256": "8cfa700bdaec77e892a15f2261201cc2689f4b558c3bd41c63b528c77ebaea3d"
+        },
+        "screenshot": {
+          "file": "runtime-20261126T073206903278Z-18017/card-50-18017.png",
+          "sha256": "ce7b9b7408eb65813bc34b8126bf2dca2eaacd0eb5fd1b989b077a9f305e0c50"
+        },
+        "notes": {
+          "file": "runtime-20261126T073206903278Z-18017/note-provenance.json",
+          "sha256": "64b885019a371919757330602ae9abde8e703dc191177c74a626a70414ef862c"
+        },
+        "rows": 25,
+        "unit_m2": 16,
+        "unit_dash": 9,
+        "source_section_links_per_card": 2,
+        "at_commit": "ef490b97ab276f4bb4b65eb00ba0ebacd96eb012"
+      }
+    },
+    "data": {
+      "ZIP": "Tariff-ETT-Chapter50-offline-20261125.zip",
+      "ZIP_sha256": "2434ed7c7c956c66b9b18e888e69c5d38d403a51b8680a344e6e04ed95c769c5",
+      "parts": [
+        {
+          "first": "5001000000",
+          "last": "5007909000",
+          "file": "50-001-025.sqlite",
+          "sha256": "ba16ca830c603b861dd665a6873c0dca870550c9519b596de6a9932ee6c0c140"
+        }
+      ]
+    },
+    "pdf_sha256": "bbf3618a251f6f77ba04ae264c655f195650c8fe1935c7a891e3a16738c89b96",
+    "notes": {
+      "section_XI": 15,
+      "section_XI_subheadings": 2
+    },
+    "verified_legal": 0,
+    "independent_review": {
+      "reviewer": "/root/invoice",
+      "reports": [
+        {
+          "file": "../invoice/review-ch50-source.json",
+          "sha256": "50222c810aada15225721d22f35d260b63f5c1f73aed7fa4fc1f7ad80276fd73"
+        },
+        {
+          "file": "../invoice/review-ch50-ui-18017.json",
+          "sha256": "aedfdcfe09a087209eabf6f47562859925ddee602ca6b59401024705fbc94c8e"
+        }
+      ]
+    },
+    "parsed": 25,
+    "ambiguous": 0,
+    "independent_pdf_http_ui": "invoice/review-ch50-ui-18017.json",
+    "independent_stage_revision": "ef490b97ab276f4bb4b65eb00ba0ebacd96eb012",
+    "working_revision": "85ebd51a50c0a2bce07bcccbcd408badadca268d"
+  },
+  "chapter51": {
+    "prepared": true,
+    "connected": false,
+    "pdf": "ba5550a5cb109903ab86c093200cbffd117e24d22bcc62680cd209659d75dbc7",
+    "layout": "9337e669afd7f415b0069e70cd63d30ad0a0bfe8d2ca7032e9bafe7e8b08ee3c",
+    "zip": "0f982c019c33768ceb356ebcd45fb1049e7b7e71b45c240a0b17f87290d0adad",
+    "sqlite": "dabcc6740b50662eafca5946ecaac5e2f4fb8051971cc2c507aa303579d11041",
+    "parsed": 71,
+    "ambiguous": 4,
+    "units": {
+      "–": 55,
+      "м²": 20
+    },
+    "rates": {
+      "3": 17,
+      "5": 38,
+      "10": 20
+    },
+    "footnotes": {
+      "63С)": 4
+    },
+    "notes": {
+      "chapter_51": 1
+    },
+    "negative_controls": 326,
+    "repeat_dml": 0,
+    "admitted": 0,
+    "verified": 0,
+    "independent": "ntm/review-ch51.json",
+    "independent_sha256": "cc1a15dda6f0a3cfff6fc4bf9d5a910aaeb65c0980ae2efa07fffe14c066ece5"
+  },
+  "invoice": {
+    "fixture_sha256": "1bce7c4549a95b13d49862133485adc9c0adbbd1a60ca9ad122da6d783055950",
+    "selected": [
+      "4901990000",
+      "4903000000"
+    ],
+    "quantity": [
+      8,
+      6
+    ],
+    "explicit": true,
+    "restored_after_page_reload": true,
+    "form_question_in_http_ui": true,
+    "other_draft_owner_status": 404,
+    "wrong_code_status": 422,
+    "independent_final_http": "ett/book-form-save-18017.json",
+    "prior_working_binding_available": false,
+    "previous_drafts_imported": false,
+    "previous_drafts_modified": false,
+    "long_term_storage": false
+  },
+  "ntm": {
+    "broad_revision": "ef490b97ab276f4bb4b65eb00ba0ebacd96eb012",
+    "broad_browser_states": 9,
+    "http_controls": 4,
+    "anonymous_status": 401,
+    "dates": {
+      "51": "2018-09-25",
+      "147": "2023-03-26",
+      "235": "2020-01-26",
+      "797": "2012-07-01"
+    },
+    "wording_revision": "e41e6b4a7fa0eacd8de507f6c3526bc29f0ed1ad",
+    "wording_cases": 2,
+    "final_browser": "chrome-18018.json",
+    "verified_shipment": false,
+    "official_sources_confirmed": 9,
+    "source_map": "ntm/sources.json"
+  },
+  "payments": [
+    {
+      "code": "5007901000",
+      "duty": "0 %",
+      "note": "",
+      "blank_duty": null,
+      "entered_percent": "0",
+      "manual_rub": 0,
+      "total": null
+    },
+    {
+      "code": "5007100000",
+      "duty": "3 %",
+      "note": "",
+      "blank_duty": null,
+      "entered_percent": "3",
+      "manual_rub": 3000,
+      "total": null
+    }
+  ],
+  "next": {
+    "primary": "Подключить независимо проверенную SQLite главы 51 к отдельной копии профиля и проверить 75 карточек от HTTP до Chrome, включая четыре сноски 63С), 20 единиц м² и примечание главы 51 на странице 1.",
+    "rates": {
+      "chapter": 51,
+      "stage": "READY_TO_CONNECT_INDEPENDENT_SOURCE_QA_PASS",
+      "records": 75,
+      "parsed": 71,
+      "ambiguous": 4,
+      "parts": [
+        75
+      ],
+      "zip": "evidence/2026-11-26-parallel/r486/ett/ch51/Tariff-ETT-Chapter51-offline-20261126.zip",
+      "sha256": "0f982c019c33768ceb356ebcd45fb1049e7b7e71b45c240a0b17f87290d0adad"
+    },
+    "ntm": "Следующий предмет — ученическая тетрадь. Установить по первичным источникам назначение, возраст, отличие от офисного блокнота, форму документа, исключения и даты. Не переносить условия для печатной книги на школьно-письменные принадлежности.",
+    "invoice": "Пройти две учебные позиции: ученическая тетрадь и печатное издание с заданиями. Уточнить назначение и наличие содержания, проверить работу с кандидатами принятого дерева и сохранение раздельных явных кодов.",
+    "parallel_execution": "Один A0 и до трёх работников с перекрёстной проверкой."
+  },
+  "limits": [
+    "DB HOLD; local isolated SQLite",
+    "All tariff rows UNVERIFIED and not admitted",
+    "The live local processes are temporary; storage after arbitrary interruption remains open",
+    "Real shipment and complete dated calculation unverified",
+    "No Neon, merge, deploy, enforcement, A6 or private data transfer"
+  ],
+  "receipt": "https://github.com/ivan88810900-star/tnved_starter_kit_v2/issues/257#issuecomment-7185535187",
+  "lease_generation": 486,
+  "acquisition_commit": "899820d75c8554fb36c3ccc57421c1d436e395bf",
+  "renewal_commit": "206fce1c01613587b8691d8d9e3fb00e1ba0ef19",
+  "local_manifest": "evidence/2026-11-26-parallel/r486/MANIFEST.json",
+  "local_manifest_sha256": "de0ad7ee3bdc81901c8c7d7f31e9e2a30c4ea6003e2c6575f2729484c222758b",
+  "manifest_count": 110
+}
